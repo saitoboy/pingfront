@@ -1,0 +1,8 @@
+export { StepHeader } from './StepHeader'
+export { Step1DadosPessoais } from './Step1DadosPessoais'
+export { Step2CertidaoNascimento } from './Step2CertidaoNascimento'
+export { Step3Responsaveis } from './Step3Responsaveis'
+export { Step4DadosSaude } from './Step4DadosSaude'
+export { Step5Diagnosticos } from './Step5Diagnosticos'
+export { Step6Matricula } from './Step6Matricula'
+export { Step7Revisao } from './Step7Revisao'

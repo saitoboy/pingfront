@@ -30,7 +30,7 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick }: Sideb
       active: activeItem === 'ficha-cadastro',
       onClick: () => handleMenuClick('ficha-cadastro')
     },
-    {
+    /*{
       id: 'matriculas',
       label: 'Matrículas',
       icon: '👥',
@@ -71,7 +71,7 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick }: Sideb
       icon: '⚙️',
       active: activeItem === 'configuracoes',
       onClick: () => handleMenuClick('configuracoes')
-    }
+    }*/
   ]
 
   const handleMenuClick = (itemId: string) => {
@@ -119,21 +119,6 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick }: Sideb
             </button>
           ))}
         </nav>
-      </div>
-
-      {/* Informações do Usuário */}
-      <div className="absolute bottom-0 w-64 border-t border-gray-200 bg-gray-50">
-        <div className="p-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">AS</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">Ana Silva</p>
-              <p className="text-xs text-gray-500 truncate">Professora</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )

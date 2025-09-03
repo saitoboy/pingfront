@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import FichaCadastroPage from './pages/cadastro/FichaCadastroPage'
@@ -11,10 +11,49 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [userData, setUserData] = useState<{ name: string; email: string } | null>(null)
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'ficha-cadastro'>('dashboard')
+  const [isInitializing, setIsInitializing] = useState(true) // Novo estado para controlar a inicialização
+
+  // Hook para verificar se há um token salvo ao carregar a aplicação
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const savedToken = localStorage.getItem('authToken')
+      
+      if (savedToken) {
+        // Se há um token salvo, restaura a autenticação
+        // Tenta recuperar os dados do usuário do localStorage também
+        const savedUserData = localStorage.getItem('userData')
+        
+        if (savedUserData) {
+          try {
+            const parsedUserData = JSON.parse(savedUserData)
+            setUserData(parsedUserData)
+          } catch (error) {
+            console.error('Erro ao recuperar dados do usuário do localStorage:', error)
+            // Se houver erro ao fazer parse, gera dados básicos
+            setUserData({ name: 'Usuário', email: 'usuario@exemplo.com' })
+          }
+        } else {
+          // Se não há dados do usuário salvos, gera dados padrão
+          setUserData({ name: 'Usuário', email: 'usuario@exemplo.com' })
+        }
+        
+        setIsAuthenticated(true)
+        console.log('✅ Autenticação restaurada do localStorage')
+      } else {
+        console.log('ℹ️ Nenhum token encontrado no localStorage')
+      }
+      
+      setIsInitializing(false) // Finaliza a inicialização
+    }
+
+    checkAuthStatus()
+  }, [])
 
   // Função chamada quando o usuário faz login
   const handleLogin = (user: { name: string; email: string }) => {
     setUserData(user)
+    // Salva os dados do usuário no localStorage para persistir entre recarregamentos
+    localStorage.setItem('userData', JSON.stringify(user))
     setIsLoading(true) // Mostra a tela de loading
   }
 
@@ -22,6 +61,32 @@ function App() {
   const handleLoadingComplete = () => {
     setIsLoading(false)
     setIsAuthenticated(true) // Autentica o usuário e vai para o dashboard
+  }
+
+  // Função de logout
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+    setIsLoading(false)
+    setUserData(null)
+    setCurrentPage('dashboard')
+    // Remove os dados salvos do localStorage
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('userData')
+    console.log('🚪 Logout realizado - dados removidos do localStorage')
+  }
+
+  // Se ainda está inicializando, mostra uma tela de carregamento simples
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">😊</span>
+          </div>
+          <div className="text-gray-600">Carregando...</div>
+        </div>
+      </div>
+    )
   }
 
   // Se não estiver autenticado e não estiver carregando, mostra o login
@@ -68,12 +133,7 @@ function App() {
                   </span>
                 </div>
                 <button
-                  onClick={() => {
-                    setIsAuthenticated(false)
-                    setIsLoading(false)
-                    setUserData(null)
-                    setCurrentPage('dashboard')
-                  }}
+                  onClick={handleLogout}
                   className="text-sm text-red-600 hover:text-red-800"
                 >
                   Sair

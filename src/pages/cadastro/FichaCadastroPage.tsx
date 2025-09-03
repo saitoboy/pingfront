@@ -1,474 +1,403 @@
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { 
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle
+} from 'lucide-react'
 import { logger } from '../../lib/logger'
-
-interface AlunoForm {
-  // Dados Pessoais
-  nome: string
-  cpf: string
-  rg: string
-  dataNascimento: string
-  sexo: string
-  naturalidade: string
-  
-  // Endereço
-  cep: string
-  logradouro: string
-  numero: string
-  complemento: string
-  bairro: string
-  cidade: string
-  estado: string
-  
-  // Contato
-  telefone: string
-  celular: string
-  email: string
-  
-  // Responsável
-  nomeResponsavel: string
-  cpfResponsavel: string
-  telefoneResponsavel: string
-  emailResponsavel: string
-}
+import { cadastroService } from '../../services/cadastroService'
+import type { 
+  Parentesco, 
+  Religiao, 
+  AnoLetivo, 
+  Turma 
+} from '../../types/api'
+import {
+  Step1DadosPessoais,
+  Step2CertidaoNascimento,
+  Step3Responsaveis,
+  Step4DadosSaude,
+  Step5Diagnosticos,
+  Step6Matricula,
+  Step7Revisao
+} from './components'
+import type { FormularioFichaCadastro } from './types'
+import { WIZARD_STEPS } from './types'
 
 export default function FichaCadastroPage() {
-  const [formData, setFormData] = useState<AlunoForm>({
-    nome: '',
-    cpf: '',
-    rg: '',
-    dataNascimento: '',
-    sexo: '',
-    naturalidade: '',
-    cep: '',
-    logradouro: '',
-    numero: '',
-    complemento: '',
-    bairro: '',
-    cidade: '',
-    estado: '',
-    telefone: '',
-    celular: '',
-    email: '',
-    nomeResponsavel: '',
-    cpfResponsavel: '',
-    telefoneResponsavel: '',
-    emailResponsavel: ''
-  })
-
+  // Estado do wizard
+  const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+  // Estado principal do formulário
+  const [formData, setFormData] = useState<FormularioFichaCadastro>({
+    aluno: {
+      nome_aluno: '',
+      sobrenome_aluno: '',
+      data_nascimento_aluno: '',
+      cpf_aluno: '',
+      rg_aluno: '',
+      naturalidade_aluno: '',
+      endereco_aluno: '',
+      bairro_aluno: '',
+      cep_aluno: '',
+      religiao_id: ''
+    },
+    certidao: {
+      livro_certidao: '',
+      matricula_certidao: '',
+      termo_certidao: '',
+      folha_certidao: '',
+      data_expedicao_certidao: '',
+      nome_cartorio_certidao: ''
+    },
+    responsaveis: [{
+      nome_responsavel: '',
+      sobrenome_responsavel: '',
+      telefone_responsavel: '',
+      rg_responsavel: '',
+      cpf_responsavel: '',
+      grau_instrucao_responsavel: '',
+      email_responsavel: '',
+      parentesco_id: ''
+    }],
+    dados_saude: {
+      necessidades_especiais: '',
+      vacinas_em_dia: false,
+      dorme_bem: false,
+      alimenta_se_bem: false,
+      uso_sanitario_sozinho: false,
+      restricao_alimentar: '',
+      problema_saude: '',
+      alergia_medicamento: '',
+      uso_continuo_medicamento: '',
+      alergias: '',
+      medicacao_febre: '',
+      medicacao_dor_cabeca: '',
+      medicacao_dor_barriga: '',
+      historico_convulsao: false,
+      perda_esfincter_emocional: false,
+      frequentou_outra_escola: false,
+      tipo_parto: '',
+      gravidez_tranquila: false,
+      medicacao_gravidez: '',
+      tem_irmaos: false,
+      fonoaudiologico: false,
+      psicopedagogico: false,
+      neurologico: false,
+      outro_tratamento: '',
+      motivo_tratamento: '',
+      observacoes: ''
+    },
+    diagnostico: {
+      cegueira: false,
+      baixa_visao: false,
+      surdez: false,
+      deficiencia_auditiva: false,
+      surdocegueira: false,
+      deficiencia_fisica: false,
+      deficiencia_multipla: false,
+      deficiencia_intelectual: false,
+      sindrome_down: false,
+      altas_habilidades: false,
+      tea: false,
+      alteracoes_processamento_auditivo: false,
+      tdah: false,
+      outros_diagnosticos: ''
+    },
+    matricula: {
+      turma_id: '',
+      ano_letivo_id: '',
+      data_matricula: new Date().toISOString().split('T')[0]
+    }
+  })
+
+  // Estados para dropdowns
+  const [parentescos, setParentescos] = useState<Parentesco[]>([])
+  const [religioes, setReligioes] = useState<Religiao[]>([])
+  const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([])
+  const [turmas, setTurmas] = useState<Turma[]>([])
+  const [isLoadingDropdowns, setIsLoadingDropdowns] = useState(true)
+
+  // Carregar dados dos dropdowns
+  useEffect(() => {
+    carregarDadosDropdowns()
+  }, [])
+
+  const carregarDadosDropdowns = async () => {
+    try {
+      setIsLoadingDropdowns(true);
+      
+      const dropdownsData = await cadastroService.carregarTodosDropdowns();
+      
+      // Definir os estados com os dados carregados
+      setReligioes(dropdownsData.religioes);
+      setParentescos(dropdownsData.parentescos);
+      setAnosLetivos(dropdownsData.anosLetivos);
+      setTurmas(dropdownsData.turmas);
+      
+    } catch (error) {
+      logger.error('❌ Erro ao carregar dados dos dropdowns');
+      console.error(error);
+      
+      // Limpar todos os arrays em caso de erro
+      setReligioes([]);
+      setParentescos([]);
+      setAnosLetivos([]);
+      setTurmas([]);
+    } finally {
+      setIsLoadingDropdowns(false);
+    }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  // Navegação do wizard
+  const goToStep = (step: number) => {
+    if (step >= 1 && step <= WIZARD_STEPS.length) {
+      setCurrentStep(step)
+    }
+  }
 
+  const goToNextStep = () => {
+    if (currentStep < WIZARD_STEPS.length) {
+      setCurrentStep(currentStep + 1)
+    }
+  }
+
+  const goToPrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+
+  // Submissão final
+  const handleSubmit = async () => {
+    if (currentStep !== 7) return
+
+    setIsLoading(true)
     try {
-      logger.info('📝 Salvando ficha de cadastro...')
-      // Aqui implementaremos a chamada para a API
-      await new Promise(resolve => setTimeout(resolve, 1500)) // Simula chamada à API
-      logger.success('✅ Ficha de cadastro salva com sucesso!')
+      logger.info('📝 Processando ficha de cadastro completa...')
+
+      // Preparar dados para envio
+      const dadosCompletos = {
+        aluno: {
+          ...formData.aluno,
+          data_nascimento_aluno: new Date(formData.aluno.data_nascimento_aluno)
+        },
+        certidao: {
+          ...formData.certidao,
+          data_expedicao_certidao: new Date(formData.certidao.data_expedicao_certidao)
+        },
+        responsaveis: formData.responsaveis,
+        dados_saude: formData.dados_saude,
+        diagnostico: formData.diagnostico,
+        matricula: {
+          ...formData.matricula,
+          data_matricula: new Date(formData.matricula.data_matricula)
+        }
+      }
+
+      // Simular chamada à API
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      console.log('Dados enviados:', dadosCompletos)
+
+      logger.success('✅ Ficha de cadastro processada com sucesso! RA: 2025001')
     } catch (error) {
-      logger.error('❌ Erro ao salvar ficha de cadastro')
-      console.error(error)
+      logger.error('❌ Erro ao processar ficha')
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Render do step atual
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <Step1DadosPessoais 
+            formData={formData} 
+            setFormData={setFormData} 
+            religioes={religioes} 
+            isLoadingDropdowns={isLoadingDropdowns} 
+          />
+        )
+      case 2:
+        return (
+          <Step2CertidaoNascimento 
+            formData={formData} 
+            setFormData={setFormData} 
+          />
+        )
+      case 3:
+        return (
+          <Step3Responsaveis 
+            formData={formData}
+            setFormData={setFormData}
+            parentescos={parentescos}
+            isLoadingDropdowns={isLoadingDropdowns}
+          />
+        )
+      case 4:
+        return (
+          <Step4DadosSaude 
+            formData={formData} 
+            setFormData={setFormData} 
+          />
+        )
+      case 5:
+        return (
+          <Step5Diagnosticos 
+            formData={formData} 
+            setFormData={setFormData} 
+          />
+        )
+      case 6:
+        return (
+          <Step6Matricula 
+            formData={formData}
+            setFormData={setFormData}
+            anosLetivos={anosLetivos}
+            turmas={turmas}
+            isLoadingDropdowns={isLoadingDropdowns}
+          />
+        )
+      case 7:
+        return (
+          <Step7Revisao 
+            formData={formData}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+          />
+        )
+      default:
+        return <div>Step não encontrado</div>
+    }
+  }
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Steps Navigation - Ícones com nomes embaixo */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">📋 Ficha de Cadastro</h1>
-        <p className="text-gray-600">Cadastre ou edite as informações de alunos</p>
+        <div className="flex justify-between items-start">
+          {WIZARD_STEPS.map((step, index) => (
+            <div key={step.id} className="flex flex-col items-center relative">
+              {/* Step Circle */}
+              <div
+                className={`
+                  flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-300 mb-2
+                  ${currentStep === step.id 
+                    ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-100' 
+                    : currentStep > step.id 
+                      ? 'bg-green-600 text-white shadow-md'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }
+                `}
+                onClick={() => goToStep(step.id)}
+              >
+                {currentStep > step.id ? (
+                  <Check className="w-5 h-5" />
+                ) : (
+                  React.createElement(step.icon, {
+                    className: "w-5 h-5"
+                  })
+                )}
+              </div>
+              
+              {/* Step Name */}
+              <div className={`text-xs font-medium text-center max-w-20 leading-tight ${
+                currentStep === step.id 
+                  ? 'text-blue-600' 
+                  : currentStep > step.id
+                    ? 'text-green-600'
+                    : 'text-gray-500'
+              }`}>
+                {step.title}
+              </div>
+
+              {/* Connector Line */}
+              {index < WIZARD_STEPS.length - 1 && (
+                <div 
+                  className={`
+                    absolute top-5 left-full w-full h-0.5 transition-colors duration-300 -z-10
+                    ${currentStep > step.id ? 'bg-green-600' : 'bg-gray-300'}
+                  `}
+                  style={{ 
+                    width: `calc(100% + ${100 / (WIZARD_STEPS.length - 1)}%)`,
+                    transform: 'translateX(20px)'
+                  }} 
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Progress Bar - Embaixo dos ícones */}
+        <div className="mt-6">
+          <div className="bg-gray-200 rounded-full h-2 relative overflow-hidden">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+              style={{ 
+                width: `${(currentStep / WIZARD_STEPS.length) * 100}%` 
+              }}
+            />
+          </div>
+          <div className="flex justify-between mt-2">
+            <span className="text-xs text-gray-500">Início</span>
+            <span className="text-xs font-medium text-gray-600">
+              {currentStep} de {WIZARD_STEPS.length}
+            </span>
+            <span className="text-xs text-gray-500">Finalizar</span>
+          </div>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Dados Pessoais */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span className="mr-2">👤</span>
-            Dados Pessoais
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-2">
-                Nome Completo *
-              </label>
-              <input
-                type="text"
-                id="nome"
-                name="nome"
-                required
-                value={formData.nome}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Digite o nome completo"
-              />
-            </div>
+      {/* Step Content */}
+      <div className="bg-white rounded-lg shadow-sm border p-8 mb-8 min-h-[500px]">
+        {renderCurrentStep()}
+      </div>
 
-            <div>
-              <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">
-                CPF *
-              </label>
-              <input
-                type="text"
-                id="cpf"
-                name="cpf"
-                required
-                value={formData.cpf}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="000.000.000-00"
-              />
-            </div>
+      {/* Navigation Buttons */}
+      <div className="flex justify-between">
+        <button
+          onClick={goToPrevStep}
+          disabled={currentStep === 1}
+          className="flex items-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Anterior
+        </button>
 
-            <div>
-              <label htmlFor="rg" className="block text-sm font-medium text-gray-700 mb-2">
-                RG
-              </label>
-              <input
-                type="text"
-                id="rg"
-                name="rg"
-                value={formData.rg}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="00.000.000-0"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="dataNascimento" className="block text-sm font-medium text-gray-700 mb-2">
-                Data de Nascimento *
-              </label>
-              <input
-                type="date"
-                id="dataNascimento"
-                name="dataNascimento"
-                required
-                value={formData.dataNascimento}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="sexo" className="block text-sm font-medium text-gray-700 mb-2">
-                Sexo *
-              </label>
-              <select
-                id="sexo"
-                name="sexo"
-                required
-                value={formData.sexo}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Selecione...</option>
-                <option value="M">Masculino</option>
-                <option value="F">Feminino</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="naturalidade" className="block text-sm font-medium text-gray-700 mb-2">
-                Naturalidade
-              </label>
-              <input
-                type="text"
-                id="naturalidade"
-                name="naturalidade"
-                value={formData.naturalidade}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Cidade - UF"
-              />
-            </div>
-          </div>
+        <div className="flex space-x-3">
+          {currentStep === WIZARD_STEPS.length ? (
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="flex items-center px-8 py-3 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Finalizar Cadastro
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={goToNextStep}
+              disabled={currentStep === WIZARD_STEPS.length}
+              className="flex items-center px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Próximo
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </button>
+          )}
         </div>
-
-        {/* Endereço */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span className="mr-2">🏠</span>
-            Endereço
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label htmlFor="cep" className="block text-sm font-medium text-gray-700 mb-2">
-                CEP *
-              </label>
-              <input
-                type="text"
-                id="cep"
-                name="cep"
-                required
-                value={formData.cep}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="00000-000"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label htmlFor="logradouro" className="block text-sm font-medium text-gray-700 mb-2">
-                Logradouro *
-              </label>
-              <input
-                type="text"
-                id="logradouro"
-                name="logradouro"
-                required
-                value={formData.logradouro}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Rua, Avenida, etc."
-              />
-            </div>
-
-            <div>
-              <label htmlFor="numero" className="block text-sm font-medium text-gray-700 mb-2">
-                Número *
-              </label>
-              <input
-                type="text"
-                id="numero"
-                name="numero"
-                required
-                value={formData.numero}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="123"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="complemento" className="block text-sm font-medium text-gray-700 mb-2">
-                Complemento
-              </label>
-              <input
-                type="text"
-                id="complemento"
-                name="complemento"
-                value={formData.complemento}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Apto, Bloco, etc."
-              />
-            </div>
-
-            <div>
-              <label htmlFor="bairro" className="block text-sm font-medium text-gray-700 mb-2">
-                Bairro *
-              </label>
-              <input
-                type="text"
-                id="bairro"
-                name="bairro"
-                required
-                value={formData.bairro}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Nome do bairro"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="cidade" className="block text-sm font-medium text-gray-700 mb-2">
-                Cidade *
-              </label>
-              <input
-                type="text"
-                id="cidade"
-                name="cidade"
-                required
-                value={formData.cidade}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Nome da cidade"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-2">
-                Estado *
-              </label>
-              <input
-                type="text"
-                id="estado"
-                name="estado"
-                required
-                value={formData.estado}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="UF"
-                maxLength={2}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Contato */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span className="mr-2">📞</span>
-            Contato
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-2">
-                Telefone
-              </label>
-              <input
-                type="tel"
-                id="telefone"
-                name="telefone"
-                value={formData.telefone}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="(11) 1234-5678"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="celular" className="block text-sm font-medium text-gray-700 mb-2">
-                Celular *
-              </label>
-              <input
-                type="tel"
-                id="celular"
-                name="celular"
-                required
-                value={formData.celular}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="(11) 91234-5678"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="email@exemplo.com"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Responsável */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span className="mr-2">👨‍👩‍👧‍👦</span>
-            Dados do Responsável
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="nomeResponsavel" className="block text-sm font-medium text-gray-700 mb-2">
-                Nome do Responsável *
-              </label>
-              <input
-                type="text"
-                id="nomeResponsavel"
-                name="nomeResponsavel"
-                required
-                value={formData.nomeResponsavel}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Nome completo do responsável"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="cpfResponsavel" className="block text-sm font-medium text-gray-700 mb-2">
-                CPF do Responsável *
-              </label>
-              <input
-                type="text"
-                id="cpfResponsavel"
-                name="cpfResponsavel"
-                required
-                value={formData.cpfResponsavel}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="000.000.000-00"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="telefoneResponsavel" className="block text-sm font-medium text-gray-700 mb-2">
-                Telefone do Responsável *
-              </label>
-              <input
-                type="tel"
-                id="telefoneResponsavel"
-                name="telefoneResponsavel"
-                required
-                value={formData.telefoneResponsavel}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="(11) 91234-5678"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="emailResponsavel" className="block text-sm font-medium text-gray-700 mb-2">
-                Email do Responsável
-              </label>
-              <input
-                type="email"
-                id="emailResponsavel"
-                name="emailResponsavel"
-                value={formData.emailResponsavel}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="email@exemplo.com"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Botões de Ação */}
-        <div className="flex justify-end space-x-4 pt-6">
-          <button
-            type="button"
-            className="px-6 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Salvando...
-              </span>
-            ) : (
-              '💾 Salvar Cadastro'
-            )}
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   )
 }
