@@ -374,7 +374,7 @@ export interface FichaCadastroCompleta {
     endereco_aluno: string;
     bairro_aluno: string;
     cep_aluno: string;
-    religiao_id: string;
+    religiao_id?: string; // Opcional, pode ser undefined se não selecionado
   };
   certidao: {
     livro_certidao: string;
@@ -392,7 +392,7 @@ export interface FichaCadastroCompleta {
     cpf_responsavel: string;
     grau_instrucao_responsavel: string;
     email_responsavel: string;
-    parentesco_id: string;
+    parentesco_id?: string; // Opcional, pode ser undefined se não selecionado
   }>;
   dados_saude: {
     necessidades_especiais?: string;
@@ -439,8 +439,8 @@ export interface FichaCadastroCompleta {
     outros_diagnosticos?: string;
   };
   matricula: {
-    turma_id: string;
-    ano_letivo_id: string;
+    turma_id?: string; // Opcional, pode ser undefined se não selecionado
+    ano_letivo_id?: string; // Opcional, pode ser undefined se não selecionado
     data_matricula: Date;
   };
 }

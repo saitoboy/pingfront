@@ -5,7 +5,10 @@ import type {
   Parentesco, 
   Religiao, 
   AnoLetivo, 
-  Turma 
+  Turma,
+  Serie,
+  FichaCadastroCompleta,
+  FichaCadastroResposta
 } from '../types/api';
 
 export const cadastroService = {
@@ -53,8 +56,8 @@ export const cadastroService = {
       
       logger.apiResponse(response.status, '/parentesco');
       
-      // Processar resposta - formato: {"parentescos": [...], "total": n}
-      const parentescosData = response.data?.parentescos || [];
+      // Processar resposta - formato da API: {"success": "...", "data": [...], "total": n}
+      const parentescosData = response.data?.data || response.data?.parentescos || [];
       
       if (Array.isArray(parentescosData)) {
         logger.info(`✅ ${parentescosData.length} parentescos carregados da API`);
@@ -64,7 +67,7 @@ export const cadastroService = {
           mensagem: 'Parentescos carregados com sucesso'
         };
       } else {
-        logger.info('📋 API de parentescos retornou estrutura inesperada');
+        logger.info('📋 API de parentescos retornou estrutura inesperada', 'api', response.data);
         return {
           status: 'erro',
           dados: [],
@@ -73,7 +76,7 @@ export const cadastroService = {
       }
     } catch (error: any) {
       logger.apiResponse(error.response?.status || 500, '/parentesco', error.response?.data);
-      logger.error(`Erro ao carregar parentescos: ${error.response?.data?.mensagem || error.message}`);
+      logger.error(`Erro ao carregar parentescos: ${error.response?.data?.mensagem || error.message}`, 'api');
       
       throw error;
     }
@@ -114,6 +117,46 @@ export const cadastroService = {
     }
   },
 
+  // 📝 SÉRIES - Buscar lista de séries
+  async getSeries(): Promise<ApiResponse<Serie[]>> {
+    try {
+      logger.apiRequest('GET', '/serie');
+      
+      const response = await api.get('/serie');
+      
+      logger.apiResponse(response.status, '/serie');
+      console.log('🔍 Debug response /serie:', response.data);
+      
+      // Processar resposta - formato: {"sucesso": true, "dados": [...]}
+      const seriesData = response.data?.dados || response.data?.data || [];
+      
+      console.log('🔍 Debug seriesData:', seriesData);
+      
+      if (Array.isArray(seriesData)) {
+        logger.info(`✅ ${seriesData.length} séries carregadas da API`);
+        return {
+          status: 'sucesso',
+          dados: seriesData,
+          mensagem: 'Séries carregadas com sucesso'
+        };
+      } else {
+        logger.info('📋 API de séries retornou estrutura inesperada');
+        console.log('❌ Estrutura inesperada:', response.data);
+        return {
+          status: 'erro',
+          dados: [],
+          mensagem: 'Estrutura de resposta inesperada'
+        };
+      }
+    } catch (error: any) {
+      logger.apiResponse(error.response?.status || 500, '/serie', error.response?.data);
+      logger.error(`Erro ao carregar séries: ${error.response?.data?.mensagem || error.message}`);
+      console.log('❌ Erro ao carregar séries:', error);
+      
+      throw error;
+    }
+  },
+
   // 🎓 TURMAS - Buscar lista de turmas
   async getTurmas(): Promise<ApiResponse<Turma[]>> {
     try {
@@ -149,16 +192,69 @@ export const cadastroService = {
     }
   },
 
+  // 📝 PROCESSAR FICHA DE CADASTRO COMPLETA - Enviar todos os dados para o backend
+  async processarFichaCadastro(dadosCompletos: FichaCadastroCompleta): Promise<ApiResponse<FichaCadastroResposta>> {
+    try {
+      logger.apiRequest('POST', '/ficha-cadastro');
+      logger.info('📝 Enviando ficha de cadastro completa para a API...');
+      
+      const response = await api.post('/ficha-cadastro', dadosCompletos);
+      
+      logger.apiResponse(response.status, '/ficha-cadastro');
+      console.log('🔍 Debug response ficha-cadastro:', response.data);
+      
+      // Processar resposta - formato esperado: {"sucesso": true, "dados": {...}, "mensagem": "..."
+      const dadosResposta = response.data?.dados || response.data;
+      
+      if (response.data?.sucesso || response.status === 201) {
+        const raGerado = dadosResposta?.ra_gerado || dadosResposta?.matricula?.ra || 'N/A';
+        logger.success(`✅ Ficha de cadastro processada com sucesso! RA: ${raGerado}`);
+        
+        return {
+          status: 'sucesso',
+          dados: dadosResposta,
+          mensagem: response.data?.mensagem || 'Ficha de cadastro processada com sucesso'
+        };
+      } else {
+        logger.info('📋 API de ficha-cadastro retornou estrutura inesperada');
+        console.log('❌ Estrutura inesperada:', response.data);
+        return {
+          status: 'erro',
+          dados: undefined,
+          mensagem: response.data?.mensagem || 'Erro ao processar ficha de cadastro'
+        };
+      }
+    } catch (error: any) {
+      logger.apiResponse(error.response?.status || 500, '/ficha-cadastro', error.response?.data);
+      logger.error(`Erro ao processar ficha de cadastro: ${error.response?.data?.mensagem || error.message}`);
+      console.log('❌ Erro ao processar ficha:', error);
+      
+      // Tratamento de erros de validação ou outros erros específicos
+      const mensagemErro = error.response?.data?.mensagem || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Erro desconhecido ao processar ficha';
+      
+      return {
+        status: 'erro',
+        dados: undefined,
+        mensagem: mensagemErro,
+        detalhes: error.response?.data?.detalhes || error.response?.data?.errors
+      };
+    }
+  },
+
   // 🔄 CARREGAR TODOS OS DROPDOWNS - Método utilitário para carregar todos os dados
   async carregarTodosDropdowns() {
     try {
       logger.info('🔄 Carregando dados de todos os dropdowns...');
 
       // Carregar todos os dados em paralelo para melhor performance
-      const [religioes, parentescos, anosLetivos, turmas] = await Promise.all([
+      const [religioes, parentescos, anosLetivos, series, turmas] = await Promise.all([
         this.getReligioes(),
         this.getParentescos(), 
         this.getAnosLetivos(),
+        this.getSeries(),
         this.getTurmas()
       ]);
 
@@ -168,6 +264,7 @@ export const cadastroService = {
         religioes: religioes.status === 'sucesso' ? religioes.dados || [] : [],
         parentescos: parentescos.status === 'sucesso' ? parentescos.dados || [] : [],
         anosLetivos: anosLetivos.status === 'sucesso' ? anosLetivos.dados || [] : [],
+        series: series.status === 'sucesso' ? series.dados || [] : [],
         turmas: turmas.status === 'sucesso' ? turmas.dados || [] : []
       };
     } catch (error) {

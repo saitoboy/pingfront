@@ -1,14 +1,20 @@
 import React from 'react'
 import { FileText } from 'lucide-react'
 import { StepHeader } from './StepHeader'
+import { validators } from '../../../lib/utils'
 import type { FormularioFichaCadastro } from '../types'
 
 interface Step2Props {
   formData: FormularioFichaCadastro
   setFormData: React.Dispatch<React.SetStateAction<FormularioFichaCadastro>>
+  showErrors?: boolean
 }
 
-export const Step2CertidaoNascimento: React.FC<Step2Props> = ({ formData, setFormData }) => {
+export const Step2CertidaoNascimento: React.FC<Step2Props> = ({ 
+  formData, 
+  setFormData, 
+  showErrors = false 
+}) => {
   // Função auxiliar para formatação de nomes
   const formatarNomeProprio = (texto: string) => {
     return texto
@@ -43,7 +49,11 @@ export const Step2CertidaoNascimento: React.FC<Step2Props> = ({ formData, setFor
                 }
               }))
             }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              !validators.obrigatorio(formData.certidao.livro_certidao) 
+                ? 'border-red-300 focus:ring-red-500' 
+                : 'border-gray-300'
+            }`}
             placeholder="Ex: A123"
             maxLength={10}
           />
@@ -67,7 +77,11 @@ export const Step2CertidaoNascimento: React.FC<Step2Props> = ({ formData, setFor
                 }
               }))
             }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              !validators.obrigatorio(formData.certidao.folha_certidao) 
+                ? 'border-red-300 focus:ring-red-500' 
+                : 'border-gray-300'
+            }`}
             placeholder="Ex: 123"
             maxLength={5}
           />
@@ -91,7 +105,11 @@ export const Step2CertidaoNascimento: React.FC<Step2Props> = ({ formData, setFor
                 }
               }))
             }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              !validators.obrigatorio(formData.certidao.termo_certidao) 
+                ? 'border-red-300 focus:ring-red-500' 
+                : 'border-gray-300'
+            }`}
             placeholder="Ex: 456"
             maxLength={10}
           />
@@ -115,7 +133,11 @@ export const Step2CertidaoNascimento: React.FC<Step2Props> = ({ formData, setFor
                 }
               }))
             }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              !validators.obrigatorio(formData.certidao.matricula_certidao) 
+                ? 'border-red-300 focus:ring-red-500' 
+                : 'border-gray-300'
+            }`}
             placeholder="Ex: 789012"
             maxLength={15}
           />
@@ -138,9 +160,22 @@ export const Step2CertidaoNascimento: React.FC<Step2Props> = ({ formData, setFor
                 }
               }))
             }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              !validators.obrigatorio(formData.certidao.data_expedicao_certidao) || 
+              (formData.certidao.data_expedicao_certidao && !validators.dataNascimento(formData.certidao.data_expedicao_certidao))
+                ? 'border-red-300 focus:ring-red-500' 
+                : 'border-gray-300'
+            }`}
             max={new Date().toISOString().split('T')[0]} // Não permite datas futuras
           />
+          {(!validators.obrigatorio(formData.certidao.data_expedicao_certidao) || 
+           (formData.certidao.data_expedicao_certidao && !validators.dataNascimento(formData.certidao.data_expedicao_certidao))) && (
+            <p className="mt-1 text-sm text-red-600">
+              {!validators.obrigatorio(formData.certidao.data_expedicao_certidao) 
+                ? 'Data de expedição é obrigatória' 
+                : 'Data não pode ser futura'}
+            </p>
+          )}
         </div>
 
         <div className="md:col-span-3">
@@ -161,7 +196,11 @@ export const Step2CertidaoNascimento: React.FC<Step2Props> = ({ formData, setFor
                 }
               }))
             }}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+              !validators.obrigatorio(formData.certidao.nome_cartorio_certidao) 
+                ? 'border-red-300 focus:ring-red-500' 
+                : 'border-gray-300'
+            }`}
             placeholder="Ex: 1º Ofício de Registro Civil das Pessoas Naturais da Comarca de São Paulo"
           />
         </div>
