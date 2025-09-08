@@ -15,6 +15,9 @@ export const Step2CertidaoNascimento: React.FC<Step2Props> = ({
   setFormData, 
   showErrors = false 
 }) => {
+  // Consumir showErrors para evitar warning - será usado quando implementarmos validação visual neste step
+  void showErrors;
+  
   // Função auxiliar para formatação de nomes
   const formatarNomeProprio = (texto: string) => {
     return texto

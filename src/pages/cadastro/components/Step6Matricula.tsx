@@ -23,6 +23,9 @@ export const Step6Matricula: React.FC<Step6Props> = ({
   isLoadingDropdowns,
   showErrors = false
 }) => {
+  // Consumir showErrors para evitar warning - será usado quando implementarmos validação visual neste step
+  void showErrors;
+  
   const updateMatricula = (field: keyof FormularioFichaCadastro['matricula'], value: string) => {
     setFormData(prev => ({
       ...prev,

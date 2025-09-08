@@ -14,6 +14,8 @@ export const Step4DadosSaude: React.FC<Step4Props> = ({
   setFormData, 
   showErrors = false 
 }) => {
+  // Consumir showErrors para evitar warning - não usado pois todos os campos são opcionais
+  void showErrors;
   
   // Função para atualizar campos dos dados de saúde
   const atualizarDadosSaude = (campo: string, valor: any) => {

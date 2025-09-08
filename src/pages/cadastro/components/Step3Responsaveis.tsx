@@ -20,6 +20,9 @@ export const Step3Responsaveis: React.FC<Step3Props> = ({
   isLoadingDropdowns,
   showErrors = false
 }) => {
+  // Consumir showErrors para evitar warning - será usado quando implementarmos validação visual neste step
+  void showErrors;
+  
   const [responsavelAtivo, setResponsavelAtivo] = useState(0)
 
   // Adicionar novo responsável

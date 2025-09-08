@@ -14,6 +14,9 @@ export const Step5Diagnosticos: React.FC<Step5Props> = ({
   setFormData, 
   showErrors = false 
 }) => {
+  // Consumir showErrors para evitar warning - não usado pois todos os campos são opcionais
+  void showErrors;
+  
   const updateDiagnostico = (field: keyof FormularioFichaCadastro['diagnostico'], value: boolean | string) => {
     setFormData(prev => ({
       ...prev,
