@@ -75,6 +75,17 @@ function App() {
     console.log('🚪 Logout realizado - dados removidos do localStorage')
   }
 
+  // Função para navegação entre páginas
+  const handlePageNavigation = (page: string) => {
+    if (page === 'dashboard' || page === 'ficha-cadastro') {
+      setCurrentPage(page)
+    } else {
+      console.log(`⚠️ Página '${page}' ainda não implementada`)
+      // Por enquanto, páginas não implementadas vão para dashboard
+      setCurrentPage('dashboard')
+    }
+  }
+
   // Se ainda está inicializando, mostra uma tela de carregamento simples
   if (isInitializing) {
     return (
@@ -145,7 +156,7 @@ function App() {
 
         {/* Conteúdo da Página */}
         <main className="flex-1 overflow-y-auto">
-          {currentPage === 'dashboard' && <DashboardPage />}
+          {currentPage === 'dashboard' && <DashboardPage onNavigate={handlePageNavigation} />}
           {currentPage === 'ficha-cadastro' && <FichaCadastroPage />}
         </main>
       </div>
