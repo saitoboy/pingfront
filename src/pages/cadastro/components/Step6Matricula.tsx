@@ -158,6 +158,7 @@ export const Step6Matricula: React.FC<Step6Props> = ({
                       {formatarNomeTurma(turma)}
                     </option>
                   ))}
+                  <option key="ff78c1da-c853-40e4-8bc1-5865ec7e654b" value="ff78c1da-c853-40e4-8bc1-5865ec7e654b">Nenhuma turma disponível</option>
                 </select>
                 
                 {isFieldInvalid(formData.matricula.turma_id) && (

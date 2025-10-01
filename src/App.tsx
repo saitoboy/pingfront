@@ -112,50 +112,59 @@ function App() {
 
   // Se estiver autenticado, mostra o layout principal
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      {/* Sidebar Fixa */}
       <Sidebar 
         activeItem={currentPage} 
         onItemClick={(itemId) => setCurrentPage(itemId as 'dashboard' | 'ficha-cadastro')} 
+        onLogout={handleLogout}
       />
       
-      {/* Conteúdo Principal */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {currentPage === 'dashboard' ? 'Dashboard' : 'Ficha de Cadastro'}
-                </h1>
-                <p className="text-sm text-gray-600">
-                  {currentPage === 'dashboard' 
-                    ? 'Bem-vindo ao painel de controle' 
-                    : 'Cadastre ou edite as informações de alunos'
-                  }
-                </p>
-              </div>
+      {/* Conteúdo Principal com margem para compensar a sidebar */}
+      <div className="ml-64 flex flex-col min-h-screen">
+        {/* Header Moderno Fixo */}
+        <header className="sticky top-0 z-30 relative bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-purple-600/5 to-pink-600/5"></div>
+          <div className="relative px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-5">
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-500">{userData?.name || 'Usuário'}</span>
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">
-                    {userData?.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U'}
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-2xl">
+                    {currentPage === 'dashboard' ? '📊' : '👤'}
                   </span>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm text-red-600 hover:text-red-800"
-                >
-                  Sair
-                </button>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700 bg-clip-text text-transparent">
+                    {currentPage === 'dashboard' ? 'Dashboard' : 'Ficha de Cadastro'}
+                  </h1>
+                  <p className="text-sm text-gray-600 font-medium">
+                    {currentPage === 'dashboard' 
+                      ? 'Bem-vindo ao painel de controle' 
+                      : 'Cadastre ou edite as informações de alunos'
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-gray-700">{userData?.name || 'Usuário'}</p>
+                  <p className="text-xs text-gray-500">{userData?.email || 'usuario@exemplo.com'}</p>
+                </div>
+                <div className="relative">
+                  <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
+                    <span className="text-white text-sm font-bold">
+                      {userData?.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
+                </div>
               </div>
             </div>
           </div>
         </header>
 
         {/* Conteúdo da Página */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1">
           {currentPage === 'dashboard' && <DashboardPage onNavigate={handlePageNavigation} />}
           {currentPage === 'ficha-cadastro' && <FichaCadastroPage />}
         </main>
