@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Mail, Lock, Sparkles, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import api from '../../lib/api'
-import pinguinhoImage from '../../assets/images/pinguinho2.png'
+import bgAzul from '../../assets/images/bg azul.png'
 
 interface LoginPageProps {
   onLogin?: (userData: { name: string; email: string }) => void
@@ -14,6 +14,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Função para limpar erro quando o usuário digitar
+  const clearError = () => {
+    if (error) {
+      setError(null)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,10 +104,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         setError('Dados inválidos fornecidos!')
       } else if (error.response?.status === 500) {
         setError('Erro interno do servidor. Tente novamente mais tarde.')
-      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network')) {
+      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network') || error.message.includes('ERR_NETWORK')) {
         setError('Erro de conexão. Verifique se o servidor está rodando.')
+      } else if (error.response?.data?.message) {
+        setError(error.response.data.message)
       } else {
-        setError(`Erro desconhecido: ${error.response?.status || error.message}`)
+        setError(`Erro: ${error.response?.status || error.message || 'Tente novamente'}`)
       }
       
       logger.error('🔍 Erro detalhado:')
@@ -111,40 +120,33 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center overflow-hidden p-8 lg:p-0">
-      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center overflow-hidden">
-        {/* Lado Esquerdo - Mascote */}
-        <div className="hidden lg:flex flex-col items-center justify-center p-8">
-          <div className="relative">
-            {/* Elementos decorativos */}
-            <div className="absolute -top-20 -left-20 w-40 h-40 bg-yellow-300 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob"></div>
-            <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-blob animation-delay-2000"></div>
-            
-            {/* Mascote */}
-            <div className="relative z-10">
-              <img 
-                src={pinguinhoImage} 
-                alt="Mascote Pinguinho" 
-                className="w-full max-h-[90vh] object-contain drop-shadow-2xl"
-              />
-            </div>
-          </div>
-        </div>
+    <div 
+      className="min-h-screen flex items-center justify-center overflow-hidden p-8 lg:p-0 relative"
+      style={{
+        backgroundImage: `url(${bgAzul})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      
+      <div className="w-full max-w-3xl flex flex-col gap-8 items-center overflow-hidden relative z-10">
+        
 
         {/* Lado Direito - Formulário */}
         <div className="w-full">
           {/* Texto de boas-vindas */}
-          <div className="text-center m-8">
-            <p className="text-xl text-gray-600 font-medium">
+          <div className="text-center mb-8">
+            <p className="text-xl text-gray-300 font-medium mb-2">
               Sistema de Gestão Escolar
             </p>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight pb-2">
+            <h1 className="text-5xl font-bold text-white leading-tight">
               Pinguinho de Gente
             </h1>
           </div>
 
           {/* Card do formulário */}
-          <div className="bg-white rounded-3xl shadow-sm p-8 lg:p-10 border border-gray-100">
+          <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-xl p-8 lg:p-10 border border-white/20">
           {/* Header do card */}
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -183,7 +185,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    clearError()
+                  }}
                   placeholder="seu@email.com"
                   className="block w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900"
                 />
@@ -206,7 +211,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   autoComplete="current-password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    clearError()
+                  }}
                   placeholder="••••••••"
                   className="block w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900"
                 />

@@ -24,11 +24,12 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Se o token expirou (401), redireciona para login
-    if (error.response?.status === 401) {
+    // Se o token expirou (401) e não estamos na página de login, limpa o localStorage
+    // mas não redireciona automaticamente - deixa o componente tratar
+    if (error.response?.status === 401 && !window.location.pathname.includes('login')) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('authUsuario');
-      window.location.href = '/login';
+      localStorage.removeItem('userData');
     }
     
     // Rejeita a promise para que o erro seja tratado onde a API foi chamada

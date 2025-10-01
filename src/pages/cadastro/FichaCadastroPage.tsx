@@ -504,7 +504,7 @@ export default function FichaCadastroPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6">
       {/* Steps Navigation - Ícones com nomes embaixo */}
       <div className="mb-8">
         <div className="flex justify-between items-start">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { LayoutDashboard, UserPlus } from 'lucide-react'
 import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import FichaCadastroPage from './pages/cadastro/FichaCadastroPage'
@@ -75,6 +76,18 @@ function App() {
     console.log('🚪 Logout realizado - dados removidos do localStorage')
   }
 
+  // Função para obter o ícone da página atual
+  const getPageIcon = () => {
+    switch (currentPage) {
+      case 'dashboard':
+        return LayoutDashboard
+      case 'ficha-cadastro':
+        return UserPlus
+      default:
+        return LayoutDashboard
+    }
+  }
+
   // Função para navegação entre páginas
   const handlePageNavigation = (page: string) => {
     if (page === 'dashboard' || page === 'ficha-cadastro') {
@@ -128,13 +141,14 @@ function App() {
           <div className="relative px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-5">
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-2xl">
-                    {currentPage === 'dashboard' ? '📊' : '👤'}
-                  </span>
+                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+                  {(() => {
+                    const IconComponent = getPageIcon()
+                    return <IconComponent className="w-6 h-6 text-white" />
+                  })()}
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700 bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-bold bg-blue-700 bg-clip-text text-transparent">
                     {currentPage === 'dashboard' ? 'Dashboard' : 'Ficha de Cadastro'}
                   </h1>
                   <p className="text-sm text-gray-600 font-medium">
@@ -151,7 +165,7 @@ function App() {
                   <p className="text-xs text-gray-500">{userData?.email || 'usuario@exemplo.com'}</p>
                 </div>
                 <div className="relative">
-                  <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
+                  <div className="w-11 h-11 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
                     <span className="text-white text-sm font-bold">
                       {userData?.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U'}
                     </span>

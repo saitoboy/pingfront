@@ -1,6 +1,7 @@
 import { logger } from '../../lib/logger'
-import { LayoutDashboard, UserPlus, Sparkles, LogOut } from 'lucide-react'
+import { LayoutDashboard, UserPlus, LogOut } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import Icone from '../../assets/images/icone.png'
 
 interface MenuItem {
   id: string
@@ -87,29 +88,33 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
   }
 
   return (
-    <div className="fixed left-0 top-0 w-64 h-screen bg-gradient-to-b from-blue-600 via-blue-700 to-blue-900 shadow-2xl z-40 overflow-y-auto flex flex-col">
+    <div className="fixed left-0 top-0 w-64 h-screen bg-blue-500 shadow-2xl z-40 overflow-y-auto flex flex-col">
       {/* Efeito de brilho no topo */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400"></div>
       
       {/* Logo/Header */}
-      <div className="p-6 border-b border-blue-500/30 flex-shrink-0">
+      <div className="p-6 border-b border-blue-300/40 flex-shrink-0">
         <div className="flex items-center space-x-3">
           <div className="relative">
             <div className="w-12 h-12 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform duration-300">
-              <Sparkles className="w-6 h-6 text-white" />
+              <img 
+                src={Icone} 
+                alt="Ícone do sistema" 
+                className="w-8 h-8 object-contain"
+              />
             </div>
             <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-blue-700 animate-pulse"></div>
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Pinguinho de Gente</h2>
-            <p className="text-sm text-blue-200">Sistema Escolar</p>
+            <p className="text-sm text-blue-100">Sistema Escolar</p>
           </div>
         </div>
       </div>
 
       {/* Menu Principal */}
       <div className="py-6 px-3 flex-1">
-        <p className="px-3 text-xs font-semibold text-blue-200 uppercase tracking-wider mb-4 flex items-center">
+        <p className="px-3 text-xs font-semibold text-blue-100 uppercase tracking-wider mb-4 flex items-center">
           <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></span>
           Menu Principal
         </p>
@@ -123,8 +128,8 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
                 className={`
                   group relative w-full flex items-center px-4 py-3.5 text-sm font-medium transition-all duration-300 rounded-xl
                   ${item.active 
-                    ? 'bg-white text-blue-700 shadow-lg shadow-blue-900/30 scale-105' 
-                    : 'text-blue-100 hover:bg-white/10 hover:text-white hover:translate-x-1'
+                    ? 'bg-white text-blue-700 shadow-lg shadow-blue-600/30 scale-105' 
+                    : 'text-blue-50 hover:bg-white/20 hover:text-white hover:translate-x-1'
                   }
                 `}
               >
@@ -136,7 +141,7 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
                 {/* Ícone */}
                 <div className={`
                   mr-3 transition-all duration-300
-                  ${item.active ? 'text-blue-600' : 'text-blue-300 group-hover:text-white'}
+                  ${item.active ? 'text-blue-600' : 'text-blue-200 group-hover:text-white'}
                 `}>
                   <Icon className="w-5 h-5" />
                 </div>
@@ -164,7 +169,7 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
       </div>
 
       {/* Botão de Sair */}
-      <div className="mt-auto p-4 bg-gradient-to-t from-blue-900/50 to-transparent flex-shrink-0">
+      <div className="mt-auto p-4 bg-gradient-to-t from-blue-700/30 to-transparent flex-shrink-0">
         <button
           onClick={onLogout}
           className="group w-full bg-white/10  backdrop-blur-sm rounded-xl p-2 border border-white/20 hover:border-red-400 transition-all duration-300 shadow-lg"
@@ -175,7 +180,7 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
             </div>
             <div className="flex-1 text-left">
               <p className="text-sm font-bold text-white group-hover:text-white transition-colors">Sair do Sistema</p>
-              <p className="text-xs text-blue-200 group-hover:text-red-100 transition-colors">Encerrar sessão</p>
+              <p className="text-xs text-blue-100 group-hover:text-red-100 transition-colors">Encerrar sessão</p>
             </div>
           </div>
         </button>
