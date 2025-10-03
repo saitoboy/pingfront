@@ -40,7 +40,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ actions }) => {
           <button
             key={action.id}
             onClick={action.onClick}
-            className="group relative flex flex-col items-center p-5 rounded-xl border-2 border-gray-200 hover:border-transparent transition-all duration-300 overflow-hidden hover:scale-105 hover:shadow-xl"
+            className="group relative flex flex-col items-center p-5 rounded-xl border-2 border-gray-200 hover:border-transparent transition-all duration-300 overflow-hidden hover:shadow-xl"
           >
             {/* Gradiente de fundo no hover */}
             <div className={`absolute inset-0 bg-gradient-to-br ${getGradientByIndex(index)} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>

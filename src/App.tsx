@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, UserPlus } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Users } from 'lucide-react'
 import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import FichaCadastroPage from './pages/cadastro/FichaCadastroPage'
+import CriarUsuarioPage from './pages/usuarios/CriarUsuarioPage'
+import GerenciarUsuariosPage from './pages/usuarios/GerenciarUsuariosPage'
+import GerenciarTiposUsuarioPage from './pages/usuarios/GerenciarTiposUsuarioPage'
 import Sidebar from './components/layout/Sidebar'
 import LoadingScreen from './components/ui/LoadingScreen'
 
@@ -11,7 +14,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [userData, setUserData] = useState<{ name: string; email: string } | null>(null)
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'ficha-cadastro'>('dashboard')
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario'>('dashboard')
   const [isInitializing, setIsInitializing] = useState(true) // Novo estado para controlar a inicialização
 
   // Hook para verificar se há um token salvo ao carregar a aplicação
@@ -83,6 +86,10 @@ function App() {
         return LayoutDashboard
       case 'ficha-cadastro':
         return UserPlus
+      case 'gerenciar-usuarios':
+        return Users
+      case 'criar-usuario':
+        return Users
       default:
         return LayoutDashboard
     }
@@ -90,7 +97,7 @@ function App() {
 
   // Função para navegação entre páginas
   const handlePageNavigation = (page: string) => {
-    if (page === 'dashboard' || page === 'ficha-cadastro') {
+    if (page === 'dashboard' || page === 'ficha-cadastro' || page === 'gerenciar-usuarios' || page === 'criar-usuario' || page === 'gerenciar-tipos-usuario') {
       setCurrentPage(page)
     } else {
       console.log(`⚠️ Página '${page}' ainda não implementada`)
@@ -129,7 +136,7 @@ function App() {
       {/* Sidebar Fixa */}
       <Sidebar 
         activeItem={currentPage} 
-        onItemClick={(itemId) => setCurrentPage(itemId as 'dashboard' | 'ficha-cadastro')} 
+        onItemClick={(itemId) => setCurrentPage(itemId as 'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario')} 
         onLogout={handleLogout}
       />
       
@@ -149,12 +156,24 @@ function App() {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold bg-blue-700 bg-clip-text text-transparent">
-                    {currentPage === 'dashboard' ? 'Dashboard' : 'Ficha de Cadastro'}
+                    {currentPage === 'dashboard' ? 'Dashboard' : 
+                     currentPage === 'ficha-cadastro' ? 'Ficha de Cadastro' : 
+                     currentPage === 'gerenciar-usuarios' ? 'Gerenciar Usuários' : 
+                     currentPage === 'criar-usuario' ? 'Criar Usuário' : 
+                     currentPage === 'gerenciar-tipos-usuario' ? 'Gerenciar Tipos de Usuário' : 'Dashboard'}
                   </h1>
                   <p className="text-sm text-gray-600 font-medium">
                     {currentPage === 'dashboard' 
                       ? 'Bem-vindo ao painel de controle' 
-                      : 'Cadastre ou edite as informações de alunos'
+                      : currentPage === 'ficha-cadastro'
+                      ? 'Cadastre ou edite as informações de alunos'
+                      : currentPage === 'gerenciar-usuarios'
+                      ? 'Visualize, edite e gerencie usuários do sistema'
+                      : currentPage === 'criar-usuario'
+                      ? 'Adicione novos usuários ao sistema'
+                      : currentPage === 'gerenciar-tipos-usuario'
+                      ? 'Crie, edite e gerencie os tipos de usuário do sistema'
+                      : 'Bem-vindo ao painel de controle'
                     }
                   </p>
                 </div>
@@ -181,6 +200,9 @@ function App() {
         <main className="flex-1">
           {currentPage === 'dashboard' && <DashboardPage onNavigate={handlePageNavigation} />}
           {currentPage === 'ficha-cadastro' && <FichaCadastroPage />}
+          {currentPage === 'gerenciar-usuarios' && <GerenciarUsuariosPage onNavigate={handlePageNavigation} />}
+          {currentPage === 'criar-usuario' && <CriarUsuarioPage onNavigate={handlePageNavigation} />}
+          {currentPage === 'gerenciar-tipos-usuario' && <GerenciarTiposUsuarioPage onNavigate={handlePageNavigation} />}
         </main>
       </div>
     </div>

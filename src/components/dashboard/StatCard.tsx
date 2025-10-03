@@ -74,12 +74,12 @@ export const StatCard: React.FC<StatCardProps> = ({
   const TrendIcon = trend ? getTrendIcon(trend.type) : null
 
   return (
-    <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 overflow-hidden border border-gray-100 hover:scale-105 cursor-pointer">
+    <div className="group relative bg-white rounded-2xl shadow-lg p-6 overflow-hidden border border-gray-100 cursor-pointer">
       {/* Elemento decorativo de fundo */}
       <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${getGradientClass(iconBgColor)} rounded-full blur-3xl opacity-20 -mr-16 -mt-16 group-hover:opacity-30 transition-opacity duration-300`}></div>
       
       {/* Borda animada no hover */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ padding: '2px' }}>
+      <div className="absolute inset-0 rounded-2xl bg-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ padding: '2px' }}>
         <div className="w-full h-full bg-white rounded-2xl"></div>
       </div>
 

@@ -38,12 +38,20 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
       bgColor: 'hover:bg-blue-50'
     },
     {
+      id: 'gerenciar-usuarios',
+      title: 'Gerenciar Usuários',
+      description: 'Visualizar e editar usuários',
+      icon: '⚙️',
+      onClick: () => handleNavigate('gerenciar-usuarios'),
+      bgColor: 'hover:bg-blue-50'
+    },
+    {
       id: 'alunos',
       title: 'Gerenciar Alunos',
       description: 'Ver e editar alunos',
       icon: '📝',
       onClick: () => handleNavigate('alunos'),
-      bgColor: 'hover:bg-green-50'
+      bgColor: 'hover:bg-purple-50'
     },
     {
       id: 'turmas',
@@ -51,14 +59,6 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
       description: 'Organizar turmas',
       icon: '🏫',
       onClick: () => handleNavigate('turmas'),
-      bgColor: 'hover:bg-purple-50'
-    },
-    {
-      id: 'relatorios',
-      title: 'Relatórios',
-      description: 'Visualizar relatórios',
-      icon: '📊',
-      onClick: () => handleNavigate('relatorios'),
       bgColor: 'hover:bg-yellow-50'
     }
   ]

@@ -78,11 +78,11 @@ export const ClassDistribution: React.FC<ClassDistributionProps> = ({
               const percentual = Math.min(turma.percentual_ocupacao, 100)
               
               return (
-                <div key={index} className="group space-y-3 p-4 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-yellow-50 transition-all duration-300">
+                <div key={index} className="group space-y-3 p-4 rounded-xl ">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(percentual)}
-                      <span className="text-sm font-bold text-gray-900 group-hover:text-orange-700 transition-colors">
+                      <span className="text-sm font-bold text-gray-900">
                         {turma.turma_nome}
                       </span>
                     </div>
@@ -115,7 +115,7 @@ export const ClassDistribution: React.FC<ClassDistributionProps> = ({
         {turmas.length > 0 && (
           <div className="mt-8 pt-6 border-t-2 border-gray-200">
             <div className="grid grid-cols-3 gap-4">
-              <div className="text-center p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 hover:scale-105 transition-transform duration-300 cursor-pointer">
+              <div className="text-center p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
                 <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-lg">
                   <CheckCircle className="w-6 h-6 text-white" />
                 </div>
@@ -124,7 +124,7 @@ export const ClassDistribution: React.FC<ClassDistributionProps> = ({
                 </p>
                 <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">Disponíveis</p>
               </div>
-              <div className="text-center p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-orange-50 border border-orange-200 hover:scale-105 transition-transform duration-300 cursor-pointer">
+              <div className="text-center p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-orange-50 border border-orange-200">
                 <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-lg">
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
@@ -133,7 +133,7 @@ export const ClassDistribution: React.FC<ClassDistributionProps> = ({
                 </p>
                 <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Quase Cheias</p>
               </div>
-              <div className="text-center p-4 rounded-xl bg-gradient-to-br from-red-50 to-pink-50 border border-red-200 hover:scale-105 transition-transform duration-300 cursor-pointer">
+              <div className="text-center p-4 rounded-xl bg-gradient-to-br from-red-50 to-pink-50 border border-red-200">
                 <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-lg">
                   <AlertCircle className="w-6 h-6 text-white" />
                 </div>
