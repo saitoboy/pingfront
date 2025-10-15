@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, UserPlus, Users } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Users, School } from 'lucide-react'
 import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import FichaCadastroPage from './pages/cadastro/FichaCadastroPage'
@@ -7,6 +7,7 @@ import CriarUsuarioPage from './pages/usuarios/CriarUsuarioPage'
 import GerenciarUsuariosPage from './pages/usuarios/GerenciarUsuariosPage'
 import GerenciarTiposUsuarioPage from './pages/usuarios/GerenciarTiposUsuarioPage'
 import AlocacaoProfessorPage from './pages/alocacao/AlocacaoProfessorPage'
+import GestaoEscolarPage from './pages/gestao/GestaoEscolarPage'
 import Sidebar from './components/layout/Sidebar'
 import LoadingScreen from './components/ui/LoadingScreen'
 
@@ -15,7 +16,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [userData, setUserData] = useState<{ name: string; email: string } | null>(null)
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario' | 'alocacao-professor'>('dashboard')
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario' | 'alocacao-professor' | 'gestao-escolar'>('dashboard')
   const [isInitializing, setIsInitializing] = useState(true) // Novo estado para controlar a inicialização
 
   // Hook para verificar se há um token salvo ao carregar a aplicação
@@ -91,6 +92,8 @@ function App() {
         return Users
       case 'criar-usuario':
         return Users
+      case 'gestao-escolar':
+        return School
       default:
         return LayoutDashboard
     }
@@ -98,8 +101,8 @@ function App() {
 
   // Função para navegação entre páginas
   const handlePageNavigation = (page: string) => {
-    if (page === 'dashboard' || page === 'ficha-cadastro' || page === 'gerenciar-usuarios' || page === 'criar-usuario' || page === 'gerenciar-tipos-usuario' || page === 'alocacao-professor') {
-      setCurrentPage(page)
+    if (page === 'dashboard' || page === 'ficha-cadastro' || page === 'gerenciar-usuarios' || page === 'criar-usuario' || page === 'gerenciar-tipos-usuario' || page === 'alocacao-professor' || page === 'gestao-escolar') {
+      setCurrentPage(page as any)
     } else {
       console.log(`⚠️ Página '${page}' ainda não implementada`)
       // Por enquanto, páginas não implementadas vão para dashboard
@@ -137,7 +140,7 @@ function App() {
       {/* Sidebar Fixa */}
       <Sidebar 
         activeItem={currentPage} 
-        onItemClick={(itemId) => setCurrentPage(itemId as 'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario' | 'alocacao-professor')} 
+        onItemClick={(itemId) => setCurrentPage(itemId as any)} 
         onLogout={handleLogout}
       />
       
@@ -162,7 +165,8 @@ function App() {
                      currentPage === 'gerenciar-usuarios' ? 'Gerenciar Usuários' : 
                      currentPage === 'criar-usuario' ? 'Criar Usuário' : 
                      currentPage === 'gerenciar-tipos-usuario' ? 'Gerenciar Tipos de Usuário' :
-                     currentPage === 'alocacao-professor' ? 'Alocação de Professores' : 'Dashboard'}
+                     currentPage === 'alocacao-professor' ? 'Alocação de Professores' :
+                     currentPage === 'gestao-escolar' ? 'Gestão Escolar' : 'Dashboard'}
                   </h1>
                   <p className="text-sm text-gray-600 font-medium">
                     {currentPage === 'dashboard' 
@@ -177,6 +181,8 @@ function App() {
                       ? 'Crie, edite e gerencie os tipos de usuário do sistema'
                       : currentPage === 'alocacao-professor'
                       ? 'Gerencie a alocação de professores em disciplinas e turmas'
+                      : currentPage === 'gestao-escolar'
+                      ? 'Gerencie séries, turmas e disciplinas do sistema'
                       : 'Bem-vindo ao painel de controle'
                     }
                   </p>
@@ -208,6 +214,7 @@ function App() {
           {currentPage === 'criar-usuario' && <CriarUsuarioPage onNavigate={handlePageNavigation} />}
           {currentPage === 'gerenciar-tipos-usuario' && <GerenciarTiposUsuarioPage onNavigate={handlePageNavigation} />}
           {currentPage === 'alocacao-professor' && <AlocacaoProfessorPage />}
+          {currentPage === 'gestao-escolar' && <GestaoEscolarPage />}
         </main>
       </div>
     </div>

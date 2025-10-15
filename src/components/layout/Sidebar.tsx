@@ -1,5 +1,5 @@
 import { logger } from '../../lib/logger'
-import { LayoutDashboard, UserPlus, Settings, LogOut, BookUser } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, LogOut, BookUser, School } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Icone from '../../assets/images/icone.png'
 
@@ -41,6 +41,13 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
       icon: BookUser,
       active: activeItem === 'alocacao-professor',
       onClick: () => handleMenuClick('alocacao-professor')
+    },
+    {
+      id: 'gestao-escolar',
+      label: 'Gestão Escolar',
+      icon: School,
+      active: activeItem === 'gestao-escolar',
+      onClick: () => handleMenuClick('gestao-escolar')
     },
     {
       id: 'gerenciar-usuarios',
