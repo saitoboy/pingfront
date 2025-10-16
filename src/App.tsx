@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, UserPlus, Users, School } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Users, School, BookOpen } from 'lucide-react'
 import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import FichaCadastroPage from './pages/cadastro/FichaCadastroPage'
@@ -8,6 +8,7 @@ import GerenciarUsuariosPage from './pages/usuarios/GerenciarUsuariosPage'
 import GerenciarTiposUsuarioPage from './pages/usuarios/GerenciarTiposUsuarioPage'
 import AlocacaoProfessorPage from './pages/alocacao/AlocacaoProfessorPage'
 import GestaoEscolarPage from './pages/gestao/GestaoEscolarPage'
+import SelecionarProfessorPage from './pages/diario/SelecionarProfessorPage'
 import Sidebar from './components/layout/Sidebar'
 import LoadingScreen from './components/ui/LoadingScreen'
 
@@ -16,7 +17,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [userData, setUserData] = useState<{ name: string; email: string } | null>(null)
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario' | 'alocacao-professor' | 'gestao-escolar'>('dashboard')
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario' | 'alocacao-professor' | 'gestao-escolar' | 'diario-escolar'>('dashboard')
   const [isInitializing, setIsInitializing] = useState(true) // Novo estado para controlar a inicialização
 
   // Hook para verificar se há um token salvo ao carregar a aplicação
@@ -94,6 +95,8 @@ function App() {
         return Users
       case 'gestao-escolar':
         return School
+      case 'diario-escolar':
+        return BookOpen
       default:
         return LayoutDashboard
     }
@@ -101,7 +104,7 @@ function App() {
 
   // Função para navegação entre páginas
   const handlePageNavigation = (page: string) => {
-    if (page === 'dashboard' || page === 'ficha-cadastro' || page === 'gerenciar-usuarios' || page === 'criar-usuario' || page === 'gerenciar-tipos-usuario' || page === 'alocacao-professor' || page === 'gestao-escolar') {
+    if (page === 'dashboard' || page === 'ficha-cadastro' || page === 'gerenciar-usuarios' || page === 'criar-usuario' || page === 'gerenciar-tipos-usuario' || page === 'alocacao-professor' || page === 'gestao-escolar' || page === 'diario-escolar') {
       setCurrentPage(page as any)
     } else {
       console.log(`⚠️ Página '${page}' ainda não implementada`)
@@ -166,7 +169,8 @@ function App() {
                      currentPage === 'criar-usuario' ? 'Criar Usuário' : 
                      currentPage === 'gerenciar-tipos-usuario' ? 'Gerenciar Tipos de Usuário' :
                      currentPage === 'alocacao-professor' ? 'Alocação de Professores' :
-                     currentPage === 'gestao-escolar' ? 'Gestão Escolar' : 'Dashboard'}
+                     currentPage === 'gestao-escolar' ? 'Gestão Escolar' :
+                     currentPage === 'diario-escolar' ? 'Diário Escolar' : 'Dashboard'}
                   </h1>
                   <p className="text-sm text-gray-600 font-medium">
                     {currentPage === 'dashboard' 
@@ -183,6 +187,8 @@ function App() {
                       ? 'Gerencie a alocação de professores em disciplinas e turmas'
                       : currentPage === 'gestao-escolar'
                       ? 'Gerencie séries, turmas e disciplinas do sistema'
+                      : currentPage === 'diario-escolar'
+                      ? 'Visualize e gerencie o diário escolar dos professores'
                       : 'Bem-vindo ao painel de controle'
                     }
                   </p>
@@ -215,6 +221,7 @@ function App() {
           {currentPage === 'gerenciar-tipos-usuario' && <GerenciarTiposUsuarioPage onNavigate={handlePageNavigation} />}
           {currentPage === 'alocacao-professor' && <AlocacaoProfessorPage />}
           {currentPage === 'gestao-escolar' && <GestaoEscolarPage />}
+          {currentPage === 'diario-escolar' && <SelecionarProfessorPage onNavigate={handlePageNavigation} />}
         </main>
       </div>
     </div>
