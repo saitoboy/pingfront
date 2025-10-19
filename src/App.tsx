@@ -10,6 +10,7 @@ import AlocacaoProfessorPage from './pages/alocacao/AlocacaoProfessorPage'
 import GestaoEscolarPage from './pages/gestao/GestaoEscolarPage'
 import SelecionarProfessorPage from './pages/diario/SelecionarProfessorPage'
 import DetalhesAulaPage from './pages/diario/DetalhesAulaPage'
+import LancarNotasPage from './pages/diario/LancarNotasPage'
 import Sidebar from './components/layout/Sidebar'
 import LoadingScreen from './components/ui/LoadingScreen'
 
@@ -18,9 +19,10 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [userData, setUserData] = useState<{ name: string; email: string } | null>(null)
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario' | 'alocacao-professor' | 'gestao-escolar' | 'diario-escolar' | 'detalhes-aula'>('dashboard')
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario' | 'alocacao-professor' | 'gestao-escolar' | 'diario-escolar' | 'detalhes-aula' | 'lancar-notas'>('dashboard')
   const [isInitializing, setIsInitializing] = useState(true) // Novo estado para controlar a inicialização
   const [aulaData, setAulaData] = useState<any>(null) // Dados da aula selecionada
+  const [atividadeData, setAtividadeData] = useState<any>(null) // Dados da atividade selecionada
 
   // Hook para verificar se há um token salvo ao carregar a aplicação
   useEffect(() => {
@@ -99,6 +101,8 @@ function App() {
         return School
       case 'diario-escolar':
         return BookOpen
+      case 'lancar-notas':
+        return BookOpen
       default:
         return LayoutDashboard
     }
@@ -106,7 +110,7 @@ function App() {
 
   // Função para navegação entre páginas
   const handlePageNavigation = (page: string, data?: any) => {
-    if (page === 'dashboard' || page === 'ficha-cadastro' || page === 'gerenciar-usuarios' || page === 'criar-usuario' || page === 'gerenciar-tipos-usuario' || page === 'alocacao-professor' || page === 'gestao-escolar' || page === 'diario-escolar' || page === 'detalhes-aula') {
+    if (page === 'dashboard' || page === 'ficha-cadastro' || page === 'gerenciar-usuarios' || page === 'criar-usuario' || page === 'gerenciar-tipos-usuario' || page === 'alocacao-professor' || page === 'gestao-escolar' || page === 'diario-escolar' || page === 'detalhes-aula' || page === 'lancar-notas') {
       setCurrentPage(page as any)
       if (data && page === 'detalhes-aula') {
         setAulaData(data)
@@ -116,6 +120,15 @@ function App() {
       // Por enquanto, páginas não implementadas vão para dashboard
       setCurrentPage('dashboard')
     }
+  }
+
+  const handleNavegarParaNotas = (atividade: any) => {
+    setAtividadeData({
+      atividade,
+      turma: aulaData?.turma,
+      disciplina: aulaData?.disciplina
+    })
+    setCurrentPage('lancar-notas')
   }
 
   // Se ainda está inicializando, mostra uma tela de carregamento simples
@@ -176,7 +189,8 @@ function App() {
                      currentPage === 'alocacao-professor' ? 'Alocação de Professores' :
                      currentPage === 'gestao-escolar' ? 'Gestão Escolar' :
                      currentPage === 'diario-escolar' ? 'Diário Escolar' : 
-                     currentPage === 'detalhes-aula' ? 'Detalhes da Aula' : 'Dashboard'}
+                     currentPage === 'detalhes-aula' ? 'Detalhes da Aula' :
+                     currentPage === 'lancar-notas' ? 'Lançar Notas' : 'Dashboard'}
                   </h1>
                   <p className="text-sm text-gray-600 font-medium">
                     {currentPage === 'dashboard' 
@@ -197,6 +211,8 @@ function App() {
                       ? 'Visualize e gerencie o diário escolar dos professores'
                       : currentPage === 'detalhes-aula'
                       ? 'Visualize e gerencie os detalhes da aula selecionada'
+                      : currentPage === 'lancar-notas'
+                      ? 'Lançe notas para a atividade selecionada'
                       : 'Bem-vindo ao painel de controle'
                     }
                   </p>
@@ -235,8 +251,16 @@ function App() {
               aula={aulaData.aula}
               turma={aulaData.turma}
               disciplina={aulaData.disciplina}
-              professor={aulaData.professor}
               onVoltar={() => setCurrentPage('diario-escolar')}
+              onNavegarParaNotas={handleNavegarParaNotas}
+            />
+          )}
+          {currentPage === 'lancar-notas' && atividadeData && (
+            <LancarNotasPage 
+              atividade={atividadeData.atividade}
+              turma={atividadeData.turma}
+              disciplina={atividadeData.disciplina}
+              onVoltar={() => setCurrentPage('detalhes-aula')}
             />
           )}
         </main>

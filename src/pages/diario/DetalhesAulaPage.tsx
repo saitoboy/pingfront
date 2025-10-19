@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { 
-  ArrowLeft,
   BookOpen, 
   Calendar, 
   Clock,
@@ -11,8 +10,9 @@ import {
   Trash2,
   Users,
   ClipboardList,
-  BarChart3,
-  Eye
+  Eye,
+  Star,
+  UserCheck
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import conteudoAulaService from '../../services/conteudoAulaService'
@@ -50,18 +50,13 @@ interface DetalhesAulaPageProps {
     nome_serie: string
     ano: number
   }
-  disciplina: {
-    disciplina_id: string
-    nome_disciplina: string
-  }
-  onVoltar?: () => void
+  onNavegarParaNotas?: (atividade: Atividade) => void
 }
 
 export default function DetalhesAulaPage({ 
   aula,
   turma, 
-  disciplina,
-  onVoltar 
+  onNavegarParaNotas
 }: DetalhesAulaPageProps) {
   const [conteudos, setConteudos] = useState<ConteudoAula[]>([])
   const [showFormConteudo, setShowFormConteudo] = useState(false)
@@ -99,6 +94,7 @@ export default function DetalhesAulaPage({
     carregarPeriodoLetivoAtual()
   }, [aula.aula_id])
 
+
   const carregarConteudos = async () => {
     try {
       logger.info(`📚 Carregando conteúdos da aula: ${aula.aula_id}`, 'component')
@@ -122,19 +118,12 @@ export default function DetalhesAulaPage({
       logger.info(`📋 Carregando atividades da aula: ${aula.aula_id}`, 'component')
       const response = await atividadeService.buscarAtividadesPorAula(aula.aula_id || '')
       
-      logger.info('📋 Resposta do service:', 'component', response)
-      logger.info('📋 Response.sucesso:', 'component', response.sucesso)
-      logger.info('📋 Response.dados:', 'component', response.dados)
-      logger.info('📋 É array?', 'component', Array.isArray(response.dados))
-      
       if (response.sucesso && response.dados) {
         const atividadesArray = Array.isArray(response.dados) ? response.dados : []
         setAtividades(atividadesArray)
         logger.success(`✅ ${atividadesArray.length} atividades carregadas`, 'component')
-        logger.info('📋 Atividades definidas no state:', 'component', atividadesArray)
       } else {
         logger.error('❌ Erro ao carregar atividades', 'component')
-        logger.error('❌ Response completa:', 'component', response)
         setAtividades([])
       }
     } catch (error) {
@@ -250,51 +239,6 @@ export default function DetalhesAulaPage({
     setConteudoParaExcluir(null)
   }
 
-  const handleAbrirPresenca = async () => {
-    try {
-      setLoadingPresenca(true)
-      logger.info(`👥 Carregando alunos da turma: ${turma.turma_id}`, 'component')
-      
-      const response = await frequenciaService.buscarAlunosTurma(turma.turma_id)
-      
-      if (response.sucesso && response.dados) {
-        // Verificar se já existe frequência registrada para esta aula
-        const frequenciasExistentes = await frequenciaService.buscarFrequenciasPorAula(aula.aula_id || '')
-        
-        let alunosComPresenca: AlunoFrequencia[] = []
-        
-        if (frequenciasExistentes.sucesso && frequenciasExistentes.dados && (frequenciasExistentes.dados as any[]).length > 0) {
-          // Mapear frequências existentes com os alunos
-          alunosComPresenca = (response.dados as any[]).map(aluno => {
-            const frequenciaExistente = (frequenciasExistentes.dados as any[]).find(
-              freq => freq.matricula_aluno_id === aluno.matricula_aluno_id
-            )
-            return {
-              ...aluno,
-              presenca: frequenciaExistente ? frequenciaExistente.presenca : true,
-              frequencia_id: frequenciaExistente ? frequenciaExistente.frequencia_id : undefined
-            }
-          })
-        } else {
-          // Se não há frequências registradas, todos começam como presentes
-          alunosComPresenca = (response.dados as any[]).map(aluno => ({
-            ...aluno,
-            presenca: true
-          }))
-        }
-        
-        setAlunosTurma(alunosComPresenca)
-        setShowModalPresenca(true)
-        logger.success(`✅ ${alunosComPresenca.length} alunos carregados`, 'component')
-      } else {
-        logger.error('❌ Erro ao carregar alunos da turma', 'component')
-      }
-    } catch (error) {
-      logger.error('❌ Erro ao carregar alunos da turma', 'component', error)
-    } finally {
-      setLoadingPresenca(false)
-    }
-  }
 
   const handleFecharPresenca = () => {
     setShowModalPresenca(false)
@@ -446,56 +390,97 @@ export default function DetalhesAulaPage({
     setAtividadeSelecionada(null)
   }
 
+  // Funções para notas
+  const handleAbrirNotas = (atividade: Atividade) => {
+    if (onNavegarParaNotas) {
+      onNavegarParaNotas(atividade)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <div className="px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between p-6">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={onVoltar}
-                className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Voltar"
-              >
-                <ArrowLeft className="w-6 h-6" />
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Detalhes da Aula</h1>
-                <p className="text-gray-600 mt-1">
-                  {disciplina.nome_disciplina} - {turma.nome_serie} {turma.nome_turma}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Informações da Aula */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <Calendar className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Aula de {formatarData(aula.data_aula)}
-              </h2>
-              <div className="flex items-center space-x-6 mt-2">
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <Clock className="w-5 h-5" />
-                  <span className="font-medium">{aula.hora_inicio} - {aula.hora_fim}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <Users className="w-5 h-5" />
-                  <span>{turma.nome_turma} - {turma.turno}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <BookOpen className="w-5 h-5" />
-                  <span>{conteudos.length} conteúdo(s)</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <Calendar className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Aula de {formatarData(aula.data_aula)}
+                </h2>
+                <div className="flex items-center space-x-6 mt-2">
+                  <div className="flex items-center space-x-2 text-gray-600">
+                    <Clock className="w-5 h-5" />
+                    <span className="font-medium">{aula.hora_inicio} - {aula.hora_fim}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-gray-600">
+                    <Users className="w-5 h-5" />
+                    <span>{turma.nome_turma} - {turma.turno}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-gray-600">
+                    <BookOpen className="w-5 h-5" />
+                    <span>{conteudos.length} conteúdo(s)</span>
+                  </div>
                 </div>
               </div>
             </div>
+            
+            {/* Botão de Presença */}
+            <button
+              onClick={async () => {
+                try {
+                  setLoadingPresenca(true)
+                  logger.info(`👥 Carregando alunos da turma: ${turma.turma_id}`, 'component')
+                  
+                  const response = await frequenciaService.buscarAlunosTurma(turma.turma_id)
+                  
+                  if (response.sucesso && response.dados) {
+                    // Verificar se já existe frequência registrada para esta aula
+                    const frequenciasExistentes = await frequenciaService.buscarFrequenciasPorAula(aula.aula_id || '')
+                    
+                    let alunosComPresenca: AlunoFrequencia[] = []
+                    
+                    if (frequenciasExistentes.sucesso && frequenciasExistentes.dados && (frequenciasExistentes.dados as any[]).length > 0) {
+                      // Mapear frequências existentes com os alunos
+                      alunosComPresenca = (response.dados as any[]).map(aluno => {
+                        const frequenciaExistente = (frequenciasExistentes.dados as any[]).find(
+                          freq => freq.matricula_aluno_id === aluno.matricula_aluno_id
+                        )
+                        return {
+                          ...aluno,
+                          presenca: frequenciaExistente ? frequenciaExistente.presenca : true,
+                          frequencia_id: frequenciaExistente ? frequenciaExistente.frequencia_id : undefined
+                        }
+                      })
+                    } else {
+                      // Se não há frequências registradas, todos começam como presentes
+                      alunosComPresenca = (response.dados as any[]).map(aluno => ({
+                        ...aluno,
+                        presenca: true
+                      }))
+                    }
+                    
+                    setAlunosTurma(alunosComPresenca)
+                    setShowModalPresenca(true)
+                    logger.success(`✅ ${alunosComPresenca.length} alunos carregados`, 'component')
+                  } else {
+                    logger.error('❌ Erro ao carregar alunos da turma', 'component')
+                  }
+                } catch (error) {
+                  logger.error('❌ Erro ao carregar alunos da turma', 'component', error)
+                } finally {
+                  setLoadingPresenca(false)
+                }
+              }}
+              disabled={loadingPresenca}
+              className="flex items-center space-x-3 px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <UserCheck className="w-5 h-5" />
+              <span className="font-medium">{loadingPresenca ? 'Carregando...' : 'Chamada'}</span>
+            </button>
           </div>
         </div>
 
@@ -512,7 +497,7 @@ export default function DetalhesAulaPage({
                 </h3>
                 <button
                   onClick={handleNovaConteudo}
-                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                  className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-green-700 transition-colors"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Adicionar Conteúdo
@@ -711,11 +696,6 @@ export default function DetalhesAulaPage({
             )}
 
             {/* Lista de Atividades */}
-            {(() => {
-              logger.info('📋 Renderizando atividades:', 'component', atividades)
-              logger.info('📋 Quantidade de atividades:', 'component', atividades.length)
-              return null
-            })()}
             {atividades.length === 0 ? (
               <div className="text-center py-8">
                 <ClipboardList className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -748,13 +728,24 @@ export default function DetalhesAulaPage({
                           )}
                         </div>
                       </div>
-                      <button 
-                        onClick={() => handleVisualizarAtividade(atividade)}
-                        className="p-1 text-gray-400 hover:text-purple-500 transition-colors"
-                        title="Visualizar atividade"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        {atividade.vale_nota && (
+                          <button 
+                            onClick={() => handleAbrirNotas(atividade)}
+                            className="p-1 text-gray-400 hover:text-yellow-500 transition-colors"
+                            title="Lançar notas"
+                          >
+                            <Star className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => handleVisualizarAtividade(atividade)}
+                          className="p-1 text-gray-400 hover:text-purple-500 transition-colors"
+                          title="Visualizar atividade"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -765,58 +756,8 @@ export default function DetalhesAulaPage({
           {/* Sidebar com outras funcionalidades */}
           <div className="space-y-6">
             
-            {/* Presença */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center mb-4">
-                <Users className="w-5 h-5 mr-2 text-green-500" />
-                Presença
-              </h3>
-              <div className="text-center py-4">
-                <button 
-                  onClick={handleAbrirPresenca}
-                  disabled={loadingPresenca}
-                  className="w-full px-4 py-3 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ClipboardList className="w-4 h-4 mr-2 inline" />
-                  {loadingPresenca ? 'Carregando...' : 'Registrar Presença'}
-                </button>
-              </div>
-            </div>
 
-            {/* Atividades */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center mb-4">
-                <ClipboardList className="w-5 h-5 mr-2 text-purple-500" />
-                Atividades
-              </h3>
-              <div className="text-center py-4">
-                <div className="text-2xl font-bold text-purple-600 mb-2">{atividades.length}</div>
-                <div className="text-sm text-gray-600">Atividades aplicadas</div>
-                <button 
-                  onClick={handleNovaAtividade}
-                  className="mt-3 px-4 py-2 text-sm font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-                >
-                  <Plus className="w-4 h-4 mr-2 inline" />
-                  Nova Atividade
-                </button>
-              </div>
-            </div>
 
-            {/* Avaliações */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center mb-4">
-                <BarChart3 className="w-5 h-5 mr-2 text-orange-500" />
-                Avaliações
-              </h3>
-              <div className="text-center py-4">
-                <div className="text-2xl font-bold text-orange-600 mb-2">1</div>
-                <div className="text-sm text-gray-600">Avaliação aplicada</div>
-                <button className="mt-3 px-4 py-2 text-sm font-medium text-orange-600 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
-                  <Plus className="w-4 h-4 mr-2 inline" />
-                  Nova Avaliação
-                </button>
-              </div>
-            </div>
 
           </div>
         </div>
@@ -1064,6 +1005,7 @@ export default function DetalhesAulaPage({
             </div>
           </div>
         )}
+
       </div>
     </div>
   )

@@ -19,6 +19,10 @@ export interface AtividadeResponse {
   mensagem: string
   dados?: Atividade | Atividade[]
   total?: number
+  // Campos do backend em inglês (para compatibilidade)
+  success?: boolean
+  message?: string
+  data?: Atividade | Atividade[]
 }
 
 class AtividadeService {
@@ -82,15 +86,21 @@ class AtividadeService {
       logger.info('🔍 Data.success existe?', 'service', data.success !== undefined)
       logger.info('🔍 Data.success valor:', 'service', data.success)
       
-      if (data.success !== undefined) {
-        data.sucesso = data.success
-        delete data.success
-        logger.info('🔍 Convertido success para sucesso:', 'service', data)
-        logger.info('🔍 Data.sucesso após conversão:', 'service', data.sucesso)
+      // Criar objeto de resposta padronizado
+      const responseData: AtividadeResponse = {
+        sucesso: data.success || false,
+        mensagem: data.message || '',
+        dados: data.data || [],
+        total: data.data ? (Array.isArray(data.data) ? data.data.length : 1) : 0
       }
       
-      logger.info('🔍 Dados finais retornados:', 'service', data)
-      return data
+      logger.info('🔍 Dados convertidos:', 'service', responseData)
+      logger.info('🔍 Dados convertidos - sucesso:', 'service', responseData.sucesso)
+      logger.info('🔍 Dados convertidos - dados:', 'service', responseData.dados)
+      logger.info('🔍 Dados convertidos - é array?', 'service', Array.isArray(responseData.dados))
+      
+      logger.info('🔍 Dados finais retornados:', 'service', responseData)
+      return responseData
     } catch (error) {
       logger.error('❌ Erro ao buscar atividades por aula', 'service', error)
       throw error
