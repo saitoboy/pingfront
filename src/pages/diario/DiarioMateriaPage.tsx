@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react'
 import { 
-  ArrowLeft, 
   BookOpen, 
   Calendar, 
   Clock,
   Plus,
-  Edit,
   Eye,
   Save,
-  X,
-  CheckCircle
+  X
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import { aulaService } from '../../services/aulaService'
@@ -23,6 +20,7 @@ interface Aula {
   created_at?: string
   updated_at?: string
 }
+
 
 
 interface DiarioMateriaPageProps {
@@ -44,16 +42,15 @@ interface DiarioMateriaPageProps {
     nome_disciplina: string
   }
   turmaDisciplinaProfessorId: string
-  onNavigate?: (page: string) => void
-  onVoltar?: () => void
+  onNavigate?: (page: string, data?: any) => void
 }
 
 export default function DiarioMateriaPage({ 
+  professor,
   turma, 
   disciplina, 
   turmaDisciplinaProfessorId,
-  onNavigate, 
-  onVoltar 
+  onNavigate
 }: DiarioMateriaPageProps) {
   const [aulas, setAulas] = useState<Aula[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,13 +88,6 @@ export default function DiarioMateriaPage({
     }
   }
 
-  const handleVoltar = () => {
-    if (onVoltar) {
-      onVoltar()
-    } else if (onNavigate) {
-      onNavigate('diario-escolar')
-    }
-  }
 
   const handleNovaAula = () => {
     setFormData({
@@ -142,6 +132,17 @@ export default function DiarioMateriaPage({
     })
   }
 
+  const handleVisualizarAula = (aula: Aula) => {
+    if (onNavigate) {
+      onNavigate('detalhes-aula', {
+        aula,
+        turma,
+        disciplina,
+        professor
+      })
+    }
+  }
+
   const formatarData = (data: string) => {
     return new Date(data).toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -165,7 +166,7 @@ export default function DiarioMateriaPage({
             </div>
             <button
               onClick={handleNovaAula}
-              className="flex items-center px-6 py-3 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors shadow-lg"
+              className="flex items-center px-6 py-3 text-sm font-medium text-white bg-blue-500 rounded-xl hover:bg-green-700 transition-colors shadow-lg"
             >
               <Plus className="w-5 h-5 mr-2" />
               Nova Aula
@@ -309,27 +310,17 @@ export default function DiarioMateriaPage({
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                            <Edit className="w-5 h-5" />
-                          </button>
-                          <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                          <button 
+                            onClick={() => handleVisualizarAula(aula)}
+                            className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Visualizar aula e adicionar conteúdos"
+                          >
                             <Eye className="w-5 h-5" />
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    {/* Conteúdos da Aula */}
-                    <div className="p-6">
-                      <div className="text-center py-8">
-                        <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500 mb-4">Funcionalidade de conteúdos em desenvolvimento</p>
-                        <button className="px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                          <Plus className="w-4 h-4 mr-2 inline" />
-                          Adicionar Conteúdo
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 )
               })
