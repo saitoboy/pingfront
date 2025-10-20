@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import api from '../../lib/api'
 import bgAzul from '../../assets/images/bg azul.png'
 
 interface LoginPageProps {
   onLogin?: (userData: { name: string; email: string }) => void
+  onNavigate?: (page: string) => void
 }
 
-export default function LoginPage({ onLogin }: LoginPageProps) {
+export default function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -132,6 +133,16 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       
       <div className="w-full max-w-3xl flex flex-col gap-8 items-center overflow-hidden relative z-10">
         
+        {/* Botão Voltar */}
+        <div className="w-full flex justify-start">
+          <button 
+            onClick={() => onNavigate?.('landing')}
+            className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors duration-300 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg hover:bg-white/20"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Voltar à página inicial</span>
+          </button>
+        </div>
 
         {/* Lado Direito - Formulário */}
         <div className="w-full">

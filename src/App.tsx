@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { LayoutDashboard, UserPlus, Users, School, BookOpen } from 'lucide-react'
+import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/auth/LoginPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import FichaCadastroPage from './pages/cadastro/FichaCadastroPage'
@@ -19,7 +20,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [userData, setUserData] = useState<{ name: string; email: string } | null>(null)
-  const [currentPage, setCurrentPage] = useState<'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario' | 'alocacao-professor' | 'gestao-escolar' | 'diario-escolar' | 'detalhes-aula' | 'lancar-notas'>('dashboard')
+  const [currentPage, setCurrentPage] = useState<'landing' | 'login' | 'dashboard' | 'ficha-cadastro' | 'gerenciar-usuarios' | 'criar-usuario' | 'gerenciar-tipos-usuario' | 'alocacao-professor' | 'gestao-escolar' | 'diario-escolar' | 'detalhes-aula' | 'lancar-notas'>('landing')
   const [isInitializing, setIsInitializing] = useState(true) // Novo estado para controlar a inicialização
   const [aulaData, setAulaData] = useState<any>(null) // Dados da aula selecionada
   const [atividadeData, setAtividadeData] = useState<any>(null) // Dados da atividade selecionada
@@ -49,7 +50,8 @@ function App() {
         }
         
         setIsAuthenticated(true)
-        console.log('✅ Autenticação restaurada do localStorage')
+        setCurrentPage('dashboard') // Direciona para o dashboard quando logado
+        console.log('✅ Autenticação restaurada do localStorage - Redirecionando para dashboard')
       } else {
         console.log('ℹ️ Nenhum token encontrado no localStorage')
       }
@@ -65,6 +67,7 @@ function App() {
     setUserData(user)
     // Salva os dados do usuário no localStorage para persistir entre recarregamentos
     localStorage.setItem('userData', JSON.stringify(user))
+    setCurrentPage('dashboard') // Direciona para o dashboard após login
     setIsLoading(true) // Mostra a tela de loading
   }
 
@@ -79,11 +82,11 @@ function App() {
     setIsAuthenticated(false)
     setIsLoading(false)
     setUserData(null)
-    setCurrentPage('dashboard')
+    setCurrentPage('landing') // Volta para a landing page após logout
     // Remove os dados salvos do localStorage
     localStorage.removeItem('authToken')
     localStorage.removeItem('userData')
-    console.log('🚪 Logout realizado - dados removidos do localStorage')
+    console.log('🚪 Logout realizado - dados removidos do localStorage - Redirecionando para landing page')
   }
 
   // Função para obter o ícone da página atual
@@ -110,15 +113,15 @@ function App() {
 
   // Função para navegação entre páginas
   const handlePageNavigation = (page: string, data?: any) => {
-    if (page === 'dashboard' || page === 'ficha-cadastro' || page === 'gerenciar-usuarios' || page === 'criar-usuario' || page === 'gerenciar-tipos-usuario' || page === 'alocacao-professor' || page === 'gestao-escolar' || page === 'diario-escolar' || page === 'detalhes-aula' || page === 'lancar-notas') {
+    if (page === 'landing' || page === 'login' || page === 'dashboard' || page === 'ficha-cadastro' || page === 'gerenciar-usuarios' || page === 'criar-usuario' || page === 'gerenciar-tipos-usuario' || page === 'alocacao-professor' || page === 'gestao-escolar' || page === 'diario-escolar' || page === 'detalhes-aula' || page === 'lancar-notas') {
       setCurrentPage(page as any)
       if (data && page === 'detalhes-aula') {
         setAulaData(data)
       }
     } else {
       console.log(`⚠️ Página '${page}' ainda não implementada`)
-      // Por enquanto, páginas não implementadas vão para dashboard
-      setCurrentPage('dashboard')
+      // Por enquanto, páginas não implementadas vão para landing
+      setCurrentPage('landing')
     }
   }
 
@@ -145,9 +148,15 @@ function App() {
     )
   }
 
-  // Se não estiver autenticado e não estiver carregando, mostra o login
+  // Se não estiver autenticado e não estiver carregando, mostra a landing page ou login
   if (!isAuthenticated && !isLoading) {
-    return <LoginPage onLogin={handleLogin} />
+    if (currentPage === 'landing') {
+      return <LandingPage onNavigate={handlePageNavigation} />
+    }
+    if (currentPage === 'login') {
+      return <LoginPage onLogin={handleLogin} onNavigate={handlePageNavigation} />
+    }
+    return <LandingPage onNavigate={handlePageNavigation} />
   }
 
   // Se estiver carregando após o login, mostra a tela de loading
@@ -250,8 +259,6 @@ function App() {
             <DetalhesAulaPage 
               aula={aulaData.aula}
               turma={aulaData.turma}
-              disciplina={aulaData.disciplina}
-              onVoltar={() => setCurrentPage('diario-escolar')}
               onNavegarParaNotas={handleNavegarParaNotas}
             />
           )}
