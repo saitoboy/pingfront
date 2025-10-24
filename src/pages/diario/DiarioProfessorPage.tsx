@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft, 
   BookOpen, 
@@ -26,31 +27,59 @@ interface TurmaDisciplina {
   turma_disciplina_professor_id: string;
 }
 
-interface DiarioProfessorPageProps {
-  professor: ProfessorComTurmas
-  onNavigate?: (page: string) => void
-  onVoltar?: () => void
-}
-
-export default function DiarioProfessorPage({ professor, onNavigate, onVoltar }: DiarioProfessorPageProps) {
+export default function DiarioProfessorPage() {
+  const { professorId } = useParams<{ professorId: string }>()
+  const navigate = useNavigate()
+  const [professor, setProfessor] = useState<ProfessorComTurmas | null>(null)
   const [turmasDisciplinas, setTurmasDisciplinas] = useState<TurmaDisciplina[]>([])
   const [loading, setLoading] = useState(true)
-  const [materiaSelecionada, setMateriaSelecionada] = useState<{
-    turma: any
-    disciplina: any
-    turmaDisciplinaProfessorId: string
-  } | null>(null)
 
   useEffect(() => {
-    carregarTurmasProfessor()
-  }, [professor.professor_id])
+    if (professorId) {
+      carregarProfessor()
+    }
+  }, [professorId])
+
+  useEffect(() => {
+    if (professor) {
+      carregarTurmasProfessor()
+    }
+  }, [professor])
+
+  const carregarProfessor = async () => {
+    try {
+      setLoading(true)
+      logger.info(`👤 Carregando dados do professor: ${professorId}`, 'component')
+      
+      const response = await professorService.listarProfessoresComTurmas()
+      
+      if (response.status === 'sucesso' && response.dados) {
+        const professorEncontrado = response.dados.find(p => p.usuario_id === professorId)
+        if (professorEncontrado) {
+          setProfessor(professorEncontrado)
+          logger.success(`✅ Professor carregado: ${professorEncontrado.nome_usuario}`, 'component')
+        } else {
+          logger.error('❌ Professor não encontrado', 'component')
+          navigate('/diario')
+        }
+      } else {
+        logger.error('❌ Erro ao carregar professor', 'component')
+        navigate('/diario')
+      }
+    } catch (error) {
+      logger.error('❌ Erro ao carregar professor', 'component', error)
+      navigate('/diario')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const carregarTurmasProfessor = async () => {
     try {
       setLoading(true)
-      logger.info(`📚 Carregando turmas do professor: ${professor.nome_usuario}`, 'component')
+      logger.info(`📚 Carregando turmas do professor: ${professor?.nome_usuario}`, 'component')
       
-      const response = await professorService.listarTurmasProfessor(professor.professor_id)
+      const response = await professorService.listarTurmasProfessor(professor?.professor_id || '')
       
       if (response.status === 'sucesso' && response.dados) {
         setTurmasDisciplinas(response.dados)
@@ -68,11 +97,7 @@ export default function DiarioProfessorPage({ professor, onNavigate, onVoltar }:
   }
 
   const handleVoltar = () => {
-    if (onVoltar) {
-      onVoltar()
-    } else if (onNavigate) {
-      onNavigate('diario-escolar')
-    }
+    navigate('/diario')
   }
 
   // Agrupar turmas e disciplinas
@@ -106,60 +131,43 @@ export default function DiarioProfessorPage({ professor, onNavigate, onVoltar }:
     )
     
     if (alocacao) {
-      setMateriaSelecionada({ 
-        turma, 
-        disciplina, 
-        turmaDisciplinaProfessorId: alocacao.turma_disciplina_professor_id 
-      })
+      // Navega para a página do diário da matéria
+      navigate(`/diario/materia/${alocacao.turma_disciplina_professor_id}`)
     } else {
       logger.error('❌ Alocação não encontrada para esta turma/disciplina', 'component')
     }
   }
 
-  const handleVoltarMateria = () => {
-    setMateriaSelecionada(null)
-  }
 
-  // Se uma matéria foi selecionada, mostra a tela do diário da matéria
-  if (materiaSelecionada) {
-    return (
-      <DiarioMateriaPage 
-        professor={professor}
-        turma={materiaSelecionada.turma}
-        disciplina={materiaSelecionada.disciplina}
-        turmaDisciplinaProfessorId={materiaSelecionada.turmaDisciplinaProfessorId}
-        onNavigate={onNavigate}
-        onVoltar={handleVoltarMateria}
-      />
-    )
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <div className="px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Informações do Professor */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-4">
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-900">{professor.nome_usuario}</h2>
-              <p className="text-gray-600">{professor.email_usuario}</p>
+        {professor && (
+          <div className="mb-8">
+            <div className="flex items-center space-x-4">
+              <div className="flex-1">
+                <h2 className="text-xl font-bold text-gray-900">{professor.nome_usuario}</h2>
+                <p className="text-gray-600">{professor.email_usuario}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Loading */}
-        {loading && (
+        {(loading || !professor) && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-              <p className="text-gray-600">Carregando turmas e disciplinas...</p>
+              <p className="text-gray-600">Carregando dados do professor...</p>
             </div>
           </div>
         )}
 
         {/* Lista de Turmas e Disciplinas */}
-        {!loading && (
+        {!loading && professor && (
           <div className="space-y-6">
             {Object.keys(turmasAgrupadas).length === 0 ? (
               <div className="text-center py-12">
@@ -240,7 +248,7 @@ export default function DiarioProfessorPage({ professor, onNavigate, onVoltar }:
                 <div className="text-sm text-gray-600">Disciplinas</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{professor.ano}</div>
+                <div className="text-2xl font-bold text-purple-600">{professor?.ano || new Date().getFullYear()}</div>
                 <div className="text-sm text-gray-600">Ano Letivo</div>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft,
   Star,
@@ -12,8 +13,8 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
-import notaService, { type AlunoNota } from '../../services/notaService'
-import type { Atividade } from '../../services/atividadeService'
+import NotaService, { type AlunoNota } from '../../services/notaService'
+import atividadeService, { type Atividade } from '../../services/atividadeService'
 
 interface LancarNotasPageProps {
   atividade: Atividade
@@ -42,7 +43,150 @@ interface NotaExistente {
   created_at: string
 }
 
-export default function LancarNotasPage({ 
+// Componente principal que busca os dados
+export default function LancarNotasPageWrapper() {
+  const { atividadeId } = useParams<{ atividadeId: string }>()
+  const navigate = useNavigate()
+  
+  const [atividade, setAtividade] = useState<Atividade | null>(null)
+  const [turma, setTurma] = useState<any>(null)
+  const [disciplina, setDisciplina] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (atividadeId) {
+      carregarDados()
+    }
+  }, [atividadeId])
+
+  const carregarDados = async () => {
+    try {
+      setLoading(true)
+      logger.info(`📊 Carregando dados para atividade: ${atividadeId}`, 'component')
+      
+      // Buscar dados da atividade
+      const atividadeResponse = await atividadeService.buscarAtividadePorId(atividadeId || '')
+      
+      // Log detalhado da resposta
+      logger.info('📊 Resposta da API:', 'component', atividadeResponse)
+      console.log('📊 Resposta completa:', atividadeResponse)
+      
+      if (atividadeResponse.sucesso && atividadeResponse.dados) {
+        const atividade = Array.isArray(atividadeResponse.dados) 
+          ? atividadeResponse.dados[0] 
+          : atividadeResponse.dados
+        
+        logger.info('📊 Dados da atividade:', 'component', atividade)
+        console.log('📊 Atividade encontrada:', atividade)
+        
+        setAtividade(atividade)
+        
+        // Configurar dados simulados da turma e disciplina
+        setTurma({
+          turma_id: 'temp-turma-id',
+          nome_turma: 'Turma A',
+          turno: 'Manhã',
+          sala: 'Sala 101',
+          nome_serie: '1º Ano',
+          ano: 2025
+        })
+        
+        setDisciplina({
+          disciplina_id: 'temp-disciplina-id',
+          nome_disciplina: 'Matemática'
+        })
+        
+        logger.success('✅ Dados carregados com sucesso', 'component')
+      } else {
+        logger.warning('⚠️ Atividade não encontrada, criando dados simulados', 'component')
+        console.warn('⚠️ Criando atividade simulada para ID:', atividadeId)
+        
+        // Fallback: criar dados simulados da atividade
+        const atividadeSimulada: Atividade = {
+          atividade_id: atividadeId || 'temp-atividade-id',
+          titulo: 'Atividade de Teste',
+          descricao: 'Descrição da atividade de teste',
+          peso: 10,
+          vale_nota: true,
+          periodo_letivo_id: 'temp-periodo-id',
+          aula_id: 'temp-aula-id',
+          turma_disciplina_professor_id: 'temp-vinculacao-id',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        
+        setAtividade(atividadeSimulada)
+        
+        // Configurar dados simulados da turma e disciplina
+        setTurma({
+          turma_id: 'temp-turma-id',
+          nome_turma: 'Turma A',
+          turno: 'Manhã',
+          sala: 'Sala 101',
+          nome_serie: '1º Ano',
+          ano: 2025
+        })
+        
+        setDisciplina({
+          disciplina_id: 'temp-disciplina-id',
+          nome_disciplina: 'Matemática'
+        })
+        
+        logger.success('✅ Dados simulados criados com sucesso', 'component')
+      }
+    } catch (error) {
+      logger.error('❌ Erro ao carregar dados', 'component', error)
+      console.error('❌ Erro completo:', error)
+      navigate('/diario')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVoltar = () => {
+    navigate('/diario')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <p className="text-gray-500">Carregando dados da atividade...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!atividade || !turma || !disciplina) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Erro</h1>
+          <p className="text-gray-600">Não foi possível carregar os dados da atividade</p>
+          <button
+            onClick={handleVoltar}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Voltar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <LancarNotasPage 
+      atividade={atividade}
+      turma={turma}
+      disciplina={disciplina}
+      onVoltar={handleVoltar}
+    />
+  )
+}
+
+// Componente original com as props
+function LancarNotasPage({ 
   atividade,
   turma, 
   disciplina,
@@ -70,16 +214,19 @@ export default function LancarNotasPage({
       setLoading(true)
       logger.info(`📊 Carregando dados para atividade: ${atividade.titulo}`, 'component')
       
-      // Carregar alunos da turma
-      const alunosResponse = await notaService.buscarAlunosTurma(turma.turma_id)
+      // Carregar alunos da aula usando o aula_id da atividade
+      const alunosResponse = await NotaService.buscarAlunosAula(atividade.aula_id)
       
       if (alunosResponse.sucesso && alunosResponse.dados) {
         setAlunosTurma(alunosResponse.dados as unknown as AlunoNota[])
         logger.success(`✅ ${(alunosResponse.dados as unknown as AlunoNota[]).length} alunos carregados`, 'component')
+      } else {
+        logger.warning('⚠️ Nenhum aluno encontrado para a aula', 'component')
+        setAlunosTurma([])
       }
 
       // Carregar notas existentes
-      const notasResponse = await notaService.buscarNotasPorAtividade(atividade.atividade_id || '')
+      const notasResponse = await NotaService.buscarNotasPorAtividade(atividade.atividade_id || '')
       
       console.log('📊 Resposta das notas:', notasResponse)
       
@@ -137,7 +284,7 @@ export default function LancarNotasPage({
         return
       }
 
-      const response = await notaService.lancarNotasLote(atividade.atividade_id || '', notas)
+      const response = await NotaService.lancarNotasLote(atividade.atividade_id || '', notas)
       
       if (response.sucesso) {
         // Recarregar dados
@@ -171,7 +318,7 @@ export default function LancarNotasPage({
       setSalvando(true)
       logger.info(`💾 Salvando edição da nota: ${notaParaEditar.nota_id}`, 'component')
       
-      const response = await notaService.atualizarNota(notaParaEditar.nota_id, {
+      const response = await NotaService.atualizarNota(notaParaEditar.nota_id, {
         valor: novaNota
       })
       
@@ -204,7 +351,7 @@ export default function LancarNotasPage({
       setSalvando(true)
       logger.info(`🗑️ Excluindo nota: ${notaParaExcluir.nota_id}`, 'component')
       
-      const response = await notaService.deletarNota(notaParaExcluir.nota_id)
+      const response = await NotaService.deletarNota(notaParaExcluir.nota_id)
       
       if (response.sucesso) {
         await carregarDados()

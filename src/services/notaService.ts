@@ -109,6 +109,21 @@ class NotaService {
   }
 
   /**
+   * Buscar alunos da aula para lançar notas
+   */
+  static async buscarAlunosAula(aulaId: string): Promise<NotaResponse> {
+    try {
+      logger.info(`👥 Buscando alunos da aula: ${aulaId}`, 'service')
+      const response = await api.get(`/matricula-aluno/aula/${aulaId}`)
+      
+      return converterRespostaBackend(response.data)
+    } catch (error) {
+      logger.error('❌ Erro ao buscar alunos da aula', 'service', error)
+      throw error
+    }
+  }
+
+  /**
    * Criar nova nota
    */
   static async criarNota(dadosNota: {

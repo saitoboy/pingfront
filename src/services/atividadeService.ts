@@ -56,11 +56,19 @@ class AtividadeService {
       logger.info(`🔍 Buscando atividade: ${atividadeId}`, 'service')
       const response = await api.get(`/atividade/${atividadeId}`)
       
-      // Converter success para sucesso para manter consistência
+      // Converter success para sucesso e data para dados para manter consistência
       const data = response.data
       if (data.success !== undefined) {
         data.sucesso = data.success
         delete data.success
+      }
+      if (data.data !== undefined) {
+        data.dados = data.data
+        delete data.data
+      }
+      if (data.message !== undefined) {
+        data.mensagem = data.message
+        delete data.message
       }
       
       return data

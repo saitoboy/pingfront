@@ -94,6 +94,7 @@ export const aulaService = {
     }
   },
 
+
   // ✏️ ATUALIZAR AULA - Atualizar dados de uma aula
   async atualizarAula(aulaId: string, dadosAtualizacao: Partial<Omit<Aula, 'aula_id' | 'turma_disciplina_professor_id' | 'created_at' | 'updated_at'>>): Promise<ApiResponse<Aula>> {
     try {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { 
   BookOpen, 
   Calendar, 
@@ -12,13 +13,15 @@ import {
   ClipboardList,
   Eye,
   Star,
-  UserCheck
+  UserCheck,
+  ArrowLeft
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import conteudoAulaService from '../../services/conteudoAulaService'
 import frequenciaService from '../../services/frequenciaService'
 import atividadeService, { type Atividade } from '../../services/atividadeService'
 import periodoLetivoService from '../../services/periodoLetivoService'
+import { aulaService } from '../../services/aulaService'
 import type { AlunoFrequencia } from '../../services/frequenciaService'
 
 interface Aula {
@@ -31,6 +34,7 @@ interface Aula {
   updated_at?: string
 }
 
+
 interface ConteudoAula {
   conteudo_aula_id?: string
   aula_id: string
@@ -40,24 +44,18 @@ interface ConteudoAula {
   updated_at?: string
 }
 
-interface DetalhesAulaPageProps {
-  aula: Aula
-  turma: {
-    turma_id: string
-    nome_turma: string
-    turno: string
-    sala: string
-    nome_serie: string
-    ano: number
-  }
-  onNavegarParaNotas?: (atividade: Atividade) => void
-}
-
-export default function DetalhesAulaPage({ 
-  aula,
-  turma, 
-  onNavegarParaNotas
-}: DetalhesAulaPageProps) {
+export default function DetalhesAulaPage() {
+  const { aulaId } = useParams<{ aulaId: string }>()
+  const navigate = useNavigate()
+  
+  // Estados para dados da aula
+  const [aula, setAula] = useState<Aula | null>(null)
+  const [turma, setTurma] = useState<any>(null)
+  const [disciplina, setDisciplina] = useState<any>(null)
+  const [professor, setProfessor] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  
+  // Estados existentes
   const [conteudos, setConteudos] = useState<ConteudoAula[]>([])
   const [showFormConteudo, setShowFormConteudo] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
@@ -77,28 +75,119 @@ export default function DetalhesAulaPage({
     peso: 1,
     vale_nota: false,
     periodo_letivo_id: '',
-    aula_id: aula.aula_id || '',
-    turma_disciplina_professor_id: aula.turma_disciplina_professor_id
+    aula_id: '',
+    turma_disciplina_professor_id: ''
   })
   const [formConteudo, setFormConteudo] = useState<ConteudoAula>({
-    aula_id: aula.aula_id || '',
+    aula_id: '',
     descricao: '',
     conteudo: ''
   })
 
+  // Carregar dados da aula
   useEffect(() => {
-    logger.info('🔄 useEffect executado', 'component')
-    logger.info('🔄 Aula ID:', 'component', aula.aula_id)
-    carregarConteudos()
-    carregarAtividades()
-    carregarPeriodoLetivoAtual()
-  }, [aula.aula_id])
+    if (aulaId) {
+      carregarDadosAula()
+    }
+  }, [aulaId])
+
+  // Carregar conteúdos e atividades quando aula estiver disponível
+  useEffect(() => {
+    if (aula?.aula_id) {
+      logger.info('🔄 useEffect executado', 'component')
+      logger.info('🔄 Aula ID:', 'component', aula.aula_id)
+      carregarConteudos()
+      carregarAtividades()
+      carregarPeriodoLetivoAtual()
+    }
+  }, [aula?.aula_id])
+
+  const carregarDadosAula = async () => {
+    try {
+      setLoading(true)
+      logger.info(`📚 Carregando dados da aula: ${aulaId}`, 'component')
+      
+      // 1. Buscar dados básicos da aula (rota que já funciona)
+      const aulaResponse = await aulaService.buscarAulaPorId(aulaId || '')
+      
+      if (aulaResponse.status !== 'sucesso' || !aulaResponse.dados) {
+        throw new Error('Aula não encontrada')
+      }
+      
+      const aula = aulaResponse.dados
+      logger.info('📊 Dados da aula obtidos:', 'component', aula)
+      
+      // 2. Configurar dados da aula
+      setAula({
+        aula_id: aula.aula_id,
+        turma_disciplina_professor_id: aula.turma_disciplina_professor_id,
+        data_aula: aula.data_aula,
+        hora_inicio: aula.hora_inicio,
+        hora_fim: aula.hora_fim,
+        created_at: aula.created_at,
+        updated_at: aula.updated_at
+      })
+      
+      // 3. Configurar dados simulados da vinculação (turma, disciplina, professor)
+      // Como a API de vinculação não existe ainda, vamos usar dados simulados
+      logger.info('📊 Configurando dados simulados da vinculação', 'component')
+      
+      setTurma({
+        turma_id: 'temp-turma-id',
+        nome_turma: 'Turma A',
+        turno: 'Manhã',
+        sala: 'Sala 101',
+        nome_serie: '1º Ano',
+        ano: 2025
+      })
+      
+      setDisciplina({
+        disciplina_id: 'temp-disciplina-id',
+        nome_disciplina: 'Matemática'
+      })
+      
+      setProfessor({
+        professor_id: 'temp-professor-id',
+        nome_usuario: 'Professor Teste',
+        email_usuario: 'professor@teste.com'
+      })
+      
+      logger.success('✅ Dados simulados da vinculação configurados', 'component')
+      
+      // 4. Atualizar forms com dados da aula
+      setFormAtividade(prev => ({
+        ...prev,
+        aula_id: aulaId || '',
+        turma_disciplina_professor_id: aula.turma_disciplina_professor_id
+      }))
+      
+      setFormConteudo(prev => ({
+        ...prev,
+        aula_id: aulaId || ''
+      }))
+      
+      logger.success('✅ Dados da aula carregados com sucesso', 'component')
+      logger.info('📊 Dados configurados:', 'component', {
+        aula: aula.aula_id,
+        vinculacao: aula.turma_disciplina_professor_id,
+        data: aula.data_aula,
+        horario: `${aula.hora_inicio} - ${aula.hora_fim}`
+      })
+      
+    } catch (error) {
+      logger.error('❌ Erro ao carregar dados da aula', 'component', error)
+      navigate('/diario')
+    } finally {
+      setLoading(false)
+    }
+  }
 
 
   const carregarConteudos = async () => {
     try {
-      logger.info(`📚 Carregando conteúdos da aula: ${aula.aula_id}`, 'component')
-      const response = await conteudoAulaService.buscarConteudosPorAula(aula.aula_id || '')
+      if (!aula?.aula_id) return
+      logger.info(`📚 Carregando conteúdos da aula: ${aula!.aula_id}`, 'component')
+      const response = await conteudoAulaService.buscarConteudosPorAula(aula!.aula_id)
       
       if (response.sucesso && response.dados) {
         setConteudos(Array.isArray(response.dados) ? response.dados : [])
@@ -115,8 +204,9 @@ export default function DetalhesAulaPage({
 
   const carregarAtividades = async () => {
     try {
-      logger.info(`📋 Carregando atividades da aula: ${aula.aula_id}`, 'component')
-      const response = await atividadeService.buscarAtividadesPorAula(aula.aula_id || '')
+      if (!aula?.aula_id) return
+      logger.info(`📋 Carregando atividades da aula: ${aula!.aula_id}`, 'component')
+      const response = await atividadeService.buscarAtividadesPorAula(aula!.aula_id)
       
       if (response.sucesso && response.dados) {
         const atividadesArray = Array.isArray(response.dados) ? response.dados : []
@@ -163,6 +253,7 @@ export default function DetalhesAulaPage({
   }
 
   const handleNovaConteudo = () => {
+    if (!aula) return
     setFormConteudo({
       aula_id: aula.aula_id || '',
       descricao: '',
@@ -185,7 +276,7 @@ export default function DetalhesAulaPage({
         await carregarConteudos() // Recarregar a lista
         setShowFormConteudo(false)
         setFormConteudo({
-          aula_id: aula.aula_id || '',
+          aula_id: aula?.aula_id || '',
           descricao: '',
           conteudo: ''
         })
@@ -201,7 +292,7 @@ export default function DetalhesAulaPage({
   const handleCancelarConteudo = () => {
     setShowFormConteudo(false)
     setFormConteudo({
-      aula_id: aula.aula_id || '',
+      aula_id: aula?.aula_id || '',
       descricao: '',
       conteudo: ''
     })
@@ -256,14 +347,14 @@ export default function DetalhesAulaPage({
   const handleSalvarPresenca = async () => {
     try {
       setSalvandoPresenca(true)
-      logger.info(`💾 Salvando presença para aula: ${aula.aula_id}`, 'component')
+      logger.info(`💾 Salvando presença para aula: ${aula?.aula_id}`, 'component')
       
       const frequencias = alunosTurma.map(aluno => ({
         matricula_aluno_id: aluno.matricula_aluno_id,
         presenca: aluno.presenca ?? true
       }))
       
-      const response = await frequenciaService.registrarFrequenciaLote(aula.aula_id || '', frequencias)
+      const response = await frequenciaService.registrarFrequenciaLote(aula?.aula_id || '', frequencias)
       
       if (response.sucesso) {
         setShowModalPresenca(false)
@@ -289,6 +380,7 @@ export default function DetalhesAulaPage({
 
   // Funções para atividades
   const handleNovaAtividade = () => {
+    if (!aula) return
     logger.info('📝 Criando nova atividade', 'component')
     logger.info('📝 Período letivo atual:', 'component', periodoLetivoAtual)
     logger.info('📝 Aula ID:', 'component', aula.aula_id)
@@ -354,8 +446,8 @@ export default function DetalhesAulaPage({
           peso: 1,
           vale_nota: false,
           periodo_letivo_id: '',
-          aula_id: aula.aula_id || '',
-          turma_disciplina_professor_id: aula.turma_disciplina_professor_id
+          aula_id: aula?.aula_id || '',
+          turma_disciplina_professor_id: aula?.turma_disciplina_professor_id || ''
         })
         await carregarAtividades()
         logger.success('✅ Atividade criada com sucesso', 'component')
@@ -375,8 +467,8 @@ export default function DetalhesAulaPage({
       peso: 1,
       vale_nota: false,
       periodo_letivo_id: periodoLetivoAtual,
-      aula_id: aula.aula_id || '',
-      turma_disciplina_professor_id: aula.turma_disciplina_professor_id
+      aula_id: aula?.aula_id || '',
+      turma_disciplina_professor_id: aula?.turma_disciplina_professor_id || ''
     })
   }
 
@@ -392,14 +484,38 @@ export default function DetalhesAulaPage({
 
   // Funções para notas
   const handleAbrirNotas = (atividade: Atividade) => {
-    if (onNavegarParaNotas) {
-      onNavegarParaNotas(atividade)
-    }
+    navigate(`/diario/notas/${atividade.atividade_id}`)
   }
+
+  if (loading || !aula) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando detalhes da aula...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Garantir que aula não é null após a verificação
+  if (!aula) return null
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <div className="px-4 sm:px-6 lg:px-8 py-8">
+        {/* Botão Voltar */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/diario')}
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Voltar ao Diário</span>
+          </button>
+        </div>
+
         {/* Informações da Aula */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between">
@@ -409,20 +525,23 @@ export default function DetalhesAulaPage({
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Aula de {formatarData(aula.data_aula)}
+                  Aula de {formatarData(aula!.data_aula)}
                 </h2>
                 <div className="flex items-center space-x-6 mt-2">
                   <div className="flex items-center space-x-2 text-gray-600">
                     <Clock className="w-5 h-5" />
-                    <span className="font-medium">{aula.hora_inicio} - {aula.hora_fim}</span>
+                    <span className="font-medium">{aula!.hora_inicio} - {aula!.hora_fim}</span>
                   </div>
                   <div className="flex items-center space-x-2 text-gray-600">
                     <Users className="w-5 h-5" />
-                    <span>{turma.nome_turma} - {turma.turno}</span>
+                    <span>{turma?.nome_turma} - {turma?.turno}</span>
                   </div>
                   <div className="flex items-center space-x-2 text-gray-600">
                     <BookOpen className="w-5 h-5" />
-                    <span>{conteudos.length} conteúdo(s)</span>
+                    <span>{disciplina?.nome_disciplina}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-gray-600">
+                    <span className="text-sm">Prof. {professor?.nome_usuario}</span>
                   </div>
                 </div>
               </div>
@@ -433,44 +552,54 @@ export default function DetalhesAulaPage({
               onClick={async () => {
                 try {
                   setLoadingPresenca(true)
-                  logger.info(`👥 Carregando alunos da turma: ${turma.turma_id}`, 'component')
+                  if (!aula!.aula_id) return
+                  logger.info(`👥 Carregando frequências da aula: ${aula!.aula_id}`, 'component')
                   
-                  const response = await frequenciaService.buscarAlunosTurma(turma.turma_id)
+                  // Buscar frequências da aula diretamente
+                  const frequenciasExistentes = await frequenciaService.buscarFrequenciasPorAula(aula!.aula_id)
                   
-                  if (response.sucesso && response.dados) {
-                    // Verificar se já existe frequência registrada para esta aula
-                    const frequenciasExistentes = await frequenciaService.buscarFrequenciasPorAula(aula.aula_id || '')
+                  if (frequenciasExistentes.sucesso && frequenciasExistentes.dados && (frequenciasExistentes.dados as any[]).length > 0) {
+                    // Se já existem frequências, usar os dados que vêm da API
+                    logger.info('📊 Dados brutos da API:', 'component', frequenciasExistentes.dados)
                     
-                    let alunosComPresenca: AlunoFrequencia[] = []
+                    const alunosComPresenca = (frequenciasExistentes.dados as any[]).map(freq => ({
+                      matricula_aluno_id: freq.matricula_aluno_id,
+                      ra: freq.ra,
+                      nome_aluno: freq.nome_aluno,
+                      sobrenome_aluno: freq.sobrenome_aluno,
+                      presenca: freq.presenca,
+                      frequencia_id: freq.frequencia_id
+                    }))
                     
-                    if (frequenciasExistentes.sucesso && frequenciasExistentes.dados && (frequenciasExistentes.dados as any[]).length > 0) {
-                      // Mapear frequências existentes com os alunos
-                      alunosComPresenca = (response.dados as any[]).map(aluno => {
-                        const frequenciaExistente = (frequenciasExistentes.dados as any[]).find(
-                          freq => freq.matricula_aluno_id === aluno.matricula_aluno_id
-                        )
-                        return {
-                          ...aluno,
-                          presenca: frequenciaExistente ? frequenciaExistente.presenca : true,
-                          frequencia_id: frequenciaExistente ? frequenciaExistente.frequencia_id : undefined
-                        }
-                      })
-                    } else {
-                      // Se não há frequências registradas, todos começam como presentes
-                      alunosComPresenca = (response.dados as any[]).map(aluno => ({
-                        ...aluno,
-                        presenca: true
-                      }))
-                    }
+                    logger.info('📊 Dados processados:', 'component', alunosComPresenca)
                     
                     setAlunosTurma(alunosComPresenca)
                     setShowModalPresenca(true)
-                    logger.success(`✅ ${alunosComPresenca.length} alunos carregados`, 'component')
+                    logger.success(`✅ ${alunosComPresenca.length} frequências carregadas`, 'component')
+                    logger.info('📊 Dados dos alunos:', 'component', alunosComPresenca)
                   } else {
-                    logger.error('❌ Erro ao carregar alunos da turma', 'component')
+                    // Se não há frequências, buscar alunos matriculados nesta aula específica
+                    logger.info(`👥 Buscando alunos matriculados na aula: ${aula!.aula_id}`, 'component')
+                    
+                    const response = await frequenciaService.buscarAlunosPorAula(aula!.aula_id)
+                    
+                    if (response.sucesso && response.dados) {
+                      // Todos começam como presentes
+                      const alunosComPresenca = (response.dados as any[]).map(aluno => ({
+                        ...aluno,
+                        presenca: true
+                      }))
+                      
+                      setAlunosTurma(alunosComPresenca)
+                      setShowModalPresenca(true)
+                      logger.success(`✅ ${alunosComPresenca.length} alunos carregados para nova chamada`, 'component')
+                      logger.info('📊 Dados dos alunos (nova chamada):', 'component', alunosComPresenca)
+                    } else {
+                      logger.error('❌ Erro ao carregar alunos da aula', 'component')
+                    }
                   }
                 } catch (error) {
-                  logger.error('❌ Erro ao carregar alunos da turma', 'component', error)
+                  logger.error('❌ Erro ao carregar dados de presença', 'component', error)
                 } finally {
                   setLoadingPresenca(false)
                 }
@@ -1010,3 +1139,4 @@ export default function DetalhesAulaPage({
     </div>
   )
 }
+

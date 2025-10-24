@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   Users, 
   Search, 
@@ -9,18 +10,13 @@ import {
 import { logger } from '../../lib/logger'
 import { professorService } from '../../services/professorService'
 import type { ProfessorComTurmas } from '../../types/diario'
-import DiarioProfessorPage from './DiarioProfessorPage'
 
-interface SelecionarProfessorPageProps {
-  onNavigate?: (page: string) => void
-}
-
-export default function SelecionarProfessorPage({ onNavigate }: SelecionarProfessorPageProps) {
+export default function SelecionarProfessorPage() {
+  const navigate = useNavigate()
   const [professores, setProfessores] = useState<ProfessorComTurmas[]>([])
   const [professoresFiltrados, setProfessoresFiltrados] = useState<ProfessorComTurmas[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [professorSelecionado, setProfessorSelecionado] = useState<ProfessorComTurmas | null>(null)
 
   // Carregar professores ao montar o componente
   useEffect(() => {
@@ -69,17 +65,12 @@ export default function SelecionarProfessorPage({ onNavigate }: SelecionarProfes
 
   const handleProfessorClick = (professor: ProfessorComTurmas) => {
     logger.info(`👤 Professor selecionado: ${professor.nome_usuario}`, 'component')
-    setProfessorSelecionado(professor)
-  }
-
-  const handleVoltarProfessor = () => {
-    setProfessorSelecionado(null)
+    // Navega para a página do diário do professor
+    navigate(`/diario/professor/${professor.usuario_id}`)
   }
 
   const handleVoltar = () => {
-    if (onNavigate) {
-      onNavigate('dashboard')
-    }
+    navigate('/dashboard')
   }
 
 
@@ -91,16 +82,6 @@ export default function SelecionarProfessorPage({ onNavigate }: SelecionarProfes
     return acc
   }, [] as ProfessorComTurmas[])
 
-  // Se um professor foi selecionado, mostra a tela do diário
-  if (professorSelecionado) {
-    return (
-      <DiarioProfessorPage 
-        professor={professorSelecionado}
-        onNavigate={onNavigate}
-        onVoltar={handleVoltarProfessor}
-      />
-    )
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">

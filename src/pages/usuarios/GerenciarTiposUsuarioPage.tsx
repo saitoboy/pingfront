@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   Shield, 
   Search, 
@@ -14,11 +15,8 @@ import { usuarioService } from '../../services/usuarioService'
 import EditarTipoUsuarioModal from './EditarTipoUsuarioModal'
 import type { UsuarioTipo } from '../../types/api'
 
-interface GerenciarTiposUsuarioPageProps {
-  onNavigate?: (page: string) => void
-}
-
-export default function GerenciarTiposUsuarioPage({ onNavigate }: GerenciarTiposUsuarioPageProps) {
+export default function GerenciarTiposUsuarioPage() {
+  const navigate = useNavigate()
   const [tiposUsuario, setTiposUsuario] = useState<UsuarioTipo[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,9 +59,7 @@ export default function GerenciarTiposUsuarioPage({ onNavigate }: GerenciarTipos
 
   // Navegação
   const handleVoltar = () => {
-    if (onNavigate) {
-      onNavigate('gerenciar-usuarios')
-    }
+    navigate('/usuarios/gerenciar')
   }
 
   // Ações dos tipos

@@ -16,9 +16,33 @@ export const authService = {
       const response = await api.post('/auth/login', dados);
       
       logger.apiResponse(response.status, '/auth/login');
-      logger.loginSuccess(response.data.dados?.usuario);
       
-      return response.data;
+      // A API retorna os dados diretamente, não dentro de 'dados'
+      const apiData = response.data;
+      
+      // Se a API retornou sucesso, estrutura a resposta no formato esperado
+      if (apiData.token) {
+        const structuredResponse = {
+          status: 'sucesso' as const,
+          mensagem: 'Login realizado com sucesso',
+          dados: {
+            token: apiData.token,
+            usuario: {
+              usuario_id: apiData.usuario_id,
+              nome_usuario: apiData.nome_usuario || apiData.nome,
+              email_usuario: dados.email,
+              tipo_usuario_id: apiData.tipo_usuario_id || 'professor',
+              created_at: new Date(),
+              updated_at: new Date()
+            }
+          }
+        };
+        
+        logger.loginSuccess(structuredResponse.dados.usuario);
+        return structuredResponse;
+      } else {
+        throw new Error('Token não encontrado na resposta da API');
+      }
     } catch (error: any) {
       logger.apiResponse(error.response?.status || 500, '/auth/login', error.response?.data);
       logger.loginError(error.response?.data?.mensagem || error.message);

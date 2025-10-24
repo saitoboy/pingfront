@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   Users, 
   Search, 
@@ -18,15 +19,12 @@ import { usuarioService } from '../../services/usuarioService'
 import EditarUsuarioModal from './EditarUsuarioModal'
 import type { Usuario, UsuarioTipo } from '../../types/api'
 
-interface GerenciarUsuariosPageProps {
-  onNavigate?: (page: string) => void
-}
-
 interface UsuarioComTipo extends Usuario {
   tipo_usuario_nome?: string
 }
 
-export default function GerenciarUsuariosPage({ onNavigate }: GerenciarUsuariosPageProps) {
+export default function GerenciarUsuariosPage() {
+  const navigate = useNavigate()
   const [usuarios, setUsuarios] = useState<UsuarioComTipo[]>([])
   const [tiposUsuario, setTiposUsuario] = useState<UsuarioTipo[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -79,15 +77,12 @@ export default function GerenciarUsuariosPage({ onNavigate }: GerenciarUsuariosP
 
   // Navegação
   const handleVoltar = () => {
-    if (onNavigate) {
-      onNavigate('dashboard')
-    }
+    logger.info('🔙 Voltando para o dashboard', 'component')
+    navigate('/dashboard')
   }
 
   const handleCriarUsuario = () => {
-    if (onNavigate) {
-      onNavigate('criar-usuario')
-    }
+    navigate('/usuarios/criar')
   }
 
   // Ações dos usuários
@@ -211,7 +206,7 @@ export default function GerenciarUsuariosPage({ onNavigate }: GerenciarUsuariosP
               </h3>
               <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => onNavigate && onNavigate('gerenciar-tipos-usuario')}
+                  onClick={() => navigate('/usuarios/tipos')}
                   className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   <Shield className="w-4 h-4 mr-2" />

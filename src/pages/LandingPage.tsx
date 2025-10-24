@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   GraduationCap, 
   Users, 
@@ -21,11 +22,8 @@ import {
   Zap
 } from 'lucide-react'
 
-interface LandingPageProps {
-  onNavigate?: (page: string) => void
-}
-
-export default function LandingPage({ onNavigate }: LandingPageProps) {
+export default function LandingPage() {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
@@ -97,7 +95,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             <div className="flex items-center space-x-4">
               {/* Botão Portal - Desktop */}
               <button 
-                onClick={() => onNavigate?.('login')}
+                onClick={() => navigate('/login')}
                 className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
               >
                 <School className="w-5 h-5" />
@@ -106,7 +104,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
 
               {/* Botão Portal - Mobile */}
               <button 
-                onClick={() => onNavigate?.('login')}
+                onClick={() => navigate('/login')}
                 className="md:hidden bg-gradient-to-r from-blue-500 to-blue-600 text-white p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 title="Acessar Portal"
               >
@@ -623,14 +621,14 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
                   <p className="text-center text-blue-100 mb-3 text-sm">Acesso ao Portal</p>
                   <div className="space-y-2">
                     <button 
-                      onClick={() => onNavigate?.('login')}
+                      onClick={() => navigate('/login')}
                       className="w-full bg-yellow-400 text-gray-900 py-2 rounded-lg font-semibold hover:bg-yellow-300 transition-all duration-300 flex items-center justify-center text-sm"
                     >
                       <School className="w-4 h-4 mr-2" />
                       Portal da Escola
                     </button>
                     <button 
-                      onClick={() => onNavigate?.('login')}
+                      onClick={() => navigate('/login')}
                       className="w-full bg-white/20 text-white py-2 rounded-lg font-semibold hover:bg-white/30 transition-all duration-300 flex items-center justify-center border border-white/30 text-sm"
                     >
                       <Users className="w-4 h-4 mr-2" />
@@ -647,7 +645,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
       {/* Botão Flutuante para Acesso Rápido */}
       <div className="fixed bottom-6 right-6 z-50">
         <button 
-          onClick={() => onNavigate?.('login')}
+          onClick={() => navigate('/login')}
           className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-full shadow-2xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-110 group"
           title="Acessar Portal da Escola"
         >

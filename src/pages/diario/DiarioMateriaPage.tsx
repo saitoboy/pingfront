@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { 
   BookOpen, 
   Calendar, 
@@ -6,7 +7,8 @@ import {
   Plus,
   Eye,
   Save,
-  X
+  X,
+  ArrowLeft
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import { aulaService } from '../../services/aulaService'
@@ -21,55 +23,74 @@ interface Aula {
   updated_at?: string
 }
 
-
-
-interface DiarioMateriaPageProps {
-  professor: {
-    professor_id: string
-    nome_usuario: string
-    email_usuario: string
-  }
-  turma: {
-    turma_id: string
-    nome_turma: string
-    turno: string
-    sala: string
-    nome_serie: string
-    ano: number
-  }
-  disciplina: {
-    disciplina_id: string
-    nome_disciplina: string
-  }
-  turmaDisciplinaProfessorId: string
-  onNavigate?: (page: string, data?: any) => void
-}
-
-export default function DiarioMateriaPage({ 
-  professor,
-  turma, 
-  disciplina, 
-  turmaDisciplinaProfessorId,
-  onNavigate
-}: DiarioMateriaPageProps) {
+export default function DiarioMateriaPage() {
+  const { turmaDisciplinaProfessorId } = useParams<{ turmaDisciplinaProfessorId: string }>()
+  const navigate = useNavigate()
+  const [professor, setProfessor] = useState<any>(null)
+  const [turma, setTurma] = useState<any>(null)
+  const [disciplina, setDisciplina] = useState<any>(null)
   const [aulas, setAulas] = useState<Aula[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState<Aula>({
-    turma_disciplina_professor_id: turmaDisciplinaProfessorId,
+    turma_disciplina_professor_id: turmaDisciplinaProfessorId || '',
     data_aula: new Date().toISOString().split('T')[0],
     hora_inicio: '08:00',
     hora_fim: '09:00'
   })
 
   useEffect(() => {
-    carregarAulas()
-  }, [turma.turma_id, disciplina.disciplina_id])
+    if (turmaDisciplinaProfessorId) {
+      carregarDadosMateria()
+    }
+  }, [turmaDisciplinaProfessorId])
+
+  useEffect(() => {
+    if (turmaDisciplinaProfessorId) {
+      carregarAulas()
+    }
+  }, [turmaDisciplinaProfessorId])
+
+  const carregarDadosMateria = async () => {
+    try {
+      setLoading(true)
+      logger.info(`📚 Carregando dados da matéria: ${turmaDisciplinaProfessorId}`, 'component')
+      
+      // TODO: Implementar serviço para buscar dados da matéria
+      // Por enquanto, vamos usar dados mockados
+      setProfessor({
+        professor_id: '550e8400-e29b-41d4-a716-446655440003', // UUID mockado
+        nome_usuario: 'Professor Teste',
+        email_usuario: 'professor@teste.com'
+      })
+      
+      setTurma({
+        turma_id: '550e8400-e29b-41d4-a716-446655440000', // UUID mockado
+        nome_turma: '1º Ano A',
+        turno: 'Manhã',
+        sala: 'Sala 101',
+        nome_serie: '1º Ano',
+        ano: 2025
+      })
+      
+      setDisciplina({
+        disciplina_id: '550e8400-e29b-41d4-a716-446655440002', // UUID mockado
+        nome_disciplina: 'Matemática'
+      })
+      
+      logger.success('✅ Dados da matéria carregados', 'component')
+    } catch (error) {
+      logger.error('❌ Erro ao carregar dados da matéria', 'component', error)
+      navigate('/diario')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const carregarAulas = async () => {
     try {
       setLoading(true)
-      logger.info(`📚 Carregando aulas: ${disciplina.nome_disciplina} - ${turma.nome_turma}`, 'component')
+      logger.info(`📚 Carregando aulas: ${disciplina?.nome_disciplina} - ${turma?.nome_turma}`, 'component')
       
       const response = await aulaService.listarAulasPorVinculacao(turmaDisciplinaProfessorId)
       
@@ -133,13 +154,8 @@ export default function DiarioMateriaPage({
   }
 
   const handleVisualizarAula = (aula: Aula) => {
-    if (onNavigate) {
-      onNavigate('detalhes-aula', {
-        aula,
-        turma,
-        disciplina,
-        professor
-      })
+    if (aula.aula_id) {
+      navigate(`/diario/aula/${aula.aula_id}`)
     }
   }
 
@@ -159,9 +175,16 @@ export default function DiarioMateriaPage({
         <div className="mb-8">
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate('/diario')}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span>Voltar</span>
+              </button>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Diário da Matéria</h1>
-                <p className="text-gray-600 mt-1">{disciplina.nome_disciplina} - {turma.nome_serie} {turma.nome_turma}</p>
+                <p className="text-gray-600 mt-1">{disciplina?.nome_disciplina} - {turma?.nome_serie} {turma?.nome_turma}</p>
               </div>
             </div>
             <button

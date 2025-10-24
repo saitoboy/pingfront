@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   Mail, 
   Lock, 
@@ -16,10 +17,6 @@ import { validators } from '../../lib/utils'
 import { usuarioService } from '../../services/usuarioService'
 import type { UsuarioTipo } from '../../types/api'
 
-interface CriarUsuarioPageProps {
-  onNavigate?: (page: string) => void
-}
-
 interface FormData {
   nome_usuario: string
   email_usuario: string
@@ -28,7 +25,8 @@ interface FormData {
   tipo_usuario_id: string
 }
 
-export default function CriarUsuarioPage({ onNavigate }: CriarUsuarioPageProps) {
+export default function CriarUsuarioPage() {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState<FormData>({
     nome_usuario: '',
     email_usuario: '',
@@ -166,9 +164,7 @@ export default function CriarUsuarioPage({ onNavigate }: CriarUsuarioPageProps) 
 
   // Navegação
   const handleVoltar = () => {
-    if (onNavigate) {
-      onNavigate('dashboard')
-    }
+    navigate('/dashboard')
   }
 
   return (

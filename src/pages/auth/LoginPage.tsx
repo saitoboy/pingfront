@@ -1,15 +1,13 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { logger } from '../../lib/logger'
-import api from '../../lib/api'
+import { useAuth } from '../../contexts/AuthContext'
 import bgAzul from '../../assets/images/bg azul.png'
 
-interface LoginPageProps {
-  onLogin?: (userData: { name: string; email: string }) => void
-  onNavigate?: (page: string) => void
-}
-
-export default function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
+export default function LoginPage() {
+  const navigate = useNavigate()
+  const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -29,92 +27,32 @@ export default function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
     setError(null)
     
     try {
-      logger.info('🔐 Tentativa de login via API...')
+      logger.info('🔐 Tentativa de login...')
       
-      // Log dos dados que estão sendo enviados (SEM SENHA!)
-      logger.info('📤 Dados sendo enviados:')
-      console.log({ email: email, senha: '***OCULTA***' })
+      // Usa o AuthContext para fazer login
+      await login(email, password)
       
-      // Chamada real para a API de login
-      const response = await api.post('/auth/login', {
-        email: email,
-        senha: password
-      })
-
-      logger.info('📥 Resposta da API:')
-      console.log(response.data)
-
-      // Debug: vamos ver os campos individualmente
-      logger.info('🔍 Debug da resposta:')
-      console.log('Token existe?', !!response.data.token)
-      console.log('Usuario_id existe?', !!response.data.usuario_id)
-
-      // Verifica se o login foi bem-sucedido (se retornou token)
-      if (response.data.token) {
-        logger.info('✅ Condição de sucesso passou! Processando login...')
-        
-        // Salva o token no localStorage
-        localStorage.setItem('authToken', response.data.token)
-        
-        // Extrai os dados do usuário da resposta
-        const nomeFromEmail = email.split('@')[0].replace(/[^a-zA-Z]/g, '')
-        const nomeCapitalizado = nomeFromEmail.charAt(0).toUpperCase() + nomeFromEmail.slice(1).toLowerCase()
-        
-        const userData = {
-          name: response.data.nome_usuario || 
-                response.data.nome || 
-                response.data.name || 
-                nomeCapitalizado,
-          email: email, // Usa o email digitado
-          id: response.data.usuario_id || 'temp-id'
-        }
-        
-        logger.success('✅ Login realizado com sucesso via API!')
-        logger.info('👤 Dados do usuário:')
-        console.log(userData)
-        
-        // Chama a função de callback se foi fornecida
-        if (onLogin) {
-          logger.info('🚀 Chamando callback onLogin...')
-          onLogin(userData)
-        } else {
-          logger.warning('⚠️ Callback onLogin não foi fornecido!')
-        }
-      } else {
-        logger.error('❌ Falha na condição de sucesso!')
-        logger.error('Token:', response.data.token)
-        logger.error('Usuario_id:', response.data.usuario_id)
-      }
+      logger.success('✅ Login realizado com sucesso!')
+      
+      // Redireciona para o dashboard
+      navigate('/dashboard')
+      
     } catch (error: any) {
-      logger.error('❌ Erro no login via API')
-      
-      // Logs detalhados para debug
-      logger.error('🔍 Status do erro:')
-      console.log(error.response?.status)
-      logger.error('🔍 Dados do erro:')
-      console.log(error.response?.data)
-      logger.error('🔍 Headers:')
-      console.log(error.response?.headers)
-      logger.error('🔍 Erro completo:')
+      logger.error('❌ Erro no login')
       console.log(error)
       
-      // Trata diferentes tipos de erro da API
-      if (error.response?.status === 401) {
+      // Trata diferentes tipos de erro
+      if (error.message?.includes('401') || error.message?.includes('credenciais')) {
         setError('Email ou senha incorretos!')
-      } else if (error.response?.status === 400) {
+      } else if (error.message?.includes('400')) {
         setError('Dados inválidos fornecidos!')
-      } else if (error.response?.status === 500) {
+      } else if (error.message?.includes('500')) {
         setError('Erro interno do servidor. Tente novamente mais tarde.')
-      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network') || error.message.includes('ERR_NETWORK')) {
+      } else if (error.message?.includes('Network') || error.message?.includes('ERR_NETWORK')) {
         setError('Erro de conexão. Verifique se o servidor está rodando.')
-      } else if (error.response?.data?.message) {
-        setError(error.response.data.message)
       } else {
-        setError(`Erro: ${error.response?.status || error.message || 'Tente novamente'}`)
+        setError(error.message || 'Erro ao fazer login. Tente novamente.')
       }
-      
-      logger.error('🔍 Erro detalhado:')
-      console.log(error.response?.data || error.message)
     } finally {
       setIsLoading(false)
     }
@@ -136,7 +74,7 @@ export default function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
         {/* Botão Voltar */}
         <div className="w-full flex justify-start">
           <button 
-            onClick={() => onNavigate?.('landing')}
+            onClick={() => navigate('/')}
             className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors duration-300 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg hover:bg-white/20"
           >
             <ArrowLeft className="w-4 h-4" />

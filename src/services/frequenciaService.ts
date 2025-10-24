@@ -86,6 +86,28 @@ class FrequenciaService {
   }
 
   /**
+   * Buscar alunos matriculados em uma aula específica
+   */
+  static async buscarAlunosPorAula(aulaId: string): Promise<FrequenciaResponse> {
+    try {
+      logger.info(`👥 Buscando alunos da aula: ${aulaId}`, 'service')
+      const response = await api.get(`/matricula-aluno/aula/${aulaId}`)
+      
+      // Converter success para sucesso para manter consistência
+      const data = response.data
+      if (data.success !== undefined) {
+        data.sucesso = data.success
+        delete data.success
+      }
+      
+      return data
+    } catch (error) {
+      logger.error('❌ Erro ao buscar alunos da aula', 'service', error)
+      throw error
+    }
+  }
+
+  /**
    * Criar frequência individual
    */
   static async criarFrequencia(dadosFrequencia: {
