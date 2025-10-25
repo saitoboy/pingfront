@@ -1,0 +1,47 @@
+# Dependências
+node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Arquivos de build
+dist
+build
+.cache
+
+# Arquivos de desenvolvimento
+.git
+.gitignore
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Testes
+coverage
+.nyc_output
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Documentação
+*.md
+docs
+MIGRATION_GUIDE.md
+RESUMO-REFATORACAO-ROTAS.md
+ROTAS-EXPLICACAO.md
+
+# Outros
+.DS_Store
+Thumbs.db
+.eslintrc
+.prettierrc
+eslint.config.js
+

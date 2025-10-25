@@ -126,7 +126,10 @@ class Logger {
   }
 
   loginSuccess(user: any) {
-    this.success(`Login realizado com sucesso`, 'auth', { id: user.id, email: user.email });
+    this.success(`Login realizado com sucesso`, 'auth', { 
+      id: user?.id || user?.usuario_id || 'N/A', 
+      email: user?.email || 'N/A' 
+    });
   }
 
   loginError(error: string) {
