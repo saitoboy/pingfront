@@ -1,8 +1,16 @@
 import axios from 'axios';
 
 // Configuração base da API
+// Usa a variável de ambiente VITE_API_URL ou fallback para localhost em desenvolvimento
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3003';
+
+// Log da URL da API em desenvolvimento (ajuda no debug)
+if (import.meta.env.DEV) {
+  console.log('🔗 API conectando em:', baseURL);
+}
+
 const api = axios.create({
-  baseURL: 'http://localhost:3003',
+  baseURL,
   headers: {
     'Content-Type': 'application/json'
   }
