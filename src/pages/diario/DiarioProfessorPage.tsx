@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
-  ArrowLeft, 
   BookOpen, 
   Calendar, 
   Clock,
   GraduationCap,
-  Users,
   Eye
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import { professorService } from '../../services/professorService'
 import type { ProfessorComTurmas } from '../../types/diario'
-import DiarioMateriaPage from './DiarioMateriaPage'
 
 interface TurmaDisciplina {
   turma_id: string;
@@ -94,10 +91,6 @@ export default function DiarioProfessorPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleVoltar = () => {
-    navigate('/diario')
   }
 
   // Agrupar turmas e disciplinas

@@ -26,7 +26,6 @@ interface Aula {
 export default function DiarioMateriaPage() {
   const { turmaDisciplinaProfessorId } = useParams<{ turmaDisciplinaProfessorId: string }>()
   const navigate = useNavigate()
-  const [professor, setProfessor] = useState<any>(null)
   const [turma, setTurma] = useState<any>(null)
   const [disciplina, setDisciplina] = useState<any>(null)
   const [aulas, setAulas] = useState<Aula[]>([])
@@ -58,11 +57,6 @@ export default function DiarioMateriaPage() {
       
       // TODO: Implementar serviço para buscar dados da matéria
       // Por enquanto, vamos usar dados mockados
-      setProfessor({
-        professor_id: '550e8400-e29b-41d4-a716-446655440003', // UUID mockado
-        nome_usuario: 'Professor Teste',
-        email_usuario: 'professor@teste.com'
-      })
       
       setTurma({
         turma_id: '550e8400-e29b-41d4-a716-446655440000', // UUID mockado
@@ -92,7 +86,7 @@ export default function DiarioMateriaPage() {
       setLoading(true)
       logger.info(`📚 Carregando aulas: ${disciplina?.nome_disciplina} - ${turma?.nome_turma}`, 'component')
       
-      const response = await aulaService.listarAulasPorVinculacao(turmaDisciplinaProfessorId)
+      const response = await aulaService.listarAulasPorVinculacao(turmaDisciplinaProfessorId || '')
       
       if (response.status === 'sucesso' && response.dados) {
         setAulas(response.dados)
@@ -112,7 +106,7 @@ export default function DiarioMateriaPage() {
 
   const handleNovaAula = () => {
     setFormData({
-      turma_disciplina_professor_id: turmaDisciplinaProfessorId,
+      turma_disciplina_professor_id: turmaDisciplinaProfessorId || '',
       data_aula: new Date().toISOString().split('T')[0],
       hora_inicio: '08:00',
       hora_fim: '09:00'
@@ -125,7 +119,7 @@ export default function DiarioMateriaPage() {
       logger.info(`💾 Salvando nova aula: ${formData.data_aula}`, 'component')
       
       const response = await aulaService.criarAula({
-        turma_disciplina_professor_id: turmaDisciplinaProfessorId,
+        turma_disciplina_professor_id: turmaDisciplinaProfessorId || '',
         data_aula: formData.data_aula,
         hora_inicio: formData.hora_inicio,
         hora_fim: formData.hora_fim
@@ -146,7 +140,7 @@ export default function DiarioMateriaPage() {
   const handleCancelarAula = () => {
     setShowForm(false)
     setFormData({
-      turma_disciplina_professor_id: turmaDisciplinaProfessorId,
+      turma_disciplina_professor_id: turmaDisciplinaProfessorId || '',
       data_aula: new Date().toISOString().split('T')[0],
       hora_inicio: '08:00',
       hora_fim: '09:00'

@@ -13,12 +13,13 @@ const logStyles = {
   route: { color: '#8B5CF6', emoji: '🛣️' },      // Roxo claro
   form: { color: '#EC4899', emoji: '📋' },       // Rosa claro
   cache: { color: '#06B6D4', emoji: '💾' },      // Ciano claro
+  page: { color: '#14B8A6', emoji: '📄' },       // Teal
   general: { color: '#6B7280', emoji: '📝' },    // Cinza
   default: { color: '#6B7280', emoji: '📝' }     // Cinza
 };
 
 // 🏷️ CATEGORIAS DE LOGS
-type LogCategory = 'api' | 'auth' | 'component' | 'service' | 'ui' | 'route' | 'form' | 'cache' | 'general';
+export type LogCategory = 'api' | 'auth' | 'component' | 'service' | 'ui' | 'route' | 'form' | 'cache' | 'general' | 'page';
 type LogLevel = 'success' | 'error' | 'warning' | 'info' | 'debug';
 
 interface LogConfig {
