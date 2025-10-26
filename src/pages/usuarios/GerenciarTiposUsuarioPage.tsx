@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { 
   Shield, 
   Search, 
   Plus, 
   Edit, 
   Trash2, 
-  ArrowLeft,
   User,
   AlertCircle
 } from 'lucide-react'
@@ -16,7 +14,6 @@ import EditarTipoUsuarioModal from './EditarTipoUsuarioModal'
 import type { UsuarioTipo } from '../../types/api'
 
 export default function GerenciarTiposUsuarioPage() {
-  const navigate = useNavigate()
   const [tiposUsuario, setTiposUsuario] = useState<UsuarioTipo[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -56,11 +53,6 @@ export default function GerenciarTiposUsuarioPage() {
     const matchSearch = tipo.nome_tipo.toLowerCase().includes(searchTerm.toLowerCase())
     return matchSearch
   })
-
-  // Navegação
-  const handleVoltar = () => {
-    navigate('/usuarios/gerenciar')
-  }
 
   // Ações dos tipos
   const handleEditarTipo = (tipo: UsuarioTipo) => {

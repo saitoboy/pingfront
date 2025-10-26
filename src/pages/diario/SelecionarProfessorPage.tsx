@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { 
   Users, 
   Search, 
-  ArrowLeft,
   Eye,
   User
 } from 'lucide-react'
@@ -68,11 +67,6 @@ export default function SelecionarProfessorPage() {
     // Navega para a página do diário do professor
     navigate(`/diario/professor/${professor.usuario_id}`)
   }
-
-  const handleVoltar = () => {
-    navigate('/dashboard')
-  }
-
 
   // Agrupar professores únicos (sem duplicatas)
   const professoresUnicos = professoresFiltrados.reduce((acc, prof) => {

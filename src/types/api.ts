@@ -24,7 +24,7 @@ export interface Usuario {
   usuario_id: string;
   nome_usuario: string;
   email_usuario: string;
-  senha_usuario: string;
+  senha_usuario?: string;
   tipo_usuario_id: TipoUsuario;
   created_at: Date;
   updated_at: Date;

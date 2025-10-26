@@ -6,7 +6,6 @@ import {
   Plus, 
   Edit, 
   Trash2, 
-  ArrowLeft,
   Filter,
   User,
   Mail,
@@ -74,12 +73,6 @@ export default function GerenciarUsuariosPage() {
     const matchTipo = !filterTipo || usuario.tipo_usuario_id === filterTipo
     return matchSearch && matchTipo
   })
-
-  // Navegação
-  const handleVoltar = () => {
-    logger.info('🔙 Voltando para o dashboard', 'component')
-    navigate('/dashboard')
-  }
 
   const handleCriarUsuario = () => {
     navigate('/usuarios/criar')

@@ -44,7 +44,7 @@ export default function AlocarProfessorModal({
 
   const adicionarAlocacao = () => {
     if (!turmaSelecionada || !disciplinaSelecionada) {
-      logger.warn('⚠️ Turma e disciplina devem ser selecionadas');
+      logger.warning('⚠️ Turma e disciplina devem ser selecionadas');
       return;
     }
 
@@ -54,7 +54,7 @@ export default function AlocarProfessorModal({
     );
 
     if (jaExiste) {
-      logger.warn('⚠️ Esta combinação já foi adicionada');
+      logger.warning('⚠️ Esta combinação já foi adicionada');
       return;
     }
 
@@ -77,12 +77,12 @@ export default function AlocarProfessorModal({
 
   const handleConfirmar = () => {
     if (!professorSelecionado) {
-      logger.warn('⚠️ Selecione um professor');
+      logger.warning('⚠️ Selecione um professor');
       return;
     }
 
     if (alocacoesTemp.length === 0) {
-      logger.warn('⚠️ Adicione pelo menos uma alocação');
+      logger.warning('⚠️ Adicione pelo menos uma alocação');
       return;
     }
 
