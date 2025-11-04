@@ -20,10 +20,14 @@ export interface AlunoFrequencia {
 }
 
 export interface FrequenciaResponse {
-  sucesso: boolean
-  mensagem: string
-  dados?: Frequencia | Frequencia[] | AlunoFrequencia[]
+  success: boolean
+  message: string
+  data?: Frequencia | Frequencia[] | AlunoFrequencia[]
   total?: number
+  // Manter compatibilidade com versões antigas
+  sucesso?: boolean
+  mensagem?: string
+  dados?: Frequencia | Frequencia[] | AlunoFrequencia[]
 }
 
 class FrequenciaService {
