@@ -17,28 +17,84 @@ export const authService = {
       
       logger.apiResponse(response.status, '/auth/login');
       
-      // A API retorna os dados diretamente, não dentro de 'dados'
+      // A API retorna apenas o token
       const apiData = response.data;
       
-      // Se a API retornou sucesso, estrutura a resposta no formato esperado
+      // Se a API retornou sucesso com token, busca os dados completos do usuário
       if (apiData.token) {
+        // Salva temporariamente o token para fazer a requisição ao /auth/me
+        const tempToken = apiData.token;
+        
+        // Faz requisição ao /auth/me para obter os dados completos do usuário
+        logger.apiRequest('GET', '/auth/me');
+        
+        const meResponse = await api.get('/auth/me', {
+          headers: {
+            Authorization: `Bearer ${tempToken}`
+          }
+        });
+        
+        logger.apiResponse(meResponse.status, '/auth/me');
+        
+        // Extrai os dados do usuário da resposta
+        const usuarioData = meResponse.data.usuario;
+        
+        if (!usuarioData) {
+          throw new Error('Dados do usuário não encontrados na resposta do /auth/me');
+        }
+        
+        // O tipo_usuario_id vem como UUID, precisamos buscar o nome do tipo
+        let tipoUsuarioNome: 'admin' | 'secretario' | 'professor' = 'professor'; // Fallback
+        const tipoUsuarioUUID = usuarioData.tipo_usuario_id;
+        
+        try {
+          // Busca os tipos de usuário para mapear UUID -> nome
+          logger.apiRequest('GET', '/usuario-tipo');
+          const tiposResponse = await api.get('/usuario-tipo', {
+            headers: {
+              Authorization: `Bearer ${tempToken}`
+            }
+          });
+          
+          const tiposUsuario = tiposResponse.data.dados || tiposResponse.data || [];
+          
+          // Encontra o tipo correspondente ao UUID
+          const tipoEncontrado = tiposUsuario.find((tipo: any) => 
+            tipo.tipo_usuario_id === tipoUsuarioUUID
+          );
+          
+          if (tipoEncontrado && tipoEncontrado.nome_tipo) {
+            tipoUsuarioNome = tipoEncontrado.nome_tipo as 'admin' | 'secretario' | 'professor';
+            logger.info(`Tipo mapeado: ${tipoUsuarioUUID} -> ${tipoUsuarioNome}`, 'auth');
+          } else {
+            logger.error(`Tipo de usuário com UUID "${tipoUsuarioUUID}" não encontrado`, 'auth');
+          }
+        } catch (error) {
+          logger.error('Erro ao buscar tipos de usuário para mapeamento', 'auth', error);
+          // Mantém o fallback 'professor'
+        }
+        
+        // Estrutura a resposta no formato esperado
+        // tipo_usuario_id deve ser o nome do tipo ('admin', 'secretario', 'professor') para compatibilidade
         const structuredResponse = {
           status: 'sucesso' as const,
           mensagem: 'Login realizado com sucesso',
           dados: {
-            token: apiData.token,
+            token: tempToken,
             usuario: {
-              usuario_id: apiData.usuario_id,
-              nome_usuario: apiData.nome_usuario || apiData.nome,
-              email_usuario: dados.email,
-              tipo_usuario_id: apiData.tipo_usuario_id || 'professor',
-              created_at: new Date(),
-              updated_at: new Date()
+              usuario_id: usuarioData.usuario_id,
+              nome_usuario: usuarioData.nome_usuario,
+              email_usuario: usuarioData.email_usuario,
+              tipo_usuario_id: tipoUsuarioNome, // Nome do tipo para compatibilidade com Sidebar
+              created_at: new Date(usuarioData.created_at),
+              updated_at: new Date(usuarioData.updated_at)
             }
           }
         };
         
         logger.loginSuccess(structuredResponse.dados.usuario);
+        logger.info('Dados do usuário obtidos do /auth/me:', 'auth', structuredResponse.dados.usuario);
+        
         return structuredResponse;
       } else {
         throw new Error('Token não encontrado na resposta da API');

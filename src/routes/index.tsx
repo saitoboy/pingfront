@@ -4,6 +4,7 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/auth/LoginPage';
 import DashboardPage from '../pages/dashboard/DashboardPage';
+import DashboardProfessorPage from '../pages/dashboard/DashboardProfessorPage';
 import FichaCadastroPage from '../pages/cadastro/FichaCadastroPage';
 import CriarUsuarioPage from '../pages/usuarios/CriarUsuarioPage';
 import GerenciarUsuariosPage from '../pages/usuarios/GerenciarUsuariosPage';
@@ -15,6 +16,7 @@ import DiarioProfessorPage from '../pages/diario/DiarioProfessorPage';
 import DiarioMateriaPage from '../pages/diario/DiarioMateriaPage';
 import DetalhesAulaPage from '../pages/diario/DetalhesAulaPage';
 import LancarNotasPage from '../pages/diario/LancarNotasPage';
+import MeuDiarioPage from '../pages/diario/MeuDiarioPage';
 
 // 🔐 Componente de Rota Protegida
 interface ProtectedRouteProps {
@@ -72,6 +74,19 @@ function PublicRoute({ children }: ProtectedRouteProps) {
   return <>{children}</>;
 }
 
+// 🎯 Componente para escolher o dashboard correto baseado no tipo de usuário
+function DashboardRouter() {
+  const { usuario } = useAuth();
+  
+  // Professores veem o dashboard específico deles
+  if (usuario?.tipo_usuario_id === 'professor') {
+    return <DashboardProfessorPage />;
+  }
+  
+  // Admin e Secretário veem o dashboard padrão
+  return <DashboardPage />;
+}
+
 // 🗺️ DEFINIÇÃO DAS ROTAS
 export default function AppRoutes() {
   return (
@@ -94,7 +109,7 @@ export default function AppRoutes() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardPage />
+              <DashboardRouter />
             </ProtectedRoute>
           }
         />
@@ -149,6 +164,16 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <GestaoEscolarPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 📚 ROTA DO MEU DIÁRIO (para professores) */}
+        <Route
+          path="/meu-diario"
+          element={
+            <ProtectedRoute>
+              <MeuDiarioPage />
             </ProtectedRoute>
           }
         />
