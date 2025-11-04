@@ -137,14 +137,14 @@ export default function LancarNotasPageWrapper() {
     } catch (error) {
       logger.error('❌ Erro ao carregar dados', 'component', error)
       console.error('❌ Erro completo:', error)
-      navigate('/diario')
+      navigate(-1)
     } finally {
       setLoading(false)
     }
   }
 
   const handleVoltar = () => {
-    navigate('/diario')
+    navigate(-1)
   }
 
   if (loading) {

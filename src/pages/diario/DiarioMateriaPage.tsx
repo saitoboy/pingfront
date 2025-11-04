@@ -170,11 +170,10 @@ export default function DiarioMateriaPage() {
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate('/diario')}
+                onClick={() => navigate(-1)}
                 className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span>Voltar</span>
               </button>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Diário da Matéria</h1>

@@ -509,11 +509,11 @@ export default function DetalhesAulaPage() {
         {/* Botão Voltar */}
         <div className="mb-6">
           <button
-            onClick={() => navigate('/diario')}
+            onClick={() => navigate(-1)}
             className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            <span>Voltar ao Diário</span>
+            <span>Voltar</span>
           </button>
         </div>
 
