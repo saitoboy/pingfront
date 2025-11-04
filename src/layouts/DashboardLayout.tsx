@@ -53,6 +53,11 @@ const routeConfig: Record<string, { title: string; description: string; icon: an
     description: 'Visualize e gerencie o diário escolar dos professores',
     icon: BookOpen
   },
+  '/meu-diario': {
+    title: 'Meu Diário Escolar',
+    description: 'Gerencie seu próprio diário escolar',
+    icon: BookOpen
+  },
 };
 
 // Função para encontrar a configuração da rota mais próxima
@@ -105,7 +110,8 @@ export default function DashboardLayout() {
     if (location.pathname === '/usuarios/tipos') return 'gerenciar-tipos-usuario';
     if (location.pathname === '/alocacao-professor') return 'alocacao-professor';
     if (location.pathname === '/gestao-escolar') return 'gestao-escolar';
-    if (location.pathname.startsWith('/diario')) return 'diario';
+    if (location.pathname === '/meu-diario') return 'meu-diario';
+    if (location.pathname.startsWith('/diario')) return 'diario-escolar';
     return 'dashboard';
   };
 
@@ -120,6 +126,7 @@ export default function DashboardLayout() {
       'alocacao-professor': '/alocacao-professor',
       'gestao-escolar': '/gestao-escolar',
       'diario-escolar': '/diario',
+      'meu-diario': '/meu-diario',
     };
 
     const path = routeMap[itemId];

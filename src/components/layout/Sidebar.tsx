@@ -133,9 +133,21 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
       return todosMenus.filter(item => item.id !== 'gerenciar-usuarios')
     }
 
-    // PROFESSOR: nenhum menu (por enquanto)
+    // PROFESSOR: apenas Dashboard e Meu Diário
     if (tipoUsuario === 'professor') {
-      return []
+      return todosMenus.filter(item => 
+        item.id === 'dashboard' || item.id === 'diario-escolar'
+      ).map(item => {
+        // Renomeia o menu "Diário Escolar" para "Meu Diário" para professores
+        if (item.id === 'diario-escolar') {
+          return {
+            ...item,
+            label: 'Meu Diário',
+            onClick: () => handleMenuClick('meu-diario')
+          }
+        }
+        return item
+      })
     }
 
     // Fallback: se não houver usuário logado, retorna array vazio

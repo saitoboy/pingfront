@@ -74,5 +74,53 @@ export const professorService = {
       
       throw error;
     }
+  },
+
+  // 👤 BUSCAR MEU PERFIL - Buscar perfil do professor logado
+  async buscarMeuPerfil(): Promise<ApiResponse<any>> {
+    try {
+      logger.info('👤 Buscando perfil do professor logado...', 'service');
+      logger.apiRequest('GET', '/professor/me');
+      
+      const response = await api.get('/professor/me');
+      
+      logger.apiResponse(response.status, '/professor/me');
+      logger.success('Perfil do professor carregado com sucesso', 'service');
+      
+      return {
+        status: 'sucesso',
+        mensagem: 'Perfil do professor carregado com sucesso',
+        dados: response.data.professor
+      };
+    } catch (error: any) {
+      logger.apiResponse(error.response?.status || 500, '/professor/me', error.response?.data);
+      logger.error(`Erro ao buscar perfil do professor: ${error.response?.data?.mensagem || error.message}`, 'service');
+      
+      throw error;
+    }
+  },
+
+  // 📚 LISTAR MINHAS TURMAS - Buscar turmas e disciplinas do professor logado
+  async listarMinhasTurmas(): Promise<ApiResponse<any[]>> {
+    try {
+      logger.info('📚 Listando turmas do professor logado...', 'service');
+      logger.apiRequest('GET', '/professor/minhas-turmas');
+      
+      const response = await api.get('/professor/minhas-turmas');
+      
+      logger.apiResponse(response.status, '/professor/minhas-turmas');
+      logger.success('Turmas do professor logado carregadas com sucesso', 'service');
+      
+      return {
+        status: 'sucesso',
+        mensagem: 'Turmas do professor logado carregadas com sucesso',
+        dados: response.data.turmas || []
+      };
+    } catch (error: any) {
+      logger.apiResponse(error.response?.status || 500, '/professor/minhas-turmas', error.response?.data);
+      logger.error(`Erro ao listar turmas do professor logado: ${error.response?.data?.mensagem || error.message}`, 'service');
+      
+      throw error;
+    }
   }
 };
