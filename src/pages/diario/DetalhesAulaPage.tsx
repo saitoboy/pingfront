@@ -351,12 +351,13 @@ export default function DetalhesAulaPage() {
       
       const frequencias = alunosTurma.map(aluno => ({
         matricula_aluno_id: aluno.matricula_aluno_id,
-        presenca: aluno.presenca ?? true
+        presenca: aluno.presenca === true
       }))
       
       const response = await frequenciaService.registrarFrequenciaLote(aula?.aula_id || '', frequencias)
+      console.log(response);
       
-      if (response.sucesso) {
+      if (response.success) {
         setShowModalPresenca(false)
         setAlunosTurma([])
         logger.success('✅ Presença registrada com sucesso', 'component')
@@ -558,11 +559,11 @@ export default function DetalhesAulaPage() {
                   // Buscar frequências da aula diretamente
                   const frequenciasExistentes = await frequenciaService.buscarFrequenciasPorAula(aula!.aula_id)
                   
-                  if (frequenciasExistentes.sucesso && frequenciasExistentes.dados && (frequenciasExistentes.dados as any[]).length > 0) {
+                  if (frequenciasExistentes.sucesso && frequenciasExistentes.data && (frequenciasExistentes.data as any[]).length > 0) {
                     // Se já existem frequências, usar os dados que vêm da API
-                    logger.info('📊 Dados brutos da API:', 'component', frequenciasExistentes.dados)
+                    logger.info('📊 Dados brutos da API:', 'component', frequenciasExistentes.data)
                     
-                    const alunosComPresenca = (frequenciasExistentes.dados as any[]).map(freq => ({
+                    const alunosComPresenca = (frequenciasExistentes.data as any[]).map(freq => ({
                       matricula_aluno_id: freq.matricula_aluno_id,
                       ra: freq.ra,
                       nome_aluno: freq.nome_aluno,
@@ -990,32 +991,42 @@ export default function DetalhesAulaPage() {
 
                     {/* Lista de Alunos */}
                     <div className="space-y-3">
-                    {alunosTurma.map((aluno) => (
-                      <div key={aluno.matricula_aluno_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                            {aluno.nome_aluno?.charAt(0)?.toUpperCase() || 'A'}
+                      {alunosTurma.map((aluno) => {
+                        const isPresente = aluno.presenca === true;
+                        const labelPresenca = isPresente ? 'Presente' : 'Falta';
+
+                        return (
+                          <div
+                            key={aluno.matricula_aluno_id}
+                            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                          >
+                            <div className="flex items-center space-x-4">
+                              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                                {aluno.nome_aluno?.charAt(0)?.toUpperCase() || 'A'}
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-gray-900">
+                                  {aluno.nome_aluno || 'Nome não informado'} {aluno.sobrenome_aluno || ''}
+                                </h4>
+                                <p className="text-sm text-gray-600">RA: {aluno.ra || 'N/A'}</p>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => handleTogglePresenca(aluno.matricula_aluno_id)}
+                              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                                isPresente
+                                  ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                  : 'bg-red-100 text-red-800 hover:bg-red-200'
+                              }`}
+                            >
+                              {labelPresenca}
+                            </button>
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-gray-900">
-                              {aluno.nome_aluno || 'Nome não informado'} {aluno.sobrenome_aluno || ''}
-                            </h4>
-                            <p className="text-sm text-gray-600">RA: {aluno.ra || 'N/A'}</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleTogglePresenca(aluno.matricula_aluno_id)}
-                          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                            aluno.presenca
-                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                              : 'bg-red-100 text-red-800 hover:bg-red-200'
-                          }`}
-                        >
-                          {aluno.presenca ? 'Presente' : 'Falta'}
-                        </button>
-                      </div>
-                    ))}
+                        );
+                      })}
                     </div>
+
                   </>
                 )}
               </div>
@@ -1025,8 +1036,8 @@ export default function DetalhesAulaPage() {
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">
                     Total: {alunosTurma.length} alunos | 
-                    Presentes: {alunosTurma.filter(a => a.presenca).length} | 
-                    Faltas: {alunosTurma.filter(a => !a.presenca).length}
+                    Presentes: {alunosTurma.filter(a => a.presenca === true).length} | 
+                    Faltas: {alunosTurma.filter(a => a.presenca !== true).length}
                   </div>
                   <div className="flex items-center space-x-3">
                     <button
