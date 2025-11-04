@@ -2,6 +2,8 @@ import { logger } from '../../lib/logger'
 import { LayoutDashboard, UserPlus, Settings, LogOut, BookUser, School, BookOpen } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Icone from '../../assets/images/icone.png'
+import { useAuth } from '../../contexts/AuthContext'
+import { useMemo, useCallback } from 'react'
 
 interface MenuItem {
   id: string
@@ -19,101 +21,126 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogout }: SidebarProps) {
+  const { usuario } = useAuth()
+  const tipoUsuario = usuario?.tipo_usuario_id
+  console.log('%o', usuario); 
 
-  const menuItems: MenuItem[] = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      active: activeItem === 'dashboard',
-      onClick: () => handleMenuClick('dashboard')
-    },
-    {
-      id: 'ficha-cadastro',
-      label: 'Ficha de Cadastro',
-      icon: UserPlus,
-      active: activeItem === 'ficha-cadastro',
-      onClick: () => handleMenuClick('ficha-cadastro')
-    },
-    {
-      id: 'alocacao-professor',
-      label: 'Alocação de Professores',
-      icon: BookUser,
-      active: activeItem === 'alocacao-professor',
-      onClick: () => handleMenuClick('alocacao-professor')
-    },
-    {
-      id: 'gestao-escolar',
-      label: 'Gestão Escolar',
-      icon: School,
-      active: activeItem === 'gestao-escolar',
-      onClick: () => handleMenuClick('gestao-escolar')
-    },
-    {
-      id: 'diario-escolar',
-      label: 'Diário Escolar',
-      icon: BookOpen,
-      active: activeItem === 'diario-escolar',
-      onClick: () => handleMenuClick('diario-escolar')
-    },
-    {
-      id: 'gerenciar-usuarios',
-      label: 'Gerenciar Usuários',
-      icon: Settings,
-      active: activeItem === 'gerenciar-usuarios',
-      onClick: () => handleMenuClick('gerenciar-usuarios')
-    },
-    /*{
-      id: 'matriculas',
-      label: 'Matrículas',
-      icon: GraduationCap,
-      active: activeItem === 'matriculas',
-      onClick: () => handleMenuClick('matriculas')
-    },
-    {
-      id: 'diario',
-      label: 'Diário Escolar',
-      icon: BookOpen,
-      active: activeItem === 'diario',
-      onClick: () => handleMenuClick('diario')
-    },
-    {
-      id: 'avisos',
-      label: 'Avisos',
-      icon: Bell,
-      active: activeItem === 'avisos',
-      onClick: () => handleMenuClick('avisos'),
-      badge: 3
-    },
-    {
-      id: 'auditoria',
-      label: 'Auditoria',
-      icon: Search,
-      active: activeItem === 'auditoria',
-      onClick: () => handleMenuClick('auditoria')
-    },
-    {
-      id: 'boletim',
-      label: 'Boletim',
-      icon: ClipboardList,
-      active: activeItem === 'boletim',
-      onClick: () => handleMenuClick('boletim')
-    },
-    {
-      id: 'configuracoes',
-      label: 'Configurações',
-      icon: Settings,
-      active: activeItem === 'configuracoes',
-      onClick: () => handleMenuClick('configuracoes')
-    }*/
-  ]
-
-  const handleMenuClick = (itemId: string) => {
+  const handleMenuClick = useCallback((itemId: string) => {
     logger.info(`🔄 Navegando para: ${itemId}`)
     if (onItemClick) {
       onItemClick(itemId)
     }
-  }
+  }, [onItemClick])
+
+  // Filtrar menus baseado no tipo de usuário
+  const menuItems = useMemo(() => {
+    // Menu completo base
+    const todosMenus: MenuItem[] = [
+      {
+        id: 'dashboard',
+        label: 'Dashboard',
+        icon: LayoutDashboard,
+        active: activeItem === 'dashboard',
+        onClick: () => handleMenuClick('dashboard')
+      },
+      {
+        id: 'ficha-cadastro',
+        label: 'Ficha de Cadastro',
+        icon: UserPlus,
+        active: activeItem === 'ficha-cadastro',
+        onClick: () => handleMenuClick('ficha-cadastro')
+      },
+      {
+        id: 'alocacao-professor',
+        label: 'Alocação de Professores',
+        icon: BookUser,
+        active: activeItem === 'alocacao-professor',
+        onClick: () => handleMenuClick('alocacao-professor')
+      },
+      {
+        id: 'gestao-escolar',
+        label: 'Gestão Escolar',
+        icon: School,
+        active: activeItem === 'gestao-escolar',
+        onClick: () => handleMenuClick('gestao-escolar')
+      },
+      {
+        id: 'diario-escolar',
+        label: 'Diário Escolar',
+        icon: BookOpen,
+        active: activeItem === 'diario-escolar',
+        onClick: () => handleMenuClick('diario-escolar')
+      },
+      {
+        id: 'gerenciar-usuarios',
+        label: 'Gerenciar Usuários',
+        icon: Settings,
+        active: activeItem === 'gerenciar-usuarios',
+        onClick: () => handleMenuClick('gerenciar-usuarios')
+      },
+      /*{
+        id: 'matriculas',
+        label: 'Matrículas',
+        icon: GraduationCap,
+        active: activeItem === 'matriculas',
+        onClick: () => handleMenuClick('matriculas')
+      },
+      {
+        id: 'diario',
+        label: 'Diário Escolar',
+        icon: BookOpen,
+        active: activeItem === 'diario',
+        onClick: () => handleMenuClick('diario')
+      },
+      {
+        id: 'avisos',
+        label: 'Avisos',
+        icon: Bell,
+        active: activeItem === 'avisos',
+        onClick: () => handleMenuClick('avisos'),
+        badge: 3
+      },
+      {
+        id: 'auditoria',
+        label: 'Auditoria',
+        icon: Search,
+        active: activeItem === 'auditoria',
+        onClick: () => handleMenuClick('auditoria')
+      },
+      {
+        id: 'boletim',
+        label: 'Boletim',
+        icon: ClipboardList,
+        active: activeItem === 'boletim',
+        onClick: () => handleMenuClick('boletim')
+      },
+      {
+        id: 'configuracoes',
+        label: 'Configurações',
+        icon: Settings,
+        active: activeItem === 'configuracoes',
+        onClick: () => handleMenuClick('configuracoes')
+      }*/
+    ]
+
+    // ADMIN: todos os menus
+    if (tipoUsuario === 'admin') {
+      return todosMenus
+    }
+
+    // SECRETARIO: todos os menus exceto "Gerenciar Usuários"
+    if (tipoUsuario === 'secretario') {
+      return todosMenus.filter(item => item.id !== 'gerenciar-usuarios')
+    }
+
+    // PROFESSOR: nenhum menu (por enquanto)
+    if (tipoUsuario === 'professor') {
+      return []
+    }
+
+    // Fallback: se não houver usuário logado, retorna array vazio
+    return []
+  }, [tipoUsuario, activeItem, handleMenuClick])
 
   return (
     <div className="fixed left-0 top-0 w-64 h-screen bg-blue-500 shadow-2xl z-40 overflow-y-auto flex flex-col">

@@ -66,6 +66,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.status === 'sucesso' && response.dados) {
         const { token: newToken, usuario: newUsuario } = response.dados;
         
+        // Log para debug - mostra o que está sendo salvo
+        console.log('🔍 [AuthContext] Dados recebidos do authService:', {
+          token: newToken ? 'Token presente' : 'Token ausente',
+          usuario: newUsuario
+        });
+        
         // Salva no estado
         setToken(newToken);
         setUsuario(newUsuario);
@@ -73,6 +79,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Salva no localStorage para persistir
         localStorage.setItem('authToken', newToken);
         localStorage.setItem('authUsuario', JSON.stringify(newUsuario));
+        
+        // Log para confirmar o que foi salvo
+        console.log('✅ [AuthContext] Dados salvos no estado e localStorage:', {
+          usuario_salvo: newUsuario,
+          tipo_usuario_id: newUsuario?.tipo_usuario_id
+        });
       } else {
         // Se a API retornou erro, lança exceção
         throw new Error(response.mensagem || 'Erro no login');
