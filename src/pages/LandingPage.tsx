@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import imgAlunos from '../assets/images/alunos.png'
+import bgLp from '../assets/images/bg-lp3.png'
+import logo from '../assets/images/logo.png'
 import { 
   GraduationCap, 
   Users, 
@@ -46,48 +49,42 @@ export default function LandingPage() {
           <div className="flex justify-between items-center py-4">
             {/* Logo */}
             <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-                  <GraduationCap className="w-7 h-7 text-white" />
-                </div>
-              </div>
-              <div>
-                <h1 className={`text-2xl font-bold ${isScrolled ? 'bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent' : 'text-white'} `}>
-                  Escola Pinguinho
-                </h1>
-                <p className="text-sm text-gray-600 font-medium">Educação de Qualidade</p>
-              </div>
+              <img 
+                src={logo} 
+                alt="Escola Pinguinho" 
+                className={`${isScrolled ? 'w-32' : 'w-44'} transition-all duration-300 hover:scale-105`}
+              />
             </div>
 
             {/* Navegação Desktop */}
             <nav className="hidden lg:flex items-center space-x-8">
               <a 
                 href="#inicio" 
-                className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium relative group"
+                className={`${isScrolled ? 'text-gray-700 hover:text-blue-600' : 'text-white hover:text-yellow-400'} transition-colors duration-300 font-medium relative group`}
               >
                 Início
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 ${isScrolled ? 'bg-blue-600' : 'bg-yellow-400'} transition-all duration-300 group-hover:w-full`}></span>
               </a>
               <a 
                 href="#sobre" 
-                className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium relative group"
+                className={`${isScrolled ? 'text-gray-700 hover:text-blue-600' : 'text-white hover:text-yellow-400'} transition-colors duration-300 font-medium relative group`}
               >
                 Sobre
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 ${isScrolled ? 'bg-blue-600' : 'bg-yellow-400'} transition-all duration-300 group-hover:w-full`}></span>
               </a>
               <a 
                 href="#servicos" 
-                className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium relative group"
+                className={`${isScrolled ? 'text-gray-700 hover:text-blue-600' : 'text-white hover:text-yellow-400'} transition-colors duration-300 font-medium relative group`}
               >
                 Serviços
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 ${isScrolled ? 'bg-blue-600' : 'bg-yellow-400'} transition-all duration-300 group-hover:w-full`}></span>
               </a>
               <a 
                 href="#contato" 
-                className="text-gray-700 hover:text-blue-600 transition-colors duration-300 font-medium relative group"
+                className={`${isScrolled ? 'text-gray-700 hover:text-blue-600' : 'text-white hover:text-yellow-400'} transition-colors duration-300 font-medium relative group`}
               >
                 Contato
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                <span className={`absolute -bottom-1 left-0 w-0 h-0.5 ${isScrolled ? 'bg-blue-600' : 'bg-yellow-400'} transition-all duration-300 group-hover:w-full`}></span>
               </a>
             </nav>
 
@@ -112,8 +109,8 @@ export default function LandingPage() {
               </button>
 
               {/* Menu Mobile */}
-              <button className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors duration-300">
-                <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button className={`lg:hidden p-2 rounded-lg ${isScrolled ? 'hover:bg-gray-100' : 'hover:bg-white/20'} transition-colors duration-300`}>
+                <svg className={`w-6 h-6 ${isScrolled ? 'text-gray-700' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
@@ -126,41 +123,53 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section id="inicio" className="min-h-[80vh] flex items-center justify-center pt-24 pb-20 bg-gradient-to-br from-blue-600 to-blue-800 text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-4xl mx-auto">
-            {/* Título Principal */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-8">
-              Educação que
-              <span className="block text-yellow-300 mt-2">Transforma Vidas</span>
-            </h1>
+      <section 
+        id="inicio" 
+        className="min-h-[80vh] flex items-center justify-center pt-24 text-blue-500 relative"
+        style={{
+          backgroundImage: `url(${bgLp})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        <div className="max-w-7xl mx-auto pt-4 sm:pt-6 lg:pt-8 flex items-center justify-center">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="">
+              {/* Título Principal */}
+              <h1 className="text-5xl md:text-6xl text-white leading-tight mb-8">
+                Educação que
+                <span className="block font-bold mt-2">Transforma Vidas</span>
+              </h1>
 
-            {/* Subtítulo */}
-            <p className="text-xl md:text-2xl text-blue-100 leading-relaxed mb-12 max-w-3xl mx-auto">
-              Na Escola Pinguinho, cada criança é única e merece uma educação 
-              <span className="text-yellow-300 font-semibold"> personalizada</span>, 
-              <span className="text-yellow-300 font-semibold"> inclusiva</span> e de 
-              <span className="text-yellow-300 font-semibold"> qualidade</span>.
-            </p>
+              {/* Subtítulo */}
+              <p className="text-xl text-white leading-relaxed mb-12 max-w-3xl mx-auto">
+                Na Escola Pinguinho, cada criança é única e merece uma educação 
+                <span className="text-yellow-400 font-semibold"> personalizada</span>, 
+                <span className="text-yellow-400 font-semibold"> inclusiva</span> e de 
+                <span className="text-yellow-400 font-semibold"> qualidade</span>.
+              </p>
 
-            {/* Botões de Ação */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-yellow-400 text-gray-900 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-yellow-300 transition-all duration-300 flex items-center justify-center">
-                <Calendar className="w-5 h-5 mr-2" />
-                Agendar Visita
-              </button>
-              <button className="bg-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/30 transition-all duration-300 flex items-center justify-center border border-white/30">
-                <Play className="w-5 h-5 mr-2" />
-                Ver Vídeo
-              </button>
+              {/* Botões de Ação */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button className="bg-yellow-400 text-blue-900 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-yellow-300 transition-all duration-300 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 mr-2" />
+                  Agendar Visita
+                </button>
+                <button className="bg-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/30 transition-all duration-300 flex items-center justify-center border border-white/30">
+                  <Play className="w-5 h-5 mr-2" />
+                  Ver Vídeo
+                </button>
+              </div>
             </div>
           </div>
+          <img src={imgAlunos} alt="Alunos" className="w-1/2" />
         </div>
       </section>
 
       {/* Sobre a Escola */}
-      <section id="sobre" className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="sobre" className="bg-white">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           {/* Header da Seção */}
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
