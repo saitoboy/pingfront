@@ -33,9 +33,51 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Structured Data (JSON-LD) para SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "Escola Pinguinho",
+    "description": "Há mais de 15 anos formando cidadãos conscientes através de uma educação de qualidade, inclusiva e transformadora. Educação Infantil e Ensino Fundamental em São Paulo.",
+    "url": "https://escolapinguinho.com.br",
+    "logo": "https://escolapinguinho.com.br/logo.png",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Rua da Educação, 123",
+      "addressLocality": "São Paulo",
+      "addressRegion": "SP",
+      "addressCountry": "BR"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+55-11-99999-9999",
+      "contactType": "customer service",
+      "email": "contato@escolapinguinho.com.br",
+      "availableLanguage": "Portuguese"
+    },
+    "openingHours": "Mo-Fr 07:00-18:00",
+    "areaServed": {
+      "@type": "City",
+      "name": "São Paulo"
+    },
+    "educationalCredentialAwarded": ["Educação Infantil", "Ensino Fundamental"],
+    "numberOfEmployees": {
+      "@type": "QuantitativeValue",
+      "value": "500+"
+    },
+    "foundingDate": "2009"
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Header Fixo */}
+    <>
+      {/* Structured Data para SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        {/* Header Fixo */}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled 
           ? 'bg-white/95 backdrop-blur-xl shadow-2xl' 
@@ -159,7 +201,11 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-          <img src={imgAlunos} alt="Alunos" className="w-full lg:w-1/2" />
+          <img 
+            src={imgAlunos} 
+            alt="Alunos da Escola Pinguinho - Educação Infantil e Ensino Fundamental" 
+            className="w-full lg:w-1/2" 
+          />
         </div>
       </section>
 
@@ -184,7 +230,7 @@ export default function LandingPage() {
               <div className="rounded-2xl overflow-hidden">
                 <img 
                   src={imgAluno} 
-                  alt="Aluno" 
+                  alt="Aluno da Escola Pinguinho em ambiente de aprendizado" 
                   className="w-full h-auto object-cover"
                 />
               </div>
@@ -643,5 +689,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+    </>
   )
 }
