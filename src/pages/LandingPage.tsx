@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import imgAlunos from '../assets/images/alunos.png'
+import imgAluno from '../assets/images/aluno.png'
 import bgLp from '../assets/images/bg-lp3.png'
 import logo from '../assets/images/logo.png'
 import { 
@@ -14,12 +15,9 @@ import {
   Clock,
   CheckCircle,
   Play,
-  Award,
   Shield,
   Lightbulb,
-  Globe,
   Calendar,
-  UserCheck,
   School,
   Target,
   Zap
@@ -125,7 +123,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section 
         id="inicio" 
-        className="min-h-[80vh] flex items-center justify-center pt-24 text-blue-500 relative"
+        className="flex items-center justify-center pt-24 text-blue-500 relative"
         style={{
           backgroundImage: `url(${bgLp})`,
           backgroundSize: 'cover',
@@ -133,17 +131,17 @@ export default function LandingPage() {
           backgroundRepeat: 'no-repeat'
         }}
       >
-        <div className="max-w-7xl mx-auto pt-4 sm:pt-6 lg:pt-8 flex items-center justify-center">
+        <div className="max-w-7xl mx-auto pt-4 sm:pt-6 lg:pt-8 flex flex-col lg:flex-row gap-8 lg:gap-0 items-center justify-center">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="">
               {/* Título Principal */}
-              <h1 className="text-5xl md:text-6xl text-white leading-tight mb-8">
+              <h1 className="text-5xl lg:text-6xl text-white text-center lg:text-start leading-tight mb-8">
                 Educação que
                 <span className="block font-bold mt-2">Transforma Vidas</span>
               </h1>
 
               {/* Subtítulo */}
-              <p className="text-xl text-white leading-relaxed mb-12 max-w-3xl mx-auto">
+              <p className="text-xl text-white text-center lg:text-start leading-relaxed mb-12 max-w-3xl mx-auto">
                 Na Escola Pinguinho, cada criança é única e merece uma educação 
                 <span className="text-yellow-400 font-semibold"> personalizada</span>, 
                 <span className="text-yellow-400 font-semibold"> inclusiva</span> e de 
@@ -151,7 +149,7 @@ export default function LandingPage() {
               </p>
 
               {/* Botões de Ação */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <button className="bg-yellow-400 text-blue-900 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-yellow-300 transition-all duration-300 flex items-center justify-center">
                   <Calendar className="w-5 h-5 mr-2" />
                   Agendar Visita
@@ -163,13 +161,13 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-          <img src={imgAlunos} alt="Alunos" className="w-1/2" />
+          <img src={imgAlunos} alt="Alunos" className="w-full lg:w-1/2" />
         </div>
       </section>
 
       {/* Sobre a Escola */}
       <section id="sobre" className="bg-white">
-        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto bg-white p-4 sm:p-16 -mt-12 rounded-3xl border-2 border-blue-600 box-shadow-lg relative z-10">
           {/* Header da Seção */}
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
@@ -182,8 +180,35 @@ export default function LandingPage() {
           </div>
 
           {/* Conteúdo Principal */}
-          <div className="grid lg:grid-cols-2 gap-16 items-start">
+          <div className="flex flex-col lg:flex-row gap-16 items-center">
             {/* Lado Esquerdo - Missão */}
+            <div className="space-y-8">
+              <div className="rounded-2xl overflow-hidden">
+                <img 
+                  src={imgAluno} 
+                  alt="Aluno" 
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+
+              {/* Estatísticas */}
+              <div className="bg-gray-50 rounded-2xl p-8">
+                <h4 className="text-xl font-bold text-gray-900 mb-6 text-center">Números que Falam</h4>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600 mb-2">500+</div>
+                    <div className="text-gray-600 text-sm">Alunos Ativos</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600 mb-2">15+</div>
+                    <div className="text-gray-600 text-sm">Anos de Experiência</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+
+            {/* Lado Direito - Valores */}
             <div className="space-y-8">
               <div className="bg-blue-50 p-8 rounded-2xl">
                 <div className="flex items-center mb-6">
@@ -234,64 +259,6 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-
-            {/* Lado Direito - Valores */}
-            <div className="space-y-8">
-              <div className="bg-blue-600 rounded-2xl p-8 text-white">
-                <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-yellow-400 rounded-xl flex items-center justify-center mr-4">
-                    <Heart className="w-6 h-6 text-gray-900" />
-                  </div>
-                  <h3 className="text-2xl font-bold">Nossos Valores</h3>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-yellow-400" />
-                    <span className="font-medium">Respeito à diversidade e inclusão</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-yellow-400" />
-                    <span className="font-medium">Desenvolvimento integral do aluno</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-yellow-400" />
-                    <span className="font-medium">Parceria família-escola</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-yellow-400" />
-                    <span className="font-medium">Formação cidadã e ética</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-yellow-400" />
-                    <span className="font-medium">Preparação para o futuro</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Estatísticas */}
-              <div className="bg-gray-50 rounded-2xl p-8">
-                <h4 className="text-xl font-bold text-gray-900 mb-6 text-center">Números que Falam</h4>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">500+</div>
-                    <div className="text-gray-600 text-sm">Alunos Ativos</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">15+</div>
-                    <div className="text-gray-600 text-sm">Anos de Experiência</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">98%</div>
-                    <div className="text-gray-600 text-sm">Satisfação</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">100%</div>
-                    <div className="text-gray-600 text-sm">Inclusão</div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -308,7 +275,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <BookOpen className="w-6 h-6 text-blue-600" />
@@ -355,106 +322,6 @@ export default function LandingPage() {
                 <li className="flex items-center">
                   <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
                   Acompanhamento pedagógico
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <Heart className="w-6 h-6 text-green-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Atendimento Especializado</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                Suporte especializado para alunos com necessidades educacionais 
-                especiais, garantindo inclusão e desenvolvimento.
-              </p>
-              <ul className="space-y-1 text-sm text-gray-600">
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Equipe multidisciplinar
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Acompanhamento individual
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Adaptações curriculares
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
-                <Award className="w-6 h-6 text-yellow-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Atividades Extracurriculares</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                Desenvolvimento de talentos e habilidades através de atividades 
-                esportivas, artísticas e culturais.
-              </p>
-              <ul className="space-y-1 text-sm text-gray-600">
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Esportes e educação física
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Artes e música
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Robótica e tecnologia
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <UserCheck className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Orientação Educacional</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                Acompanhamento psicopedagógico para o desenvolvimento 
-                integral e orientação vocacional.
-              </p>
-              <ul className="space-y-1 text-sm text-gray-600">
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Orientação vocacional
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Apoio psicopedagógico
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Parceria família-escola
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
-                <Globe className="w-6 h-6 text-yellow-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Tecnologia Educacional</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                Uso de tecnologias modernas para enriquecer o processo 
-                de ensino e aprendizagem.
-              </p>
-              <ul className="space-y-1 text-sm text-gray-600">
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Laboratório de informática
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Plataforma digital
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                  Recursos multimídia
                 </li>
               </ul>
             </div>
