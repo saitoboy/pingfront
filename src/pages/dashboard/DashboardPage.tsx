@@ -66,6 +66,9 @@ export default function DashboardPage() {
           dashboardService.buscarAlunosPorTurma()
         ])
 
+          console.log("turmasData")
+        console.log(turmasData)
+
         setStats(statsData)
         setUltimosAlunos(alunosData)
         setDistribuicaoTurmas(turmasData)

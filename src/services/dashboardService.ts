@@ -271,8 +271,8 @@ export const dashboardService = {
           try {
             const turmaId = turma.id || turma.turma_id
             const serieId = turma.serie_id
-            const nomeTurma = turma.nome_turma || turma.nome || 'A'
-            const nomeSerie = seriesMap.get(serieId) || `${serieId}° Ano`
+            // O nome_turma já vem completo do banco (ex: "3º Ano A"), não precisa concatenar com série
+            const nomeTurma = turma.nome_turma || turma.nome || 'Turma sem nome'
             
             // Buscar matrículas desta turma
             const matriculasResponse = await api.get(`/matricula-aluno/turma/${turmaId}`)
@@ -289,20 +289,17 @@ export const dashboardService = {
             }
             
             const capacidade = turma.capacidade || turma.max_alunos || 30
-            const nomeCompleto = `${nomeSerie} ${nomeTurma}`
             
             logger.debug('🎯 Turma processada:', 'service', {
               turmaId,
               serieId,
-              nomeSerie,
               nomeTurma,
-              nomeCompleto,
               totalAlunos,
               capacidade
             })
             
             return {
-              turma_nome: nomeCompleto,
+              turma_nome: nomeTurma,
               total_alunos: totalAlunos,
               capacidade: capacidade,
               percentual_ocupacao: Math.round((totalAlunos / capacidade) * 100)
@@ -310,16 +307,14 @@ export const dashboardService = {
           } catch (error) {
             // Se der erro ao buscar matrículas da turma, retorna valores padrão
             const turmaId = turma.id || turma.turma_id
-            const serieId = turma.serie_id
-            const nomeTurma = turma.nome_turma || turma.nome || 'A'
-            const nomeSerie = seriesMap.get(serieId) || `${serieId}° Ano`
-            const nomeCompleto = `${nomeSerie} ${nomeTurma}`
+            // O nome_turma já vem completo do banco, não precisa concatenar com série
+            const nomeTurma = turma.nome_turma || turma.nome || 'Turma sem nome'
             const capacidade = turma.capacidade || turma.max_alunos || 30
             
             logger.error('❌ Erro ao buscar matrículas da turma', 'service', { turmaId, error })
             
             return {
-              turma_nome: nomeCompleto,
+              turma_nome: nomeTurma,
               total_alunos: 0,
               capacidade: capacidade,
               percentual_ocupacao: 0
