@@ -94,3 +94,23 @@
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+
+/* Scrollbar laranja para modal */
+.scrollbar-orange::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-orange::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.scrollbar-orange::-webkit-scrollbar-thumb {
+  background: #fb923c;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.scrollbar-orange::-webkit-scrollbar-thumb:hover {
+  background: #f97316;
+}

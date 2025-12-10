@@ -13,7 +13,8 @@ export interface DashboardStats {
 }
 
 export interface UltimosAlunos {
-  id: number
+  id: number | string
+  aluno_id?: string // ID original do aluno para busca na API
   nome: string
   sobrenome: string
   data_nascimento: string
@@ -190,6 +191,7 @@ export const dashboardService = {
         .map((aluno: any) => {
           const alunoProcessado = {
             id: aluno.id || aluno.aluno_id || Math.random(),
+            aluno_id: aluno.aluno_id || aluno.id, // Preservar aluno_id original para busca
             nome: aluno.nome || aluno.nome_aluno || aluno.first_name || 'Nome não informado',
             sobrenome: aluno.sobrenome || aluno.sobrenome_aluno || aluno.last_name || '',
             data_nascimento: aluno.data_nascimento || aluno.data_nascimento_aluno || aluno.birth_date || '2000-01-01',
