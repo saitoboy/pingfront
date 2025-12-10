@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { BookOpen, GraduationCap, Users, Calendar } from 'lucide-react';
 import SeriesTab from './tabs/SeriesTab';
 import TurmasTab from './tabs/TurmasTab';
@@ -7,8 +8,27 @@ import AnosLetivosTab from './tabs/AnosLetivosTab';
 
 type TabType = 'series' | 'turmas' | 'disciplinas' | 'anos-letivos';
 
+// Valida se a tab é válida
+const VALID_TABS: TabType[] = ['series', 'turmas', 'disciplinas', 'anos-letivos'];
+const isValidTab = (tab: string | null): tab is TabType => {
+  return tab !== null && VALID_TABS.includes(tab as TabType);
+};
+
 export default function GestaoEscolarPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('anos-letivos');
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  
+  // Valida se a tab da URL é válida, caso contrário usa 'anos-letivos' como padrão
+  const initialTab = isValidTab(tabFromUrl) ? tabFromUrl : 'anos-letivos';
+  
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+
+  // Atualiza a tab quando a URL mudar
+  useEffect(() => {
+    if (isValidTab(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   const tabs = [
     { id: 'anos-letivos' as TabType, label: 'Anos Letivos', icon: Calendar, color: 'blue' },

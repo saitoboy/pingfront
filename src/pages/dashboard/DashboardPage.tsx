@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Users, GraduationCap, School, Bell, Info, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import { dashboardService, type DashboardStats, type UltimosAlunos, type AlunosPorTurma } from '../../services/dashboardService'
@@ -7,25 +8,13 @@ import { QuickActions } from '../../components/dashboard/QuickActions'
 import { RecentStudents } from '../../components/dashboard/RecentStudents'
 import { ClassDistribution } from '../../components/dashboard/ClassDistribution'
 
-interface DashboardPageProps {
-  onNavigate?: (page: string) => void
-}
-
-export default function DashboardPage({ onNavigate }: DashboardPageProps) {
+export default function DashboardPage() {
+  const navigate = useNavigate()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [ultimosAlunos, setUltimosAlunos] = useState<UltimosAlunos[]>([])
   const [distribuicaoTurmas, setDistribuicaoTurmas] = useState<AlunosPorTurma[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  // Função para navegar para outras páginas
-  const handleNavigate = (page: string) => {
-    if (onNavigate) {
-      onNavigate(page)
-    } else {
-      logger.info(`Navegação para ${page} não implementada`, 'component')
-    }
-  }
 
   // Configuração das ações rápidas
   const quickActions = [
@@ -34,7 +23,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
       title: 'Nova Matrícula',
       description: 'Cadastrar novo aluno',
       icon: '👥',
-      onClick: () => handleNavigate('ficha-cadastro'),
+      onClick: () => navigate('/ficha-cadastro'),
       bgColor: 'hover:bg-blue-50'
     },
     {
@@ -42,7 +31,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
       title: 'Gerenciar Usuários',
       description: 'Visualizar e editar usuários',
       icon: '⚙️',
-      onClick: () => handleNavigate('gerenciar-usuarios'),
+      onClick: () => navigate('/usuarios/gerenciar'),
       bgColor: 'hover:bg-blue-50'
     },
     {
@@ -50,7 +39,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
       title: 'Gerenciar Alunos',
       description: 'Ver e editar alunos',
       icon: '📝',
-      onClick: () => handleNavigate('alunos'),
+      onClick: () => navigate('/gestao-escolar?tab=turmas'),
       bgColor: 'hover:bg-purple-50'
     },
     {
@@ -58,7 +47,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
       title: 'Turmas',
       description: 'Organizar turmas',
       icon: '🏫',
-      onClick: () => handleNavigate('turmas'),
+      onClick: () => navigate('/gestao-escolar?tab=turmas'),
       bgColor: 'hover:bg-yellow-50'
     }
   ]
@@ -99,7 +88,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
   }, [])
 
   const handleViewAllStudents = () => {
-    handleNavigate('alunos')
+    navigate('/gestao-escolar')
   }
 
   return (
