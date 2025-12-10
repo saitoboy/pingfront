@@ -39,7 +39,7 @@ export default function DashboardPage() {
       title: 'Gerenciar Alunos',
       description: 'Ver e editar alunos',
       icon: '📝',
-      onClick: () => navigate('/gestao-escolar?tab=turmas'),
+      onClick: () => navigate('/fichas-cadastro'),
       bgColor: 'hover:bg-purple-50'
     },
     {

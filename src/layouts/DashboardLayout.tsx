@@ -23,6 +23,11 @@ const routeConfig: Record<string, { title: string; description: string; icon: an
     description: 'Cadastre ou edite as informações de alunos',
     icon: UserPlus
   },
+  '/fichas-cadastro': {
+    title: 'Fichas de Cadastro',
+    description: 'Visualize e gerencie todas as fichas de cadastro',
+    icon: UserPlus
+  },
   '/usuarios/gerenciar': {
     title: 'Gerenciar Usuários',
     description: 'Visualize, edite e gerencie usuários do sistema',
@@ -104,7 +109,7 @@ export default function DashboardLayout() {
   // Mapeia o pathname para o activeItem da Sidebar
   const getActiveItem = () => {
     if (location.pathname === '/dashboard') return 'dashboard';
-    if (location.pathname === '/ficha-cadastro') return 'ficha-cadastro';
+    if (location.pathname === '/ficha-cadastro' || location.pathname === '/fichas-cadastro') return 'ficha-cadastro';
     if (location.pathname === '/usuarios/gerenciar') return 'gerenciar-usuarios';
     if (location.pathname === '/usuarios/criar') return 'criar-usuario';
     if (location.pathname === '/usuarios/tipos') return 'gerenciar-tipos-usuario';
@@ -119,7 +124,7 @@ export default function DashboardLayout() {
   const handleSidebarClick = (itemId: string) => {
     const routeMap: Record<string, string> = {
       'dashboard': '/dashboard',
-      'ficha-cadastro': '/ficha-cadastro',
+      'ficha-cadastro': '/fichas-cadastro',
       'gerenciar-usuarios': '/usuarios/gerenciar',
       'criar-usuario': '/usuarios/criar',
       'gerenciar-tipos-usuario': '/usuarios/tipos',
