@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { contatoService } from '../services/contatoService'
 import imgAlunos from '../assets/images/alunos.png'
 import imgAluno from '../assets/images/aluno.png'
 import bgLp from '../assets/images/bg-lp3.png'
@@ -13,17 +14,29 @@ import {
   Mail, 
   Clock,
   CheckCircle,
-  Play,
+  // Play, // Comentado temporariamente
   Shield,
   Calendar,
   School,
   Target,
-  Zap
+  Zap,
+  Instagram
 } from 'lucide-react'
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false)
+  
+  // Estados do formulário de contato
+  const [formData, setFormData] = useState({
+    nome: '',
+    telefone: '',
+    email: '',
+    mensagem: ''
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [submitMessage, setSubmitMessage] = useState('')
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,32 +46,75 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Handler para envio do formulário
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setSubmitStatus('idle')
+    setSubmitMessage('')
+
+    try {
+      await contatoService.enviarMensagem(formData)
+      setSubmitStatus('success')
+      setSubmitMessage('Mensagem enviada com sucesso! Entraremos em contato em breve.')
+      // Limpa o formulário
+      setFormData({
+        nome: '',
+        telefone: '',
+        email: '',
+        mensagem: ''
+      })
+      // Remove a mensagem de sucesso após 5 segundos
+      setTimeout(() => {
+        setSubmitStatus('idle')
+        setSubmitMessage('')
+      }, 5000)
+    } catch (error: any) {
+      setSubmitStatus('error')
+      setSubmitMessage(
+        error.response?.data?.mensagem || 
+        'Erro ao enviar mensagem. Por favor, tente novamente ou entre em contato pelo telefone.'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Handler para mudanças nos campos
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
   // Structured Data (JSON-LD) para SEO
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
     "name": "Escola Pinguinho",
-    "description": "Há mais de 15 anos formando cidadãos conscientes através de uma educação de qualidade, inclusiva e transformadora. Educação Infantil e Ensino Fundamental em São Paulo.",
+    "description": "Há mais de 50 anos formando cidadãos conscientes através de uma educação de qualidade, inclusiva e transformadora. Educação Infantil e Ensino Fundamental em Muriaé/MG.",
     "url": "https://escolapinguinho.com.br",
     "logo": "https://escolapinguinho.com.br/logo.png",
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Rua da Educação, 123",
-      "addressLocality": "São Paulo",
-      "addressRegion": "SP",
+      "streetAddress": "Avenida Dr. Passos, 41",
+      "addressLocality": "Muriaé",
+      "addressRegion": "MG",
       "addressCountry": "BR"
     },
     "contactPoint": {
       "@type": "ContactPoint",
-      "telephone": "+55-11-99999-9999",
+      "telephone": "+55-32-3721-2755",
       "contactType": "customer service",
-      "email": "contato@escolapinguinho.com.br",
+      "email": "escolapinguinhodegentec@gmail.com",
       "availableLanguage": "Portuguese"
     },
     "openingHours": "Mo-Fr 07:00-18:00",
     "areaServed": {
       "@type": "City",
-      "name": "São Paulo"
+      "name": "Muriaé"
     },
     "educationalCredentialAwarded": ["Educação Infantil", "Ensino Fundamental"],
     "numberOfEmployees": {
@@ -190,14 +246,20 @@ export default function LandingPage() {
 
               {/* Botões de Ação */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <button className="bg-yellow-400 text-blue-900 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-yellow-300 transition-all duration-300 flex items-center justify-center">
+                <a 
+                  href="https://wa.me/5532988574727?text=Olá!%20Gostaria%20de%20agendar%20uma%20visita%20à%20escola."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-yellow-400 text-blue-900 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-yellow-300 transition-all duration-300 flex items-center justify-center"
+                >
                   <Calendar className="w-5 h-5 mr-2" />
                   Agendar Visita
-                </button>
-                <button className="bg-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/30 transition-all duration-300 flex items-center justify-center border border-white/30">
+                </a>
+                {/* Botão Ver Vídeo comentado temporariamente */}
+                {/* <button className="bg-white/20 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/30 transition-all duration-300 flex items-center justify-center border border-white/30">
                   <Play className="w-5 h-5 mr-2" />
                   Ver Vídeo
-                </button>
+                </button> */}
               </div>
             </div>
           </div>
@@ -218,7 +280,7 @@ export default function LandingPage() {
               Sobre a Escola Pinguinho
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Há mais de <span className="text-blue-600 font-semibold">15 anos</span> formando cidadãos conscientes, 
+              Há mais de <span className="text-blue-600 font-semibold">50 anos</span> formando cidadãos conscientes, 
               críticos e preparados para os desafios do futuro
             </p>
           </div>
@@ -236,16 +298,33 @@ export default function LandingPage() {
               </div>
 
               {/* Estatísticas */}
-              <div className="bg-gray-50 rounded-2xl p-8">
-                <h4 className="text-xl font-bold text-gray-900 mb-6 text-center">Números que Falam</h4>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">500+</div>
-                    <div className="text-gray-600 text-sm">Alunos Ativos</div>
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 border-blue-600">
+                    <div className="flex items-center justify-center mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                        <Users className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600 mb-2">Milhares</div>
+                      <div className="text-gray-700 text-sm font-medium leading-relaxed">
+                        de crianças se formaram por aqui
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">15+</div>
-                    <div className="text-gray-600 text-sm">Anos de Experiência</div>
+                  <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 border-yellow-500">
+                    <div className="flex items-center justify-center mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center shadow-lg">
+                        <Calendar className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-600 mb-2">50+</div>
+                      <div className="text-gray-700 text-sm font-medium leading-relaxed">
+                        Anos de Experiência
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -274,8 +353,8 @@ export default function LandingPage() {
                   <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
                     <Target className="w-5 h-5 text-white" />
                   </div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Excelência Acadêmica</h4>
-                  <p className="text-gray-600 text-sm">Resultados comprovados em avaliações nacionais</p>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Impacto Cultural</h4>
+                  <p className="text-gray-600 text-sm">Promovendo experiências culturais que marcam gerações</p>
                 </div>
 
                 <div className="bg-yellow-50 p-6 rounded-xl">
@@ -291,15 +370,15 @@ export default function LandingPage() {
                     <Shield className="w-5 h-5 text-white" />
                   </div>
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">Ambiente Seguro</h4>
-                  <p className="text-gray-600 text-sm">Estrutura física e emocional protegida</p>
+                  <p className="text-gray-600 text-sm">Estrutura física e emocional protegida com salas monitoradas por câmeras</p>
                 </div>
 
                 <div className="bg-purple-50 p-6 rounded-xl">
                   <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mb-4">
                     <Zap className="w-5 h-5 text-white" />
                   </div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Inovação Constante</h4>
-                  <p className="text-gray-600 text-sm">Tecnologia e metodologias atualizadas</p>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Tempo Integral</h4>
+                  <p className="text-gray-600 text-sm">Atendemos alunos em dois turnos com oficinas diversificadas</p>
                 </div>
               </div>
             </div>
@@ -337,7 +416,7 @@ export default function LandingPage() {
                   <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center flex-shrink-0">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
-                  <span className="text-gray-700 font-medium">Idade: 3 a 5 anos</span>
+                  <span className="text-gray-700 font-medium">Idade: 1 ano e 7 meses a 5 anos</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -371,7 +450,7 @@ export default function LandingPage() {
                   <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
                     <CheckCircle className="w-5 h-5 text-white" />
                   </div>
-                  <span className="text-gray-700 font-medium">1º ao 9º ano</span>
+                  <span className="text-gray-700 font-medium">1º ao 5º ano</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -416,7 +495,7 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-sm">Telefone</p>
-                      <p className="text-blue-100 text-sm">(11) 99999-9999</p>
+                      <p className="text-blue-100 text-sm">(32) 3721-2755 | (32) 98857-4727 (WhatsApp)</p>
                     </div>
                   </div>
                   
@@ -426,7 +505,7 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-sm">E-mail</p>
-                      <p className="text-blue-100 text-sm">contato@escolapinguinho.com.br</p>
+                      <p className="text-blue-100 text-sm">escolapinguinhodegentec@gmail.com</p>
                     </div>
                   </div>
                   
@@ -436,7 +515,7 @@ export default function LandingPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-sm">Endereço</p>
-                      <p className="text-blue-100 text-sm">Rua da Educação, 123<br />Centro - São Paulo/SP</p>
+                      <p className="text-blue-100 text-sm">Avenida Dr. Passos, 41 - Muriaé/MG</p>
                     </div>
                   </div>
                   
@@ -455,12 +534,16 @@ export default function LandingPage() {
 
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
               <h3 className="text-xl font-bold mb-4">Agende uma Visita</h3>
-              <form className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">Nome</label>
                     <input 
-                      type="text" 
+                      type="text"
+                      name="nome"
+                      value={formData.nome}
+                      onChange={handleChange}
+                      required
                       className="w-full px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                       placeholder="Seu nome completo"
                     />
@@ -468,9 +551,13 @@ export default function LandingPage() {
                   <div>
                     <label className="block text-sm font-medium mb-2">Telefone</label>
                     <input 
-                      type="tel" 
+                      type="tel"
+                      name="telefone"
+                      value={formData.telefone}
+                      onChange={handleChange}
+                      required
                       className="w-full px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      placeholder="(11) 99999-9999"
+                      placeholder="(32) 98857-4727"
                     />
                   </div>
                 </div>
@@ -478,7 +565,11 @@ export default function LandingPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">E-mail</label>
                   <input 
-                    type="email" 
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
                     className="w-full px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     placeholder="seu@email.com"
                   />
@@ -487,18 +578,43 @@ export default function LandingPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">Mensagem</label>
                   <textarea 
+                    name="mensagem"
+                    value={formData.mensagem}
+                    onChange={handleChange}
+                    required
                     rows={3}
                     className="w-full px-3 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     placeholder="Conte-nos sobre seu interesse na escola..."
                   ></textarea>
                 </div>
+
+                {/* Mensagem de feedback */}
+                {submitStatus !== 'idle' && (
+                  <div className={`p-3 rounded-lg ${
+                    submitStatus === 'success' 
+                      ? 'bg-green-500/20 border border-green-500/50 text-green-100' 
+                      : 'bg-red-500/20 border border-red-500/50 text-red-100'
+                  }`}>
+                    {submitMessage}
+                  </div>
+                )}
                 
                 <button 
                   type="submit"
-                  className="w-full bg-yellow-400 text-blue-900 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-all duration-300 flex items-center justify-center"
+                  disabled={isSubmitting}
+                  className="w-full bg-yellow-400 text-blue-900 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Agendar Visita
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-blue-900 border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Agendar Visita
+                    </>
+                  )}
                 </button>
                 
                 <div className="mt-4 pt-4 border-t border-white/20">
@@ -506,18 +622,19 @@ export default function LandingPage() {
                   <div className="space-y-2">
                     <button 
                       onClick={() => navigate('/login')}
-                      className="w-full bg-yellow-400 text-blue-900 py-2 rounded-lg font-semibold hover:bg-yellow-300 transition-all duration-300 flex items-center justify-center text-sm"
+                      className="w-full bg-white/20 text-white py-2 rounded-lg font-semibold hover:bg-white/30 transition-all duration-300 flex items-center justify-center border border-white/30 text-sm"
                     >
                       <School className="w-4 h-4 mr-2" />
                       Portal da Escola
                     </button>
-                    <button 
+                    {/* Botão Portal do Aluno comentado temporariamente */}
+                    {/* <button 
                       onClick={() => navigate('/login')}
                       className="w-full bg-white/20 text-white py-2 rounded-lg font-semibold hover:bg-white/30 transition-all duration-300 flex items-center justify-center border border-white/30 text-sm"
                     >
                       <Users className="w-4 h-4 mr-2" />
                       Portal do Aluno
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </form>
@@ -530,7 +647,7 @@ export default function LandingPage() {
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-4">
         {/* Botão WhatsApp */}
         <a
-          href="https://wa.me/5511999999999"
+          href="https://wa.me/5532988574727"
           target="_blank"
           rel="noopener noreferrer"
           className="bg-green-500 text-white p-4 rounded-full shadow-2xl hover:bg-green-600 transition-all duration-300 transform hover:scale-110 group relative"
@@ -571,7 +688,7 @@ export default function LandingPage() {
                   className="w-40 h-auto mb-2"
                 />
                 <p className="text-blue-100 text-sm leading-relaxed">
-                  Transformando vidas através da educação há mais de 15 anos.
+                  Transformando vidas através da educação há mais de 50 anos.
                 </p>
               </div>
             </div>
@@ -647,19 +764,30 @@ export default function LandingPage() {
               <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-center md:justify-start space-x-2">
                   <Phone className="w-4 h-4 text-yellow-400" />
-                  <p className="text-blue-100">(11) 99999-9999</p>
+                  <p className="text-blue-100">(32) 3721-2755 | (32) 98857-4727 (WhatsApp)</p>
                 </div>
                 <div className="flex items-center justify-center md:justify-start space-x-2">
                   <Mail className="w-4 h-4 text-yellow-400" />
-                  <p className="text-blue-100">contato@escolapinguinho.com.br</p>
+                  <p className="text-blue-100">escolapinguinhodegentec@gmail.com</p>
                 </div>
                 <div className="flex items-center justify-center md:justify-start space-x-2">
                   <MapPin className="w-4 h-4 text-yellow-400" />
-                  <p className="text-blue-100">Rua da Educação, 123</p>
+                  <p className="text-blue-100">Avenida Dr. Passos, 41 - Muriaé/MG</p>
                 </div>
                 <div className="flex items-center justify-center md:justify-start space-x-2">
                   <Clock className="w-4 h-4 text-yellow-400" />
                   <p className="text-blue-100">Seg-Sex: 7h às 18h</p>
+                </div>
+                <div className="flex items-center justify-center md:justify-start space-x-2">
+                  <Instagram className="w-4 h-4 text-yellow-400" />
+                  <a 
+                    href="https://www.instagram.com/escolapinguinhodegente" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-100 hover:text-yellow-400 transition-colors"
+                  >
+                    @escolapinguinhodegente
+                  </a>
                 </div>
               </div>
             </div>

@@ -244,6 +244,47 @@ export const cadastroService = {
     }
   },
 
+  // 📋 LISTAR TODAS AS FICHAS DE CADASTRO - Buscar todas as fichas cadastradas
+  async listarTodasFichas(): Promise<ApiResponse<FichaCadastroResposta[]>> {
+    try {
+      logger.apiRequest('GET', '/ficha-cadastro');
+      logger.info('📋 Buscando todas as fichas de cadastro...');
+      
+      const response = await api.get('/ficha-cadastro');
+      
+      logger.apiResponse(response.status, '/ficha-cadastro');
+      
+      // Processar resposta - formato esperado: {"sucesso": true, "dados": [...], "total": n}
+      const fichasData = response.data?.dados || [];
+      
+      if (response.data?.sucesso || response.status === 200) {
+        logger.success(`✅ ${fichasData.length} fichas de cadastro carregadas`);
+        
+        return {
+          status: 'sucesso',
+          dados: fichasData,
+          mensagem: response.data?.mensagem || `${fichasData.length} fichas de cadastro encontradas`
+        };
+      } else {
+        logger.info('📋 API de fichas retornou estrutura inesperada');
+        return {
+          status: 'erro',
+          dados: [],
+          mensagem: response.data?.mensagem || 'Erro ao buscar fichas de cadastro'
+        };
+      }
+    } catch (error: any) {
+      logger.apiResponse(error.response?.status || 500, '/ficha-cadastro', error.response?.data);
+      logger.error(`Erro ao listar fichas de cadastro: ${error.response?.data?.mensagem || error.message}`);
+      
+      return {
+        status: 'erro',
+        dados: [],
+        mensagem: error.response?.data?.mensagem || error.message || 'Erro desconhecido ao buscar fichas'
+      };
+    }
+  },
+
   // 🔄 CARREGAR TODOS OS DROPDOWNS - Método utilitário para carregar todos os dados
   async carregarTodosDropdowns() {
     try {

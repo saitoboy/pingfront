@@ -6,6 +6,7 @@ import LoginPage from '../pages/auth/LoginPage';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 import DashboardProfessorPage from '../pages/dashboard/DashboardProfessorPage';
 import FichaCadastroPage from '../pages/cadastro/FichaCadastroPage';
+import ListarFichasPage from '../pages/cadastro/ListarFichasPage';
 import CriarUsuarioPage from '../pages/usuarios/CriarUsuarioPage';
 import GerenciarUsuariosPage from '../pages/usuarios/GerenciarUsuariosPage';
 import GerenciarTiposUsuarioPage from '../pages/usuarios/GerenciarTiposUsuarioPage';
@@ -119,6 +120,15 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <FichaCadastroPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/fichas-cadastro"
+          element={
+            <ProtectedRoute>
+              <ListarFichasPage />
             </ProtectedRoute>
           }
         />
