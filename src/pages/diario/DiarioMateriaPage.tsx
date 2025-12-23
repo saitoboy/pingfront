@@ -6,21 +6,16 @@ import {
   Clock,
   Plus,
   Eye,
-  Save,
-  X,
-  ArrowLeft
+  ArrowLeft,
+  Grid3x3
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
-import { aulaService } from '../../services/aulaService'
+import gradeHorarioService, { type GradeHorario } from '../../services/gradeHorarioService'
+import { professorService } from '../../services/professorService'
 
-interface Aula {
-  aula_id?: string
-  turma_disciplina_professor_id: string
-  data_aula: string
-  hora_inicio: string
-  hora_fim: string
-  created_at?: string
-  updated_at?: string
+interface GradeHorarioComDia extends GradeHorario {
+  nomeDia: string
+  abreviacaoDia: string
 }
 
 export default function DiarioMateriaPage() {
@@ -28,25 +23,14 @@ export default function DiarioMateriaPage() {
   const navigate = useNavigate()
   const [turma, setTurma] = useState<any>(null)
   const [disciplina, setDisciplina] = useState<any>(null)
-  const [aulas, setAulas] = useState<Aula[]>([])
+  const [gradeHorarios, setGradeHorarios] = useState<GradeHorarioComDia[]>([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState<Aula>({
-    turma_disciplina_professor_id: turmaDisciplinaProfessorId || '',
-    data_aula: new Date().toISOString().split('T')[0],
-    hora_inicio: '08:00',
-    hora_fim: '09:00'
-  })
+  const [dataSelecionada, setDataSelecionada] = useState<string>(new Date().toISOString().split('T')[0])
 
   useEffect(() => {
     if (turmaDisciplinaProfessorId) {
       carregarDadosMateria()
-    }
-  }, [turmaDisciplinaProfessorId])
-
-  useEffect(() => {
-    if (turmaDisciplinaProfessorId) {
-      carregarAulas()
+      carregarGradeHorarios()
     }
   }, [turmaDisciplinaProfessorId])
 
@@ -55,24 +39,37 @@ export default function DiarioMateriaPage() {
       setLoading(true)
       logger.info(`📚 Carregando dados da matéria: ${turmaDisciplinaProfessorId}`, 'component')
       
-      // TODO: Implementar serviço para buscar dados da matéria
-      // Por enquanto, vamos usar dados mockados
+      // Buscar turmas do professor e encontrar a vinculação específica
+      const response = await professorService.listarMinhasTurmas()
       
-      setTurma({
-        turma_id: '550e8400-e29b-41d4-a716-446655440000', // UUID mockado
-        nome_turma: '1º Ano A',
-        turno: 'Manhã',
-        sala: 'Sala 101',
-        nome_serie: '1º Ano',
-        ano: 2025
-      })
-      
-      setDisciplina({
-        disciplina_id: '550e8400-e29b-41d4-a716-446655440002', // UUID mockado
-        nome_disciplina: 'Matemática'
-      })
-      
-      logger.success('✅ Dados da matéria carregados', 'component')
+      if (response.status === 'sucesso' && response.dados) {
+        const turmas = response.dados as any[]
+        const vinculacao = turmas.find(t => t.turma_disciplina_professor_id === turmaDisciplinaProfessorId)
+        
+        if (vinculacao) {
+          setTurma({
+            turma_id: vinculacao.turma_id,
+            nome_turma: vinculacao.nome_turma,
+            turno: vinculacao.turno,
+            sala: vinculacao.sala,
+            nome_serie: vinculacao.nome_serie,
+            ano: vinculacao.ano
+          })
+          
+          setDisciplina({
+            disciplina_id: vinculacao.disciplina_id,
+            nome_disciplina: vinculacao.nome_disciplina
+          })
+          
+          logger.success('✅ Dados da matéria carregados', 'component')
+        } else {
+          logger.error('❌ Vinculação não encontrada', 'component')
+          navigate('/diario')
+        }
+      } else {
+        logger.error('❌ Erro ao carregar dados da matéria', 'component')
+        navigate('/diario')
+      }
     } catch (error) {
       logger.error('❌ Erro ao carregar dados da matéria', 'component', error)
       navigate('/diario')
@@ -81,84 +78,73 @@ export default function DiarioMateriaPage() {
     }
   }
 
-  const carregarAulas = async () => {
+  const carregarGradeHorarios = async () => {
     try {
-      setLoading(true)
-      logger.info(`📚 Carregando aulas: ${disciplina?.nome_disciplina} - ${turma?.nome_turma}`, 'component')
+      logger.info(`📅 Carregando grade de horários: ${turmaDisciplinaProfessorId}`, 'component')
       
-      const response = await aulaService.listarAulasPorVinculacao(turmaDisciplinaProfessorId || '')
+      const response = await gradeHorarioService.buscarGradesPorVinculacao(turmaDisciplinaProfessorId || '')
       
-      if (response.status === 'sucesso' && response.dados) {
-        setAulas(response.dados)
-        logger.success(`✅ ${response.dados.length} aulas carregadas`, 'component')
+      if (response.success && response.data) {
+        const grades = Array.isArray(response.data) ? response.data : [response.data]
+        const gradesComDia = grades.map(grade => ({
+          ...grade,
+          nomeDia: gradeHorarioService.getNomeDiaSemana(grade.dia_semana),
+          abreviacaoDia: gradeHorarioService.getAbreviacaoDiaSemana(grade.dia_semana)
+        }))
+        
+        // Ordenar por dia da semana e hora
+        gradesComDia.sort((a, b) => {
+          if (a.dia_semana !== b.dia_semana) {
+            return a.dia_semana - b.dia_semana
+          }
+          return a.hora_inicio.localeCompare(b.hora_inicio)
+        })
+        
+        setGradeHorarios(gradesComDia)
+        logger.success(`✅ ${gradesComDia.length} horários carregados`, 'component')
       } else {
-        logger.error('❌ Erro ao carregar aulas', 'component')
-        setAulas([])
+        logger.warning('⚠️ Nenhuma grade de horários encontrada', 'component')
+        setGradeHorarios([])
       }
     } catch (error) {
-      logger.error('❌ Erro ao carregar aulas', 'component', error)
-      setAulas([])
-    } finally {
-      setLoading(false)
+      logger.error('❌ Erro ao carregar grade de horários', 'component', error)
+      setGradeHorarios([])
     }
   }
 
-
-  const handleNovaAula = () => {
-    setFormData({
-      turma_disciplina_professor_id: turmaDisciplinaProfessorId || '',
-      data_aula: new Date().toISOString().split('T')[0],
-      hora_inicio: '08:00',
-      hora_fim: '09:00'
-    })
-    setShowForm(true)
-  }
-
-  const handleSalvarAula = async () => {
-    try {
-      logger.info(`💾 Salvando nova aula: ${formData.data_aula}`, 'component')
-      
-      const response = await aulaService.criarAula({
-        turma_disciplina_professor_id: turmaDisciplinaProfessorId || '',
-        data_aula: formData.data_aula,
-        hora_inicio: formData.hora_inicio,
-        hora_fim: formData.hora_fim
-      })
-      
-      if (response.status === 'sucesso' && response.dados) {
-        setAulas([...aulas, response.dados])
-        setShowForm(false)
-        logger.success('✅ Aula salva com sucesso', 'component')
-      } else {
-        logger.error('❌ Erro ao salvar aula', 'component')
-      }
-    } catch (error) {
-      logger.error('❌ Erro ao salvar aula', 'component', error)
-    }
-  }
-
-  const handleCancelarAula = () => {
-    setShowForm(false)
-    setFormData({
-      turma_disciplina_professor_id: turmaDisciplinaProfessorId || '',
-      data_aula: new Date().toISOString().split('T')[0],
-      hora_inicio: '08:00',
-      hora_fim: '09:00'
-    })
-  }
-
-  const handleVisualizarAula = (aula: Aula) => {
-    if (aula.aula_id) {
-      navigate(`/diario/aula/${aula.aula_id}`)
-    }
+  const handleSelecionarData = (data: string) => {
+    setDataSelecionada(data)
+    navigate(`/diario/dia/${turmaDisciplinaProfessorId}/${data}`)
   }
 
   const formatarData = (data: string) => {
-    return new Date(data).toLocaleDateString('pt-BR', {
+    return new Date(data + 'T00:00:00').toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
+      weekday: 'long'
     })
+  }
+
+  // Agrupar horários por dia da semana
+  const horariosPorDia = gradeHorarios.reduce((acc, grade) => {
+    if (!acc[grade.dia_semana]) {
+      acc[grade.dia_semana] = []
+    }
+    acc[grade.dia_semana].push(grade)
+    return acc
+  }, {} as Record<number, GradeHorarioComDia[]>)
+
+  // Obter dia da semana da data selecionada
+  const getDiaSemanaDaData = (data: string): number => {
+    const date = new Date(data + 'T00:00:00')
+    return date.getDay()
+  }
+
+  // Verificar se há horário na data selecionada
+  const temHorarioNaData = (data: string): boolean => {
+    const diaSemana = getDiaSemanaDaData(data)
+    return horariosPorDia[diaSemana] && horariosPorDia[diaSemana].length > 0
   }
 
   return (
@@ -167,7 +153,7 @@ export default function DiarioMateriaPage() {
         
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between p-6">
+          <div className="flex items-center justify-between p-6 bg-white rounded-2xl shadow-lg">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate(-1)}
@@ -177,198 +163,140 @@ export default function DiarioMateriaPage() {
               </button>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Diário da Matéria</h1>
-                <p className="text-gray-600 mt-1">{disciplina?.nome_disciplina} - {turma?.nome_serie} {turma?.nome_turma}</p>
+                <p className="text-gray-600 mt-1">
+                  {disciplina?.nome_disciplina} - {turma?.nome_serie} {turma?.nome_turma}
+                </p>
               </div>
             </div>
-            <button
-              onClick={handleNovaAula}
-              className="flex items-center px-6 py-3 text-sm font-medium text-white bg-blue-500 rounded-xl hover:bg-green-700 transition-colors shadow-lg"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Nova Aula
-            </button>
           </div>
         </div>
-
-        
-
-        {/* Formulário de Nova Aula */}
-        {showForm && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border-2 border-green-200">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Nova Aula</h3>
-              <button
-                onClick={handleCancelarAula}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Data da Aula
-                </label>
-                <input
-                  type="date"
-                  value={formData.data_aula}
-                  onChange={(e) => setFormData({...formData, data_aula: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Hora de Início
-                </label>
-                <input
-                  type="time"
-                  value={formData.hora_inicio}
-                  onChange={(e) => setFormData({...formData, hora_inicio: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Hora de Fim
-                </label>
-                <input
-                  type="time"
-                  value={formData.hora_fim}
-                  onChange={(e) => setFormData({...formData, hora_fim: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-            
-            <div className="mt-6 p-4 bg-blue-50 rounded-xl">
-              <div className="flex items-center space-x-2 text-blue-700">
-                <BookOpen className="w-5 h-5" />
-                <span className="font-medium">Informação</span>
-              </div>
-              <p className="text-blue-600 text-sm mt-2">
-                Após criar a aula, você poderá adicionar conteúdos específicos para cada aula.
-                Os conteúdos são adicionados separadamente para permitir maior flexibilidade.
-              </p>
-            </div>
-            
-            <div className="flex items-center justify-end space-x-4 mt-6">
-              <button
-                onClick={handleCancelarAula}
-                className="px-6 py-3 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSalvarAula}
-                className="flex items-center px-6 py-3 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Aula
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent mx-auto mb-4"></div>
-              <p className="text-gray-600">Carregando aulas...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+              <p className="text-gray-600">Carregando grade de horários...</p>
             </div>
           </div>
         )}
 
-        {/* Lista de Aulas */}
         {!loading && (
-          <div className="space-y-6">
-            {aulas.length === 0 ? (
-              <div className="text-center py-12">
-                <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma aula registrada</h3>
-                <p className="text-gray-600 mb-6">Comece adicionando a primeira aula desta disciplina.</p>
-                <button
-                  onClick={handleNovaAula}
-                  className="flex items-center px-6 py-3 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors mx-auto"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Adicionar Primeira Aula
-                </button>
+          <div className="space-y-8">
+            {/* Grade de Horários */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                  <Grid3x3 className="w-6 h-6 mr-3 text-blue-500" />
+                  Grade de Horários
+                </h2>
               </div>
-            ) : (
-              aulas.map((aula) => {
-                return (
-                  <div key={aula.aula_id} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-                    {/* Header da Aula */}
-                    <div className="px-6 py-4 bg-gradient-to-r from-green-50 to-blue-50 border-b border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
-                            <Calendar className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900">
-                              Aula de {formatarData(aula.data_aula)}
-                            </h3>
-                            <div className="flex items-center space-x-4 mt-1">
-                              <div className="flex items-center space-x-1 text-sm text-gray-600">
-                                <Clock className="w-4 h-4" />
-                                <span>{aula.hora_inicio} - {aula.hora_fim}</span>
+
+              {gradeHorarios.length === 0 ? (
+                <div className="text-center py-12">
+                  <Clock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma grade de horários cadastrada</h3>
+                  <p className="text-gray-600">Entre em contato com a secretaria para cadastrar os horários desta disciplina.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+                  {[1, 2, 3, 4, 5, 6, 0].map(dia => {
+                    const horarios = horariosPorDia[dia] || []
+                    const nomeDia = gradeHorarioService.getAbreviacaoDiaSemana(dia)
+                    
+                    return (
+                      <div key={dia} className="border border-gray-200 rounded-xl p-4">
+                        <h3 className="font-bold text-gray-900 mb-3 text-center">{nomeDia}</h3>
+                        {horarios.length === 0 ? (
+                          <p className="text-sm text-gray-400 text-center">Sem aula</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {horarios.map((grade, index) => (
+                              <div
+                                key={grade.grade_horario_id || index}
+                                className="bg-blue-50 rounded-lg p-2 text-center"
+                              >
+                                <div className="text-xs font-medium text-blue-700">
+                                  {grade.hora_inicio} - {grade.hora_fim}
+                                </div>
                               </div>
-                            <div className="flex items-center space-x-1 text-sm text-gray-600">
-                              <BookOpen className="w-4 h-4" />
-                              <span>Conteúdos em breve</span>
-                            </div>
-                            </div>
+                            ))}
                           </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Seletor de Data */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <Calendar className="w-6 h-6 mr-3 text-green-500" />
+                Selecionar Data
+              </h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Escolha uma data para registrar o diário
+                  </label>
+                  <input
+                    type="date"
+                    value={dataSelecionada}
+                    onChange={(e) => setDataSelecionada(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+
+                {dataSelecionada && (
+                  <div className="mt-4">
+                    <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Data selecionada:</p>
+                          <p className="text-lg font-semibold text-gray-900">{formatarData(dataSelecionada)}</p>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <button 
-                            onClick={() => handleVisualizarAula(aula)}
-                            className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Visualizar aula e adicionar conteúdos"
-                          >
-                            <Eye className="w-5 h-5" />
-                          </button>
-                        </div>
+                        {temHorarioNaData(dataSelecionada) ? (
+                          <div className="flex items-center space-x-2 px-3 py-1 bg-green-100 rounded-lg">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm font-medium text-green-700">Tem aula</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2 px-3 py-1 bg-yellow-100 rounded-lg">
+                            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                            <span className="text-sm font-medium text-yellow-700">Sem horário</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
+                    <button
+                      onClick={() => handleSelecionarData(dataSelecionada)}
+                      className="w-full flex items-center justify-center px-6 py-3 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors shadow-lg"
+                    >
+                      <Eye className="w-5 h-5 mr-2" />
+                      Acessar Diário do Dia
+                    </button>
                   </div>
-                )
-              })
-            )}
-          </div>
-        )}
+                )}
+              </div>
+            </div>
 
-        {/* Estatísticas */}
-        {!loading && aulas.length > 0 && (
-          <div className="mt-8 bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Estatísticas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{aulas.length}</div>
-                <div className="text-sm text-gray-600">Total de Aulas</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">
-                  {aulas.reduce((total, aula) => {
-                    const inicio = new Date(`2000-01-01T${aula.hora_inicio}`)
-                    const fim = new Date(`2000-01-01T${aula.hora_fim}`)
-                    const duracao = (fim.getTime() - inicio.getTime()) / (1000 * 60 * 60)
-                    return total + duracao
-                  }, 0).toFixed(1)}h
+            {/* Informações */}
+            <div className="bg-blue-50 rounded-2xl p-6 border border-blue-200">
+              <div className="flex items-start space-x-3">
+                <BookOpen className="w-6 h-6 text-blue-600 mt-1" />
+                <div>
+                  <h3 className="font-semibold text-blue-900 mb-2">Como usar o diário por dia</h3>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Selecione uma data no calendário acima</li>
+                    <li>• Clique em "Acessar Diário do Dia" para registrar frequência, atividades e conteúdos</li>
+                    <li>• O sistema usa a grade de horários para identificar os dias com aula</li>
+                    <li>• Você pode registrar o diário mesmo em dias sem horário cadastrado</li>
+                  </ul>
                 </div>
-                <div className="text-sm text-gray-600">Horas Ministradas</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
-                  {new Set(aulas.map(aula => aula.data_aula)).size}
-                </div>
-                <div className="text-sm text-gray-600">Dias de Aula</div>
               </div>
             </div>
           </div>

@@ -7,7 +7,7 @@ export interface Turma {
   nome_turma: string;
   ano_letivo_id: string;
   serie_id: string;
-  turno: 'MANHA' | 'TARDE' | 'NOITE' | 'INTEGRAL';
+  turno: 'manhã' | 'tarde' | 'noite' | 'integral';
   sala?: string;
   capacidade_maxima?: number;
   created_at?: string;
@@ -21,7 +21,7 @@ export interface CriarTurmaDto {
   nome_turma: string;
   ano_letivo_id: string;
   serie_id: string;
-  turno: 'MANHA' | 'TARDE' | 'NOITE' | 'INTEGRAL';
+  turno: 'manhã' | 'tarde' | 'noite' | 'integral';
   sala?: string;
   capacidade_maxima?: number;
 }

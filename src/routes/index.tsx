@@ -15,6 +15,8 @@ import GestaoEscolarPage from '../pages/gestao/GestaoEscolarPage';
 import SelecionarProfessorPage from '../pages/diario/SelecionarProfessorPage';
 import DiarioProfessorPage from '../pages/diario/DiarioProfessorPage';
 import DiarioMateriaPage from '../pages/diario/DiarioMateriaPage';
+import DiarioDiaPage from '../pages/diario/DiarioDiaPage';
+import CalendarioGradePage from '../pages/diario/CalendarioGradePage';
 import DetalhesAulaPage from '../pages/diario/DetalhesAulaPage';
 import LancarNotasPage from '../pages/diario/LancarNotasPage';
 import MeuDiarioPage from '../pages/diario/MeuDiarioPage';
@@ -217,6 +219,24 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <DiarioMateriaPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/diario/dia/:turmaDisciplinaProfessorId/:data"
+          element={
+            <ProtectedRoute>
+              <DiarioDiaPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/diario/calendario/:professorId/:diaSemana?"
+          element={
+            <ProtectedRoute>
+              <CalendarioGradePage />
             </ProtectedRoute>
           }
         />

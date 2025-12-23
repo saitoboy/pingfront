@@ -73,6 +73,22 @@ function findRouteConfig(pathname: string): { title: string; description: string
   }
 
   // Para rotas dinâmicas, encontra o padrão correspondente
+  if (pathname.startsWith('/diario/professor/')) {
+    return {
+      title: 'Diário Escolar',
+      description: '', // Será preenchido dinamicamente com os dados do usuário
+      icon: BookOpen
+    };
+  }
+
+  if (pathname.startsWith('/diario/calendario/')) {
+    return {
+      title: 'Calendário',
+      description: '',
+      icon: BookOpen
+    };
+  }
+
   if (pathname.startsWith('/diario/aula/')) {
     return {
       title: 'Detalhes da Aula',
@@ -171,7 +187,7 @@ export default function DashboardLayout() {
                     {currentRoute.title}
                   </h1>
                   <p className="text-sm text-gray-600 font-medium">
-                    {currentRoute.description}
+                    Grade Curricular
                   </p>
                 </div>
               </div>

@@ -88,20 +88,20 @@ export default function TurmasTab() {
 
   const getTurnoLabel = (turno: string) => {
     const turnos: any = {
-      'MANHA': 'Manhã',
-      'TARDE': 'Tarde',
-      'NOITE': 'Noite',
-      'INTEGRAL': 'Integral'
+      'manhã': 'Manhã',
+      'tarde': 'Tarde',
+      'noite': 'Noite',
+      'integral': 'Integral'
     };
     return turnos[turno] || turno;
   };
 
   const getTurnoColor = (turno: string) => {
     const cores: any = {
-      'MANHA': 'bg-yellow-100 text-yellow-800',
-      'TARDE': 'bg-orange-100 text-orange-800',
-      'NOITE': 'bg-blue-100 text-blue-800',
-      'INTEGRAL': 'bg-blue-100 text-blue-800'
+      'manhã': 'bg-yellow-100 text-yellow-800',
+      'tarde': 'bg-orange-100 text-orange-800',
+      'noite': 'bg-blue-100 text-blue-800',
+      'integral': 'bg-blue-100 text-blue-800'
     };
     return cores[turno] || 'bg-gray-100 text-gray-800';
   };
@@ -171,10 +171,10 @@ export default function TurmasTab() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Todos os turnos</option>
-              <option value="MANHA">Manhã</option>
-              <option value="TARDE">Tarde</option>
-              <option value="NOITE">Noite</option>
-              <option value="INTEGRAL">Integral</option>
+              <option value="manhã">Manhã</option>
+              <option value="tarde">Tarde</option>
+              <option value="noite">Noite</option>
+              <option value="integral">Integral</option>
             </select>
           </div>
         </div>
