@@ -4,7 +4,6 @@ import {
   BookOpen, 
   Calendar, 
   Clock,
-  Plus,
   Eye,
   ArrowLeft,
   Grid3x3
