@@ -265,21 +265,19 @@ export default function AlocacaoProfessorPage() {
           </div>
 
           {/* Botões de Ação */}
-          <div className="flex items-center justify-between mt-6 pt-6 border-t">
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => { carregarAlocacoes(); carregarEstatisticas(); }}
-                disabled={!anoLetivoAtivo || loading}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                Atualizar
-              </button>
-            </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mt-6 pt-6 border-t">
+            <button
+              onClick={() => { carregarAlocacoes(); carregarEstatisticas(); }}
+              disabled={!anoLetivoAtivo || loading}
+              className="w-full sm:w-auto px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </button>
             <button
               onClick={() => setModalAberto(true)}
               disabled={!anoLetivoAtivo || loading}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-lg"
+              className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
             >
               <Plus className="w-5 h-5 mr-2" />
               Nova Alocação
@@ -367,18 +365,25 @@ export default function AlocacaoProfessorPage() {
             {professoresComAlocacoes.map((prof) => (
               <div key={prof.professor_id} className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 {/* Header do Professor */}
-                <div className="bg-blue-600 px-6 py-4">
-                  <div className="flex items-center justify-between">
+                <div className="bg-blue-600 px-4 sm:px-6 py-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                      <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
                         <Users className="w-6 h-6 text-white" />
                       </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white">{prof.nome_professor}</h3>
-                        <p className="text-blue-100 text-sm">{prof.email_professor}</p>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg sm:text-xl font-bold text-white truncate">{prof.nome_professor}</h3>
+                        <p className="text-blue-100 text-xs sm:text-sm truncate">{prof.email_professor}</p>
+                        {/* Quantidade de alocações - visível apenas em mobile */}
+                        <div className="sm:hidden mt-2">
+                          <div className="bg-white/20 px-3 py-1.5 rounded-lg inline-block">
+                            <p className="text-white font-bold text-sm">{prof.alocacoes.length} alocações</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="bg-white/20 px-4 py-2 rounded-lg">
+                    {/* Quantidade de alocações - visível apenas em desktop */}
+                    <div className="hidden sm:block bg-white/20 px-4 py-2 rounded-lg flex-shrink-0">
                       <p className="text-white font-bold text-lg">{prof.alocacoes.length} alocações</p>
                     </div>
                   </div>

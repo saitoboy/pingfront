@@ -128,6 +128,35 @@ export const authService = {
     }
   },
 
+  // ✅ VERIFY TOKEN - Verificar se o token é válido
+  async verifyToken(token: string): Promise<boolean> {
+    try {
+      logger.info('Verificando validade do token', 'auth');
+      logger.apiRequest('GET', '/auth/me');
+      
+      const response = await api.get('/auth/me', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      logger.apiResponse(response.status, '/auth/me');
+      
+      // Se chegou aqui, o token é válido
+      return response.status === 200 && !!response.data?.usuario;
+    } catch (error: any) {
+      // Se retornou 401, o token é inválido ou expirado
+      if (error.response?.status === 401) {
+        logger.info('Token inválido ou expirado', 'auth');
+        return false;
+      }
+      
+      // Outros erros também consideramos como token inválido
+      logger.error(`Erro ao verificar token: ${error.response?.data?.mensagem || error.message}`, 'auth');
+      return false;
+    }
+  },
+
   // 🔄 REFRESH - Renovar token JWT
   async refresh(): Promise<ApiResponse<LoginResponse>> {
     try {

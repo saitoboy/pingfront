@@ -69,19 +69,19 @@ export default function SeriesTab() {
   return (
     <div>
       {/* Header com botão adicionar */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <GraduationCap className="w-7 h-7 text-blue-600" />
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <div className="flex-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" />
             Séries Escolares
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Gerencie as séries/anos escolares disponíveis
           </p>
         </div>
         <button
           onClick={handleNovaSerie}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
         >
           <Plus className="w-5 h-5" />
           Nova Série
@@ -97,16 +97,17 @@ export default function SeriesTab() {
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9', WebkitOverflowScrolling: 'touch' }}>
+            <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Série
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ID
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
@@ -114,16 +115,16 @@ export default function SeriesTab() {
             <tbody className="bg-white divide-y divide-gray-200">
               {series.map((serie) => (
                 <tr key={serie.serie_id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <GraduationCap className="w-5 h-5 text-blue-600 mr-3" />
-                      <span className="text-sm font-medium text-gray-900">{serie.nome_serie}</span>
+                      <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2 sm:mr-3 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm font-medium text-gray-900">{serie.nome_serie}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-500">{serie.serie_id.substring(0, 8)}...</span>
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <span className="text-xs sm:text-sm text-gray-500">{serie.serie_id.substring(0, 8)}...</span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleEditarSerie(serie)}
                       className="text-blue-600 hover:text-blue-900 mr-4"
@@ -143,6 +144,7 @@ export default function SeriesTab() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

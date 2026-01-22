@@ -37,28 +37,60 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // ⚡ EFFECT - roda quando o componente carrega
   useEffect(() => {
-    // Verifica se já tem token salvo no localStorage
-    const savedToken = localStorage.getItem('authToken');
-    const savedUsuario = localStorage.getItem('authUsuario');
+    // Função assíncrona para verificar o token
+    const verificarTokenSalvo = async () => {
+      // Verifica se já tem token salvo no localStorage
+      const savedToken = localStorage.getItem('authToken');
+      const savedUsuario = localStorage.getItem('authUsuario');
 
-    if (savedToken && savedUsuario) {
-      try {
-        setToken(savedToken);
-        setUsuario(JSON.parse(savedUsuario));
-      } catch (error) {
-        // Se der erro ao fazer parse, limpa o localStorage
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('authUsuario');
+      if (savedToken && savedUsuario) {
+        try {
+          // Verifica se o token é válido fazendo uma requisição ao backend
+          const tokenValido = await authService.verifyToken(savedToken);
+          
+          if (tokenValido) {
+            // Token válido, restaura o estado
+            setToken(savedToken);
+            setUsuario(JSON.parse(savedUsuario));
+          } else {
+            // Token inválido ou expirado, remove do localStorage
+            console.log('🔒 Token expirado ou inválido, removendo do localStorage');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('authUsuario');
+            setToken(null);
+            setUsuario(null);
+          }
+        } catch (error) {
+          // Se der erro ao fazer parse ou verificar, limpa o localStorage
+          console.error('❌ Erro ao verificar token:', error);
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('authUsuario');
+          setToken(null);
+          setUsuario(null);
+        }
       }
-    }
 
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    verificarTokenSalvo();
   }, []);
 
   // 🔑 FUNÇÃO LOGIN
   const login = async (email: string, senha: string) => {
     try {
       setIsLoading(true);
+      
+      // Remove qualquer token antigo do localStorage antes de fazer novo login
+      // Isso garante que tokens expirados não causem problemas
+      const tokenAntigo = localStorage.getItem('authToken');
+      if (tokenAntigo) {
+        console.log('🧹 Removendo token antigo antes do login');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUsuario');
+        setToken(null);
+        setUsuario(null);
+      }
       
       // Chama o serviço de autenticação
       const response = await authService.login({ email, senha });

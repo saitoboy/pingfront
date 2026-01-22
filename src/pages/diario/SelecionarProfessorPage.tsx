@@ -134,17 +134,17 @@ export default function SelecionarProfessorPage() {
                 
                 <div className="divide-y divide-gray-200">
                   {professoresUnicos.map((professor) => (
-                    <div key={professor.professor_id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <div key={professor.professor_id} className="px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                          <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
                             <User className="w-5 h-5 text-white" />
                           </div>
-                          <div>
-                            <h4 className="text-lg font-semibold text-gray-900">{professor.nome_usuario}</h4>
-                            <p className="text-sm text-gray-600">{professor.email_usuario}</p>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{professor.nome_usuario}</h4>
+                            <p className="text-xs sm:text-sm text-gray-600 truncate">{professor.email_usuario}</p>
                             <div className="flex items-center space-x-2 mt-1">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
                               <span className="text-xs text-green-600 font-medium">Ano Letivo {professor.ano} - Ativo</span>
                             </div>
                           </div>
@@ -152,7 +152,7 @@ export default function SelecionarProfessorPage() {
                         
                         <button
                           onClick={() => handleProfessorClick(professor)}
-                          className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-lg"
+                          className="w-full sm:w-auto flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-lg flex-shrink-0"
                         >
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Diário

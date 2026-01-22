@@ -1,4 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   UserPlus, 
@@ -6,7 +7,9 @@ import {
   School, 
   BookOpen,
   GraduationCap,
-  Settings
+  Settings,
+  Menu,
+  X
 } from 'lucide-react';
 import Sidebar from '../components/layout/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
@@ -117,10 +120,16 @@ export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { usuario, logout } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Obtém a configuração da rota atual
   const currentRoute = findRouteConfig(location.pathname);
   const IconComponent = currentRoute.icon;
+
+  // Fecha o sidebar quando a rota mudar (em mobile)
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
 
   // Mapeia o pathname para o activeItem da Sidebar
   const getActiveItem = () => {
@@ -153,6 +162,8 @@ export default function DashboardLayout() {
     const path = routeMap[itemId];
     if (path) {
       navigate(path);
+      // Fecha o sidebar em mobile após navegação
+      setIsSidebarOpen(false);
     }
   };
 
@@ -164,35 +175,58 @@ export default function DashboardLayout() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      {/* Overlay para mobile quando sidebar está aberto */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar Fixa */}
       <Sidebar 
         activeItem={getActiveItem()} 
         onItemClick={handleSidebarClick} 
         onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
       
       {/* Conteúdo Principal com margem para compensar a sidebar */}
-      <div className="ml-64 flex flex-col min-h-screen">
+      <div className="lg:ml-64 flex flex-col min-h-screen">
         {/* Header Moderno Fixo */}
         <header className="sticky top-0 z-30 relative bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-purple-600/5 to-pink-600/5"></div>
           <div className="relative px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-5">
               <div className="flex items-center space-x-4">
+                {/* Botão hambúrguer para mobile */}
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="lg:hidden w-10 h-10 flex items-center justify-center rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors shadow-lg"
+                  aria-label="Toggle menu"
+                >
+                  {isSidebarOpen ? (
+                    <X className="w-6 h-6" />
+                  ) : (
+                    <Menu className="w-6 h-6" />
+                  )}
+                </button>
+                
                 <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
                   <IconComponent className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold bg-blue-700 bg-clip-text text-transparent">
+                  <h1 className="text-xl sm:text-2xl font-bold bg-blue-700 bg-clip-text text-transparent">
                     {currentRoute.title}
                   </h1>
-                  <p className="text-sm text-gray-600 font-medium">
+                  <p className="text-xs sm:text-sm text-gray-600 font-medium hidden sm:block">
                     Grade Curricular
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="text-right">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="text-right hidden sm:block">
                   <p className="text-sm font-semibold text-gray-700">
                     {usuario?.nome_usuario || 'Usuário'}
                   </p>
@@ -201,8 +235,8 @@ export default function DashboardLayout() {
                   </p>
                 </div>
                 <div className="relative">
-                  <div className="w-11 h-11 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
-                    <span className="text-white text-sm font-bold">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-300 cursor-pointer">
+                    <span className="text-white text-xs sm:text-sm font-bold">
                       {usuario?.nome_usuario
                         ?.split(' ')
                         .map(n => n[0])
@@ -211,7 +245,7 @@ export default function DashboardLayout() {
                         .toUpperCase() || 'U'}
                     </span>
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-400 rounded-full border-2 border-white"></div>
                 </div>
               </div>
             </div>

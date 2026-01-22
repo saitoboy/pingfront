@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { 
   ArrowLeft,
   ArrowRight,
@@ -503,19 +503,64 @@ export default function FichaCadastroPage() {
     }
   }
 
+  // Ref para o container de steps (para scroll automático)
+  const stepsContainerRef = useRef<HTMLDivElement>(null)
+
+  // Scroll automático para o step atual em mobile
+  useEffect(() => {
+    if (stepsContainerRef.current) {
+      const stepElement = stepsContainerRef.current.children[currentStep - 1] as HTMLElement
+      if (stepElement) {
+        const container = stepsContainerRef.current
+        const stepLeft = stepElement.offsetLeft
+        const stepWidth = stepElement.offsetWidth
+        const containerWidth = container.offsetWidth
+        const scrollLeft = stepLeft - (containerWidth / 2) + (stepWidth / 2)
+        
+        container.scrollTo({
+          left: scrollLeft,
+          behavior: 'smooth'
+        })
+      }
+    }
+  }, [currentStep])
+
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6">
       {/* Steps Navigation - Ícones com nomes embaixo */}
       <div className="mb-8">
-        <div className="flex justify-between items-start">
+        {/* Container com scroll horizontal em mobile, layout normal em desktop */}
+        <div 
+          ref={stepsContainerRef}
+          className="
+            steps-scroll-container
+            flex items-start 
+            lg:justify-between 
+            gap-4 sm:gap-6 lg:gap-0
+            overflow-x-auto overflow-y-visible
+            pb-4
+            -mx-4 sm:-mx-6 px-4 sm:px-6
+            lg:mx-0 lg:px-0
+            scroll-smooth
+          "
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#cbd5e1 #f1f5f9',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
           {WIZARD_STEPS.map((step, index) => (
-            <div key={step.id} className="flex flex-col items-center relative">
+            <div 
+              key={step.id} 
+              className="flex flex-col items-center relative flex-shrink-0"
+              style={{ minWidth: '80px' }}
+            >
               {/* Step Circle */}
               <div
                 className={`
-                  flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-all duration-300 mb-2
+                  flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full cursor-pointer transition-all duration-300 mb-2 flex-shrink-0
                   ${currentStep === step.id 
-                    ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-100' 
+                    ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-100 scale-110' 
                     : currentStep > step.id 
                       ? 'bg-green-600 text-white shadow-md'
                       : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -524,35 +569,39 @@ export default function FichaCadastroPage() {
                 onClick={() => goToStep(step.id)}
               >
                 {currentStep > step.id ? (
-                  <Check className="w-5 h-5" />
+                  <Check className="w-5 h-5 sm:w-6 sm:h-6" />
                 ) : (
                   React.createElement(step.icon, {
-                    className: "w-5 h-5"
+                    className: "w-5 h-5 sm:w-6 sm:h-6"
                   })
                 )}
               </div>
               
               {/* Step Name */}
-              <div className={`text-xs font-medium text-center max-w-20 leading-tight ${
-                currentStep === step.id 
-                  ? 'text-blue-600' 
+              <div className={`
+                text-xs sm:text-sm font-medium text-center leading-tight
+                ${currentStep === step.id 
+                  ? 'text-blue-600 font-bold' 
                   : currentStep > step.id
                     ? 'text-green-600'
                     : 'text-gray-500'
-              }`}>
+                }
+              `}
+              style={{ maxWidth: '90px' }}
+              >
                 {step.title}
               </div>
 
-              {/* Connector Line */}
+              {/* Connector Line - apenas em desktop */}
               {index < WIZARD_STEPS.length - 1 && (
                 <div 
                   className={`
-                    absolute top-5 left-full w-full h-0.5 transition-colors duration-300 -z-10
+                    hidden lg:block absolute top-6 sm:top-7 left-full h-0.5 transition-colors duration-300 -z-10
                     ${currentStep > step.id ? 'bg-green-600' : 'bg-gray-300'}
                   `}
                   style={{ 
                     width: `calc(100% + ${100 / (WIZARD_STEPS.length - 1)}%)`,
-                    transform: 'translateX(20px)'
+                    transform: 'translateX(28px)'
                   }} 
                 />
               )}

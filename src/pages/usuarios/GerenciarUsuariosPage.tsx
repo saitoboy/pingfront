@@ -10,8 +10,7 @@ import {
   User,
   Mail,
   Calendar,
-  AlertCircle,
-  Shield
+  AlertCircle
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import { usuarioService } from '../../services/usuarioService'
@@ -192,22 +191,23 @@ export default function GerenciarUsuariosPage() {
         {/* Lista de Usuários */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
           {/* Header da Tabela */}
-          <div className="px-6 py-5 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
-            <div className="flex items-center justify-between">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h3 className="text-lg font-bold text-gray-900">
                 Usuários ({usuariosFiltrados.length})
               </h3>
               <div className="flex items-center space-x-2">
-                <button
+                {/* Botão Gerenciar Tipos - Comentado temporariamente */}
+                {/* <button
                   onClick={() => navigate('/usuarios/tipos')}
                   className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   <Shield className="w-4 h-4 mr-2" />
                   Gerenciar Tipos
-                </button>
+                </button> */}
                 <button
                   onClick={handleCriarUsuario}
-                  className="flex items-center px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="w-full sm:w-auto flex items-center justify-center px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Novo Usuário
@@ -269,34 +269,34 @@ export default function GerenciarUsuariosPage() {
                 {usuariosFiltrados.map((usuario) => (
                   <div
                     key={usuario.usuario_id}
-                    className="group relative bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl p-6 hover:border-blue-200 transition-all duration-300"
+                    className="group relative bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl p-4 sm:p-6 hover:border-blue-200 transition-all duration-300"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
                         {/* Avatar */}
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                          <User className="w-6 h-6 text-white" />
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                          <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
 
                         {/* Informações */}
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h4 className="text-lg font-bold text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 gap-2 sm:gap-0 mb-2">
+                            <h4 className="text-base sm:text-lg font-bold text-gray-900 truncate">
                               {usuario.nome_usuario}
                             </h4>
-                            <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getTipoColor(usuario.tipo_usuario_id)}`}>
+                            <span className={`px-2 sm:px-3 py-1 text-xs font-semibold rounded-full border ${getTipoColor(usuario.tipo_usuario_id)} flex-shrink-0 w-fit`}>
                               {getTipoNome(usuario.tipo_usuario_id)}
                             </span>
                           </div>
                           
-                          <div className="flex items-center space-x-4 text-sm text-gray-600">
-                            <div className="flex items-center space-x-1">
-                              <Mail className="w-4 h-4" />
-                              <span>{usuario.email_usuario}</span>
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2 sm:gap-0 text-xs sm:text-sm text-gray-600">
+                            <div className="flex items-center space-x-1 min-w-0">
+                              <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                              <span className="truncate">{usuario.email_usuario}</span>
                             </div>
                             <div className="flex items-center space-x-1">
-                              <Calendar className="w-4 h-4" />
-                              <span>
+                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                              <span className="whitespace-nowrap">
                                 Criado em {new Date(usuario.created_at).toLocaleDateString('pt-BR')}
                               </span>
                             </div>
@@ -305,7 +305,7 @@ export default function GerenciarUsuariosPage() {
                       </div>
 
                       {/* Ações */}
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-end sm:justify-start space-x-2 flex-shrink-0">
                         <button
                           onClick={() => handleEditarUsuario(usuario)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
