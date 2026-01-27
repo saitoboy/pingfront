@@ -21,22 +21,37 @@ export default function EsqueciSenhaPage() {
     try {
       logger.info('Solicitando redefinição de senha...');
       
-      await authService.forgotPassword(email);
+      const response = await authService.forgotPassword(email);
       
-      setSuccess(true);
-      logger.success('Código de redefinição enviado com sucesso!');
+      // Verifica se a resposta indica sucesso
+      // A API pode retornar { sucesso: boolean } ou { status: 'sucesso' | 'erro' }
+      const sucesso = (response as any).sucesso || response.status === 'sucesso';
       
-      // Redireciona para página de confirmação após 2 segundos
-      setTimeout(() => {
-        navigate('/auth/confirmar-codigo', { 
-          state: { email } 
-        });
-      }, 2000);
+      if (sucesso) {
+        setSuccess(true);
+        logger.success('Código de redefinição enviado com sucesso!');
+        
+        // Redireciona para página de confirmação após 2 segundos
+        setTimeout(() => {
+          navigate('/auth/confirmar-codigo', { 
+            state: { email } 
+          });
+        }, 2000);
+      } else {
+        // Se não foi sucesso, mostra erro
+        const mensagem = response.mensagem || (response as any).mensagem || 'Erro ao solicitar redefinição.';
+        setError(mensagem);
+        logger.error('Erro ao solicitar redefinição de senha');
+      }
       
     } catch (error: any) {
       logger.error('Erro ao solicitar redefinição de senha');
       
-      if (error.response?.data?.mensagem) {
+      // Trata diferentes tipos de erro
+      if (error.response?.status === 404) {
+        // Email não encontrado
+        setError(error.response?.data?.mensagem || 'Email não cadastrado no sistema.');
+      } else if (error.response?.data?.mensagem) {
         setError(error.response.data.mensagem);
       } else if (error.message?.includes('Network') || error.message?.includes('ERR_NETWORK')) {
         setError('Erro de conexão. Verifique se o servidor está rodando.');

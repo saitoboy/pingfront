@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Key, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
+import { Key, ArrowLeft, AlertCircle } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { logger } from '../../lib/logger';
 import bgAzul from '../../assets/images/bg azul.png';
@@ -13,7 +13,6 @@ export default function ConfirmarCodigoPage() {
   const [codigo, setCodigo] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [resetCodeId, setResetCodeId] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Se não tiver email, redireciona para esqueci senha
@@ -108,13 +107,18 @@ export default function ConfirmarCodigoPage() {
       
       const response = await authService.verifyResetCode(email, codigoFinal);
       
-      if (response.sucesso && response.reset_code_id) {
+      // A API retorna { sucesso: boolean, mensagem: string, reset_code_id: string }
+      // Mas o tipo ApiResponse espera { status, mensagem, dados }
+      // Vamos tratar ambos os formatos
+      const resetCodeId = (response as any).reset_code_id || (response.dados as any)?.reset_code_id;
+      const sucesso = (response as any).sucesso || response.status === 'sucesso';
+      
+      if (sucesso && resetCodeId) {
         logger.success('Código verificado com sucesso!');
-        setResetCodeId(response.reset_code_id);
         
         // Redireciona para página de redefinição
         navigate('/auth/redefinir-senha', {
-          state: { reset_code_id: response.reset_code_id }
+          state: { reset_code_id: resetCodeId }
         });
       } else {
         throw new Error('Código inválido');
@@ -198,7 +202,9 @@ export default function ConfirmarCodigoPage() {
               {codigo.map((digit, index) => (
                 <input
                   key={index}
-                  ref={(el) => (inputRefs.current[index] = el)}
+                  ref={(el) => {
+                    inputRefs.current[index] = el;
+                  }}
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
