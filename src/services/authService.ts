@@ -128,6 +128,35 @@ export const authService = {
     }
   },
 
+  // ✅ VERIFY TOKEN - Verificar se o token é válido
+  async verifyToken(token: string): Promise<boolean> {
+    try {
+      logger.info('Verificando validade do token', 'auth');
+      logger.apiRequest('GET', '/auth/me');
+      
+      const response = await api.get('/auth/me', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      logger.apiResponse(response.status, '/auth/me');
+      
+      // Se chegou aqui, o token é válido
+      return response.status === 200 && !!response.data?.usuario;
+    } catch (error: any) {
+      // Se retornou 401, o token é inválido ou expirado
+      if (error.response?.status === 401) {
+        logger.info('Token inválido ou expirado', 'auth');
+        return false;
+      }
+      
+      // Outros erros também consideramos como token inválido
+      logger.error(`Erro ao verificar token: ${error.response?.data?.mensagem || error.message}`, 'auth');
+      return false;
+    }
+  },
+
   // 🔄 REFRESH - Renovar token JWT
   async refresh(): Promise<ApiResponse<LoginResponse>> {
     try {
@@ -163,6 +192,66 @@ export const authService = {
     } catch (error: any) {
       logger.apiResponse(error.response?.status || 500, '/test-connection', error.response?.data);
       logger.error(`Erro na conexão com API: ${error.response?.data?.mensagem || error.message}`, 'api');
+      
+      throw error;
+    }
+  },
+
+  // 🔐 FORGOT PASSWORD - Solicitar redefinição de senha
+  async forgotPassword(email: string): Promise<ApiResponse<any>> {
+    try {
+      logger.info('Solicitando redefinição de senha', 'auth');
+      logger.apiRequest('POST', '/auth/forgot-password');
+      
+      const response = await api.post('/auth/forgot-password', { email });
+      
+      logger.apiResponse(response.status, '/auth/forgot-password');
+      logger.success('Código de redefinição enviado', 'auth');
+      
+      return response.data;
+    } catch (error: any) {
+      logger.apiResponse(error.response?.status || 500, '/auth/forgot-password', error.response?.data);
+      logger.error(`Erro ao solicitar redefinição: ${error.response?.data?.mensagem || error.message}`, 'auth');
+      
+      throw error;
+    }
+  },
+
+  // ✅ VERIFY RESET CODE - Verificar código de redefinição
+  async verifyResetCode(email: string, codigo: string): Promise<ApiResponse<{ reset_code_id: string }>> {
+    try {
+      logger.info('Verificando código de redefinição', 'auth');
+      logger.apiRequest('POST', '/auth/verify-reset-code');
+      
+      const response = await api.post('/auth/verify-reset-code', { email, codigo });
+      
+      logger.apiResponse(response.status, '/auth/verify-reset-code');
+      logger.success('Código verificado com sucesso', 'auth');
+      
+      return response.data;
+    } catch (error: any) {
+      logger.apiResponse(error.response?.status || 500, '/auth/verify-reset-code', error.response?.data);
+      logger.error(`Erro ao verificar código: ${error.response?.data?.mensagem || error.message}`, 'auth');
+      
+      throw error;
+    }
+  },
+
+  // 🔑 RESET PASSWORD - Redefinir senha
+  async resetPassword(reset_code_id: string, nova_senha: string): Promise<ApiResponse<any>> {
+    try {
+      logger.info('Redefinindo senha', 'auth');
+      logger.apiRequest('POST', '/auth/reset-password');
+      
+      const response = await api.post('/auth/reset-password', { reset_code_id, nova_senha });
+      
+      logger.apiResponse(response.status, '/auth/reset-password');
+      logger.success('Senha redefinida com sucesso', 'auth');
+      
+      return response.data;
+    } catch (error: any) {
+      logger.apiResponse(error.response?.status || 500, '/auth/reset-password', error.response?.data);
+      logger.error(`Erro ao redefinir senha: ${error.response?.data?.mensagem || error.message}`, 'auth');
       
       throw error;
     }

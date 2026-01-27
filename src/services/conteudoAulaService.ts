@@ -108,6 +108,39 @@ class ConteudoAulaService {
       throw error
     }
   }
+
+  /**
+   * Buscar conteúdos por data e vinculação
+   */
+  static async buscarConteudosPorDataEVinculacao(vinculacaoId: string, data: string): Promise<ConteudoAulaResponse> {
+    try {
+      logger.info(`🔍 Buscando conteúdos da vinculação ${vinculacaoId} e data ${data}`, 'service')
+      const response = await api.get(`/conteudo-aula/data/${vinculacaoId}/${data}`)
+      return response.data
+    } catch (error) {
+      logger.error('❌ Erro ao buscar conteúdos por data e vinculação', 'service', error)
+      throw error
+    }
+  }
+
+  /**
+   * Criar conteúdo com data (novo método)
+   */
+  static async criarConteudoComData(dadosConteudo: {
+    turma_disciplina_professor_id: string
+    data_aula: string
+    descricao: string
+    conteudo: string
+  }): Promise<ConteudoAulaResponse> {
+    try {
+      logger.info(`📝 Criando conteúdo com data: ${dadosConteudo.descricao}`, 'service')
+      const response = await api.post('/conteudo-aula', dadosConteudo)
+      return response.data
+    } catch (error) {
+      logger.error('❌ Erro ao criar conteúdo com data', 'service', error)
+      throw error
+    }
+  }
 }
 
 export default ConteudoAulaService

@@ -1,5 +1,5 @@
 import { logger } from '../../lib/logger'
-import { LayoutDashboard, UserPlus, Settings, LogOut, BookUser, School, BookOpen } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, LogOut, BookUser, School, BookOpen, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Icone from '../../assets/images/icone.png'
 import { useAuth } from '../../contexts/AuthContext'
@@ -18,9 +18,11 @@ interface SidebarProps {
   activeItem?: string
   onItemClick?: (itemId: string) => void
   onLogout?: () => void
+  isOpen?: boolean
+  onClose?: () => void
 }
 
-export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogout }: SidebarProps) {
+export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogout, isOpen = false, onClose }: SidebarProps) {
   const { usuario } = useAuth()
   const tipoUsuario = usuario?.tipo_usuario_id
   console.log('%o', usuario); 
@@ -30,7 +32,11 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
     if (onItemClick) {
       onItemClick(itemId)
     }
-  }, [onItemClick])
+    // Fecha o sidebar em mobile após clicar em um item
+    if (onClose) {
+      onClose()
+    }
+  }, [onItemClick, onClose])
 
   // Filtrar menus baseado no tipo de usuário
   const menuItems = useMemo(() => {
@@ -155,33 +161,50 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
   }, [tipoUsuario, activeItem, handleMenuClick])
 
   return (
-    <div className="fixed left-0 top-0 w-64 h-screen bg-blue-500 shadow-2xl z-40 overflow-y-auto flex flex-col">
+    <div 
+      className={`
+        fixed left-0 top-0 w-64 h-screen bg-blue-500 shadow-2xl z-50 overflow-y-auto flex flex-col
+        transform transition-transform duration-300 ease-in-out
+        lg:translate-x-0
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}
+    >
       {/* Efeito de brilho no topo */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400"></div>
       
       {/* Logo/Header */}
-      <div className="p-6 border-b border-blue-300/40 flex-shrink-0">
-        <div className="flex items-center space-x-3">
-          <div className="relative">
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform duration-300">
-              <img 
-                src={Icone} 
-                alt="Ícone do sistema" 
-                className="w-8 h-8 object-contain"
-              />
+      <div className="p-4 sm:p-6 border-b border-blue-300/40 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-110 transition-transform duration-300">
+                <img 
+                  src={Icone} 
+                  alt="Ícone do sistema" 
+                  className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
+                />
+              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-400 rounded-full border-2 border-blue-700 animate-pulse"></div>
             </div>
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-blue-700 animate-pulse"></div>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-white">Pinguinho de Gente</h2>
+              <p className="text-xs sm:text-sm text-blue-100">Sistema Escolar</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-white">Pinguinho de Gente</h2>
-            <p className="text-sm text-blue-100">Sistema Escolar</p>
-          </div>
+          {/* Botão de fechar para mobile */}
+          <button
+            onClick={onClose}
+            className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+            aria-label="Fechar menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
       {/* Menu Principal */}
-      <div className="py-6 px-3 flex-1">
-        <p className="px-3 text-xs font-semibold text-blue-100 uppercase tracking-wider mb-4 flex items-center">
+      <div className="py-4 sm:py-6 px-2 sm:px-3 flex-1">
+        <p className="px-2 sm:px-3 text-xs font-semibold text-blue-100 uppercase tracking-wider mb-3 sm:mb-4 flex items-center">
           <span className="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></span>
           Menu Principal
         </p>
@@ -193,7 +216,7 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
                 key={item.id}
                 onClick={item.onClick}
                 className={`
-                  group relative w-full flex items-center px-4 py-3.5 text-sm font-medium transition-all duration-300 rounded-xl
+                  group relative w-full flex items-center px-3 sm:px-4 py-2.5 sm:py-3.5 text-xs sm:text-sm font-medium transition-all duration-300 rounded-xl
                   ${item.active 
                     ? 'bg-white text-blue-700 shadow-lg shadow-blue-600/30 scale-105' 
                     : 'text-blue-50 hover:bg-white/20 hover:text-white hover:translate-x-1'
@@ -202,19 +225,19 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
               >
                 {/* Indicador ativo à esquerda */}
                 {item.active && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-yellow-400 to-orange-400 rounded-r-full"></div>
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 sm:h-8 bg-gradient-to-b from-yellow-400 to-orange-400 rounded-r-full"></div>
                 )}
                 
                 {/* Ícone */}
                 <div className={`
-                  mr-3 transition-all duration-300
+                  mr-2 sm:mr-3 transition-all duration-300 flex-shrink-0
                   ${item.active ? 'text-blue-600' : 'text-blue-200 group-hover:text-white'}
                 `}>
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 
                 {/* Label */}
-                <span className="flex-1 text-left">{item.label}</span>
+                <span className="flex-1 text-left truncate">{item.label}</span>
                 
                 {/* Badge (se houver) */}
                 {item.badge && (
@@ -236,18 +259,18 @@ export default function Sidebar({ activeItem = 'dashboard', onItemClick, onLogou
       </div>
 
       {/* Botão de Sair */}
-      <div className="mt-auto p-4 bg-gradient-to-t from-blue-700/30 to-transparent flex-shrink-0">
+      <div className="mt-auto p-3 sm:p-4 bg-gradient-to-t from-blue-700/30 to-transparent flex-shrink-0">
         <button
           onClick={onLogout}
-          className="group w-full bg-white/10  backdrop-blur-sm rounded-xl p-2 border border-white/20 hover:border-red-400 transition-all duration-300 shadow-lg"
+          className="group w-full bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20 hover:border-red-400 transition-all duration-300 shadow-lg"
         >
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-red-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
-              <LogOut className="w-5 h-5 text-white" />
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-red-400 to-red-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md flex-shrink-0">
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-bold text-white group-hover:text-white transition-colors">Sair do Sistema</p>
-              <p className="text-xs text-blue-100 group-hover:text-red-100 transition-colors">Encerrar sessão</p>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-xs sm:text-sm font-bold text-white group-hover:text-white transition-colors truncate">Sair do Sistema</p>
+              <p className="text-xs text-blue-100 group-hover:text-red-100 transition-colors hidden sm:block">Encerrar sessão</p>
             </div>
           </div>
         </button>

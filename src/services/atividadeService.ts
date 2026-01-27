@@ -198,6 +198,64 @@ class AtividadeService {
       throw error
     }
   }
+
+  /**
+   * Buscar atividades por data e vinculação
+   */
+  static async buscarAtividadesPorDataEVinculacao(vinculacaoId: string, data: string): Promise<AtividadeResponse> {
+    try {
+      logger.info(`🔍 Buscando atividades da vinculação ${vinculacaoId} e data ${data}`, 'service')
+      const response = await api.get(`/atividade/data/${vinculacaoId}/${data}`)
+      
+      const responseData = response.data
+      if (responseData.success !== undefined) {
+        responseData.sucesso = responseData.success
+        delete responseData.success
+      }
+      if (responseData.data !== undefined) {
+        responseData.dados = responseData.data
+        delete responseData.data
+      }
+      if (responseData.message !== undefined) {
+        responseData.mensagem = responseData.message
+        delete responseData.message
+      }
+      
+      return responseData
+    } catch (error) {
+      logger.error('❌ Erro ao buscar atividades por data e vinculação', 'service', error)
+      throw error
+    }
+  }
+
+  /**
+   * Criar atividade com data (novo método)
+   */
+  static async criarAtividadeComData(dadosAtividade: {
+    titulo: string
+    descricao: string
+    peso: number
+    vale_nota: boolean
+    periodo_letivo_id: string
+    turma_disciplina_professor_id: string
+    data_aula: string
+  }): Promise<AtividadeResponse> {
+    try {
+      logger.info(`➕ Criando atividade com data: ${dadosAtividade.titulo}`, 'service')
+      const response = await api.post('/atividade', dadosAtividade)
+      
+      const data = response.data
+      if (data.success !== undefined) {
+        data.sucesso = data.success
+        delete data.success
+      }
+      
+      return data
+    } catch (error) {
+      logger.error('❌ Erro ao criar atividade com data', 'service', error)
+      throw error
+    }
+  }
 }
 
 export default AtividadeService

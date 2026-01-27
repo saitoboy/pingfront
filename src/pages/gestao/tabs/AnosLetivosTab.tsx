@@ -95,19 +95,19 @@ export default function AnosLetivosTab() {
   return (
     <div>
       {/* Header com botão adicionar */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Calendar className="w-7 h-7 text-blue-600" />
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <div className="flex-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <Calendar className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" />
             Anos Letivos
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Gerencie os anos letivos do sistema
           </p>
         </div>
         <button
           onClick={handleNovoAnoLetivo}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
         >
           <Plus className="w-5 h-5" />
           Novo Ano Letivo
@@ -123,16 +123,17 @@ export default function AnosLetivosTab() {
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9', WebkitOverflowScrolling: 'touch' }}>
+            <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ano
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
@@ -140,30 +141,30 @@ export default function AnosLetivosTab() {
             <tbody className="bg-white divide-y divide-gray-200">
               {anosLetivos.map((anoLetivo) => (
                 <tr key={anoLetivo.ano_letivo_id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <Calendar className="w-5 h-5 text-blue-600 mr-3" />
                       <span className="text-sm font-medium text-gray-900">{anoLetivo.ano}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     {anoLetivo.ativo ? (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <CheckCircle className="w-4 h-4 mr-1" />
+                      <span className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                         Ativo
                       </span>
                     ) : (
                       <button
                         onClick={() => handleAtivarAnoLetivo(anoLetivo)}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors"
+                        className="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors"
                         title="Clique para ativar"
                       >
-                        <Circle className="w-4 h-4 mr-1" />
+                        <Circle className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                         Inativo
                       </button>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleEditarAnoLetivo(anoLetivo)}
                       className="text-blue-600 hover:text-blue-900 mr-4"
@@ -188,6 +189,7 @@ export default function AnosLetivosTab() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

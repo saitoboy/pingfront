@@ -3,6 +3,9 @@ import { useAuth } from '../contexts/AuthContext';
 import DashboardLayout from '../layouts/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/auth/LoginPage';
+import EsqueciSenhaPage from '../pages/auth/EsqueciSenhaPage';
+import ConfirmarCodigoPage from '../pages/auth/ConfirmarCodigoPage';
+import RedefinirSenhaPage from '../pages/auth/RedefinirSenhaPage';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 import DashboardProfessorPage from '../pages/dashboard/DashboardProfessorPage';
 import FichaCadastroPage from '../pages/cadastro/FichaCadastroPage';
@@ -15,6 +18,8 @@ import GestaoEscolarPage from '../pages/gestao/GestaoEscolarPage';
 import SelecionarProfessorPage from '../pages/diario/SelecionarProfessorPage';
 import DiarioProfessorPage from '../pages/diario/DiarioProfessorPage';
 import DiarioMateriaPage from '../pages/diario/DiarioMateriaPage';
+import DiarioDiaPage from '../pages/diario/DiarioDiaPage';
+import CalendarioGradePage from '../pages/diario/CalendarioGradePage';
 import DetalhesAulaPage from '../pages/diario/DetalhesAulaPage';
 import LancarNotasPage from '../pages/diario/LancarNotasPage';
 import MeuDiarioPage from '../pages/diario/MeuDiarioPage';
@@ -100,6 +105,34 @@ export default function AppRoutes() {
         element={
           <PublicRoute>
             <LoginPage />
+          </PublicRoute>
+        }
+      />
+
+      {/* 🔐 ROTAS DE REDEFINIÇÃO DE SENHA (públicas) */}
+      <Route
+        path="/auth/esqueci-senha"
+        element={
+          <PublicRoute>
+            <EsqueciSenhaPage />
+          </PublicRoute>
+        }
+      />
+
+      <Route
+        path="/auth/confirmar-codigo"
+        element={
+          <PublicRoute>
+            <ConfirmarCodigoPage />
+          </PublicRoute>
+        }
+      />
+
+      <Route
+        path="/auth/redefinir-senha"
+        element={
+          <PublicRoute>
+            <RedefinirSenhaPage />
           </PublicRoute>
         }
       />
@@ -217,6 +250,24 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <DiarioMateriaPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/diario/dia/:turmaDisciplinaProfessorId/:data"
+          element={
+            <ProtectedRoute>
+              <DiarioDiaPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/diario/calendario/:professorId/:diaSemana?"
+          element={
+            <ProtectedRoute>
+              <CalendarioGradePage />
             </ProtectedRoute>
           }
         />

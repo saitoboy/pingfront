@@ -176,6 +176,126 @@ class FrequenciaService {
       throw error
     }
   }
+
+  /**
+   * Buscar frequências por professor, turma e data (método principal)
+   */
+  static async buscarFrequenciasPorProfessorTurmaEData(
+    professor_id: string,
+    turma_id: string,
+    data: string
+  ): Promise<FrequenciaResponse> {
+    try {
+      logger.info(`🔍 Buscando frequências do professor ${professor_id}, turma ${turma_id} e data ${data}`, 'service')
+      const response = await api.get(`/frequencia/professor/${professor_id}/turma/${turma_id}/data/${data}`)
+      
+      const responseData = response.data
+      if (responseData.success !== undefined) {
+        responseData.sucesso = responseData.success
+        delete responseData.success
+      }
+      if (responseData.data !== undefined) {
+        responseData.dados = responseData.data
+        delete responseData.data
+      }
+      
+      return responseData
+    } catch (error) {
+      logger.error('❌ Erro ao buscar frequências por professor, turma e data', 'service', error)
+      throw error
+    }
+  }
+
+  /**
+   * Buscar frequências por data e vinculação (DEPRECATED - manter para compatibilidade)
+   */
+  static async buscarFrequenciasPorDataEVinculacao(vinculacaoId: string, data: string): Promise<FrequenciaResponse> {
+    try {
+      logger.info(`🔍 Buscando frequências da vinculação ${vinculacaoId} e data ${data}`, 'service')
+      const response = await api.get(`/frequencia/data/${vinculacaoId}/${data}`)
+      
+      const responseData = response.data
+      if (responseData.success !== undefined) {
+        responseData.sucesso = responseData.success
+        delete responseData.success
+      }
+      if (responseData.data !== undefined) {
+        responseData.dados = responseData.data
+        delete responseData.data
+      }
+      
+      return responseData
+    } catch (error) {
+      logger.error('❌ Erro ao buscar frequências por data e vinculação', 'service', error)
+      throw error
+    }
+  }
+
+  /**
+   * Registrar frequência em lote por professor, turma e data (método principal)
+   */
+  static async registrarFrequenciaLotePorProfessorTurmaEData(
+    professor_id: string,
+    turma_id: string,
+    dataAula: string,
+    frequencias: Array<{
+      matricula_aluno_id: string
+      presenca: boolean
+    }>
+  ): Promise<FrequenciaResponse> {
+    try {
+      logger.info(`📝 Registrando frequência em lote para professor ${professor_id}, turma ${turma_id} e data ${dataAula}`, 'service')
+      const response = await api.post('/frequencia/lote-por-professor-turma-data', {
+        professor_id,
+        turma_id,
+        data_aula: dataAula,
+        frequencias
+      })
+      
+      const responseData = response.data
+      if (responseData.success !== undefined) {
+        responseData.sucesso = responseData.success
+        delete responseData.success
+      }
+      
+      return responseData
+    } catch (error) {
+      logger.error('❌ Erro ao registrar frequência em lote por professor, turma e data', 'service', error)
+      throw error
+    }
+  }
+
+  /**
+   * Registrar frequência em lote por data (DEPRECATED - manter para compatibilidade)
+   */
+  static async registrarFrequenciaLotePorData(
+    turmaDisciplinaProfessorId: string,
+    dataAula: string,
+    frequencias: Array<{
+      matricula_aluno_id: string
+      presenca: boolean
+    }>
+  ): Promise<FrequenciaResponse> {
+    try {
+      logger.info(`📝 Registrando frequência em lote para vinculação ${turmaDisciplinaProfessorId} e data ${dataAula}`, 'service')
+      const response = await api.post('/frequencia/lote-por-data', {
+        turma_disciplina_professor_id: turmaDisciplinaProfessorId,
+        data_aula: dataAula,
+        frequencias
+      })
+      
+      const responseData = response.data
+      if (responseData.success !== undefined) {
+        responseData.sucesso = responseData.success
+        delete responseData.success
+      }
+      
+      return responseData
+    } catch (error) {
+      logger.error('❌ Erro ao registrar frequência em lote por data', 'service', error)
+      throw error
+    }
+  }
 }
 
 export default FrequenciaService

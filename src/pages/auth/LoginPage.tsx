@@ -183,9 +183,13 @@ export default function LoginPage() {
 
             {/* Link esqueceu senha */}
             <div className="flex items-center justify-end">
-              <a href="#" className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+              <button
+                type="button"
+                onClick={() => navigate('/auth/esqueci-senha')}
+                className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+              >
                 Esqueceu a senha?
-              </a>
+              </button>
             </div>
 
             {/* Botão de login */}

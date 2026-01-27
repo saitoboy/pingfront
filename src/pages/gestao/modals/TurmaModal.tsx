@@ -15,7 +15,7 @@ export default function TurmaModal({ turma, onClose, onSalvar }: TurmaModalProps
   const [nomeTurma, setNomeTurma] = useState('');
   const [serieId, setSerieId] = useState('');
   const [anoLetivoId, setAnoLetivoId] = useState('');
-  const [turno, setTurno] = useState<'MANHA' | 'TARDE' | 'NOITE' | 'INTEGRAL'>('MANHA');
+  const [turno, setTurno] = useState<'manhã' | 'tarde' | 'noite' | 'integral'>('manhã');
   const [sala, setSala] = useState('');
   const [capacidadeMaxima, setCapacidadeMaxima] = useState('');
   
@@ -35,7 +35,9 @@ export default function TurmaModal({ turma, onClose, onSalvar }: TurmaModalProps
       setNomeTurma(turma.nome_turma);
       setSerieId(turma.serie_id);
       setAnoLetivoId(turma.ano_letivo_id);
-      setTurno(turma.turno);
+      // Converter turno para o formato esperado (minúsculas com acentuação)
+      const turnoNormalizado = turma.turno?.toLowerCase() || 'manhã';
+      setTurno(turnoNormalizado as 'manhã' | 'tarde' | 'noite' | 'integral');
       setSala(turma.sala || '');
       setCapacidadeMaxima(turma.capacidade_maxima?.toString() || '');
     }
@@ -221,15 +223,15 @@ export default function TurmaModal({ turma, onClose, onSalvar }: TurmaModalProps
               <select
                 id="turno"
                 value={turno}
-                onChange={(e) => setTurno(e.target.value as any)}
+                onChange={(e) => setTurno(e.target.value as 'manhã' | 'tarde' | 'noite' | 'integral')}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 disabled={salvando}
                 required
               >
-                <option value="MANHA">Manhã</option>
-                <option value="TARDE">Tarde</option>
-                <option value="NOITE">Noite</option>
-                <option value="INTEGRAL">Integral</option>
+                <option value="manhã">Manhã</option>
+                <option value="tarde">Tarde</option>
+                <option value="noite">Noite</option>
+                <option value="integral">Integral</option>
               </select>
             </div>
 

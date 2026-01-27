@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { BookOpen, GraduationCap, Users, Calendar } from 'lucide-react';
 import SeriesTab from './tabs/SeriesTab';
@@ -22,6 +22,7 @@ export default function GestaoEscolarPage() {
   const initialTab = isValidTab(tabFromUrl) ? tabFromUrl : 'anos-letivos';
   
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
 
   // Atualiza a tab quando a URL mudar
   useEffect(() => {
@@ -29,6 +30,25 @@ export default function GestaoEscolarPage() {
       setActiveTab(tabFromUrl);
     }
   }, [tabFromUrl]);
+
+  // Scroll automático para a tab ativa em mobile
+  useEffect(() => {
+    if (tabsContainerRef.current) {
+      const activeTabElement = tabsContainerRef.current.querySelector(`[data-tab-id="${activeTab}"]`) as HTMLElement;
+      if (activeTabElement) {
+        const container = tabsContainerRef.current;
+        const tabLeft = activeTabElement.offsetLeft;
+        const tabWidth = activeTabElement.offsetWidth;
+        const containerWidth = container.offsetWidth;
+        const scrollLeft = tabLeft - (containerWidth / 2) + (tabWidth / 2);
+        
+        container.scrollTo({
+          left: scrollLeft,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [activeTab]);
 
   const tabs = [
     { id: 'anos-letivos' as TabType, label: 'Anos Letivos', icon: Calendar, color: 'blue' },
@@ -43,7 +63,20 @@ export default function GestaoEscolarPage() {
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {/* Tab Navigation */}
-          <div className="flex border-b border-gray-200">
+          <div 
+            ref={tabsContainerRef}
+            className="
+              tabs-scroll-container
+              flex border-b border-gray-200
+              overflow-x-auto overflow-y-visible
+              scroll-smooth
+            "
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#cbd5e1 #f1f5f9',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -51,9 +84,11 @@ export default function GestaoEscolarPage() {
               return (
                 <button
                   key={tab.id}
+                  data-tab-id={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`
-                    flex items-center gap-2 px-6 py-4 font-medium transition-all
+                    flex items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 font-medium transition-all
+                    flex-shrink-0 whitespace-nowrap
                     ${isActive 
                       ? `bg-${tab.color}-50 text-${tab.color}-600 border-b-2 border-${tab.color}-600` 
                       : 'text-gray-600 hover:bg-gray-50'
@@ -67,8 +102,8 @@ export default function GestaoEscolarPage() {
                     })
                   }}
                 >
-                  <Icon className="w-5 h-5" />
-                  {tab.label}
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">{tab.label}</span>
                 </button>
               );
             })}

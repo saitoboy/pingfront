@@ -88,20 +88,20 @@ export default function TurmasTab() {
 
   const getTurnoLabel = (turno: string) => {
     const turnos: any = {
-      'MANHA': 'Manhã',
-      'TARDE': 'Tarde',
-      'NOITE': 'Noite',
-      'INTEGRAL': 'Integral'
+      'manhã': 'Manhã',
+      'tarde': 'Tarde',
+      'noite': 'Noite',
+      'integral': 'Integral'
     };
     return turnos[turno] || turno;
   };
 
   const getTurnoColor = (turno: string) => {
     const cores: any = {
-      'MANHA': 'bg-yellow-100 text-yellow-800',
-      'TARDE': 'bg-orange-100 text-orange-800',
-      'NOITE': 'bg-blue-100 text-blue-800',
-      'INTEGRAL': 'bg-blue-100 text-blue-800'
+      'manhã': 'bg-yellow-100 text-yellow-800',
+      'tarde': 'bg-orange-100 text-orange-800',
+      'noite': 'bg-blue-100 text-blue-800',
+      'integral': 'bg-blue-100 text-blue-800'
     };
     return cores[turno] || 'bg-gray-100 text-gray-800';
   };
@@ -118,19 +118,19 @@ export default function TurmasTab() {
   return (
     <div>
       {/* Header com botão adicionar */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Users className="w-7 h-7 text-blue-600" />
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <div className="flex-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <Users className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" />
             Turmas
           </h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Gerencie as turmas da escola
           </p>
         </div>
         <button
           onClick={handleNovaTurma}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0"
         >
           <Plus className="w-5 h-5" />
           Nova Turma
@@ -171,10 +171,10 @@ export default function TurmasTab() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Todos os turnos</option>
-              <option value="MANHA">Manhã</option>
-              <option value="TARDE">Tarde</option>
-              <option value="NOITE">Noite</option>
-              <option value="INTEGRAL">Integral</option>
+              <option value="manhã">Manhã</option>
+              <option value="tarde">Tarde</option>
+              <option value="noite">Noite</option>
+              <option value="integral">Integral</option>
             </select>
           </div>
         </div>
@@ -193,25 +193,26 @@ export default function TurmasTab() {
         </div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9', WebkitOverflowScrolling: 'touch' }}>
+            <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Turma
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Série
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Turno
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Sala
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Capacidade
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ações
                 </th>
               </tr>
@@ -219,27 +220,27 @@ export default function TurmasTab() {
             <tbody className="bg-white divide-y divide-gray-200">
               {turmasFiltradas.map((turma) => (
                 <tr key={turma.turma_id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <Users className="w-5 h-5 text-blue-600 mr-3" />
-                      <span className="text-sm font-medium text-gray-900">{turma.nome_turma}</span>
+                      <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mr-2 sm:mr-3 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm font-medium text-gray-900">{turma.nome_turma}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">{turma.nome_serie || '-'}</span>
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <span className="text-xs sm:text-sm text-gray-900">{turma.nome_serie || '-'}</span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTurnoColor(turma.turno)}`}>
                       {getTurnoLabel(turma.turno)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">{turma.sala || '-'}</span>
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <span className="text-xs sm:text-sm text-gray-900">{turma.sala || '-'}</span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">{turma.capacidade_maxima ? `${turma.capacidade_maxima} alunos` : '-'}</span>
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <span className="text-xs sm:text-sm text-gray-900">{turma.capacidade_maxima ? `${turma.capacidade_maxima} alunos` : '-'}</span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleEditarTurma(turma)}
                       className="text-blue-600 hover:text-blue-900 mr-4"
@@ -259,6 +260,7 @@ export default function TurmasTab() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
