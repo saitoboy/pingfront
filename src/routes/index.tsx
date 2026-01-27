@@ -3,6 +3,9 @@ import { useAuth } from '../contexts/AuthContext';
 import DashboardLayout from '../layouts/DashboardLayout';
 import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/auth/LoginPage';
+import EsqueciSenhaPage from '../pages/auth/EsqueciSenhaPage';
+import ConfirmarCodigoPage from '../pages/auth/ConfirmarCodigoPage';
+import RedefinirSenhaPage from '../pages/auth/RedefinirSenhaPage';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 import DashboardProfessorPage from '../pages/dashboard/DashboardProfessorPage';
 import FichaCadastroPage from '../pages/cadastro/FichaCadastroPage';
@@ -102,6 +105,34 @@ export default function AppRoutes() {
         element={
           <PublicRoute>
             <LoginPage />
+          </PublicRoute>
+        }
+      />
+
+      {/* 🔐 ROTAS DE REDEFINIÇÃO DE SENHA (públicas) */}
+      <Route
+        path="/auth/esqueci-senha"
+        element={
+          <PublicRoute>
+            <EsqueciSenhaPage />
+          </PublicRoute>
+        }
+      />
+
+      <Route
+        path="/auth/confirmar-codigo"
+        element={
+          <PublicRoute>
+            <ConfirmarCodigoPage />
+          </PublicRoute>
+        }
+      />
+
+      <Route
+        path="/auth/redefinir-senha"
+        element={
+          <PublicRoute>
+            <RedefinirSenhaPage />
           </PublicRoute>
         }
       />
