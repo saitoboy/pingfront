@@ -20,9 +20,6 @@ export const Step3Responsaveis: React.FC<Step3Props> = ({
   isLoadingDropdowns,
   showErrors = false
 }) => {
-  // Consumir showErrors para evitar warning - será usado quando implementarmos validação visual neste step
-  void showErrors;
-  
   const [responsavelAtivo, setResponsavelAtivo] = useState(0)
 
   // Adicionar novo responsável
@@ -201,31 +198,6 @@ export const Step3Responsaveis: React.FC<Step3Props> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              RG *
-            </label>
-            <input
-              type="text"
-              required
-              value={responsavelAtual.rg_responsavel}
-              onChange={(e) => {
-                let cleanRg = e.target.value.replace(/[^0-9X-]/gi, '').toUpperCase();
-                if (cleanRg.length > 2 && cleanRg.indexOf('-') === -1) {
-                  cleanRg = cleanRg.replace(/(\d{2})(\d{3})(\d{3})(\w{1})/, '$1.$2.$3-$4');
-                }
-                atualizarResponsavel(responsavelAtivo, 'rg_responsavel', cleanRg);
-              }}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                !validators.obrigatorio(responsavelAtual.rg_responsavel) 
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-gray-300'
-              }`}
-              placeholder="00.000.000-0"
-              maxLength={12}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
               Telefone *
             </label>
             <input
@@ -251,36 +223,6 @@ export const Step3Responsaveis: React.FC<Step3Props> = ({
                 {!validators.obrigatorio(responsavelAtual.telefone_responsavel) 
                   ? 'Telefone é obrigatório' 
                   : 'Telefone inválido'}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email *
-            </label>
-            <input
-              type="email"
-              required
-              value={responsavelAtual.email_responsavel}
-              onChange={(e) => {
-                atualizarResponsavel(responsavelAtivo, 'email_responsavel', e.target.value.toLowerCase());
-              }}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                !validators.obrigatorio(responsavelAtual.email_responsavel) || 
-                (responsavelAtual.email_responsavel && !validators.email(responsavelAtual.email_responsavel))
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-gray-300'
-              }`}
-              placeholder="email@exemplo.com"
-              maxLength={100}
-            />
-            {(!validators.obrigatorio(responsavelAtual.email_responsavel) || 
-             (responsavelAtual.email_responsavel && !validators.email(responsavelAtual.email_responsavel))) && (
-              <p className="mt-1 text-sm text-red-600">
-                {!validators.obrigatorio(responsavelAtual.email_responsavel) 
-                  ? 'Email é obrigatório' 
-                  : 'Email inválido'}
               </p>
             )}
           </div>
@@ -325,27 +267,6 @@ export const Step3Responsaveis: React.FC<Step3Props> = ({
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Grau de Instrução
-            </label>
-            <select
-              value={responsavelAtual.grau_instrucao_responsavel}
-              onChange={(e) => atualizarResponsavel(responsavelAtivo, 'grau_instrucao_responsavel', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Selecione...</option>
-              <option value="Fundamental Incompleto">Ensino Fundamental Incompleto</option>
-              <option value="Fundamental Completo">Ensino Fundamental Completo</option>
-              <option value="Médio Incompleto">Ensino Médio Incompleto</option>
-              <option value="Médio Completo">Ensino Médio Completo</option>
-              <option value="Superior Incompleto">Ensino Superior Incompleto</option>
-              <option value="Superior Completo">Ensino Superior Completo</option>
-              <option value="Pós-graduação">Pós-graduação</option>
-              <option value="Mestrado">Mestrado</option>
-              <option value="Doutorado">Doutorado</option>
-            </select>
-          </div>
         </div>
       )}
 
@@ -356,7 +277,6 @@ export const Step3Responsaveis: React.FC<Step3Props> = ({
           <li>• É obrigatório cadastrar pelo menos um responsável</li>
           <li>• Você pode adicionar múltiplos responsáveis (pai, mãe, avós, etc.)</li>
           <li>• Todos os campos marcados com * são obrigatórios</li>
-          <li>• O email será usado para comunicações da escola</li>
         </ul>
       </div>
 
