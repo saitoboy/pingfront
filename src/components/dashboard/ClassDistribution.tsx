@@ -53,6 +53,16 @@ export const ClassDistribution: React.FC<ClassDistributionProps> = ({
     return <CheckCircle className="w-4 h-4 text-green-600" />
   }
 
+  // O nome_turma às vezes repete a série (ex: "2 ano A"); usamos só o identificador final (A, B...)
+  const getIdentificadorTurma = (nome: string) => nome.trim().split(/\s+/).pop() || nome
+
+  // Ordenar de 1º ao 5º ano (pela série) e depois pelo nome da turma
+  const turmasOrdenadas = [...turmas].sort((a, b) => {
+    const porSerie = (a.serie_nome ?? '').localeCompare(b.serie_nome ?? '', 'pt-BR', { numeric: true })
+    if (porSerie !== 0) return porSerie
+    return a.turma_nome.localeCompare(b.turma_nome, 'pt-BR', { numeric: true })
+  })
+
   return (
     <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
       <div className="px-6 py-5 bg-gradient-to-r from-orange-50 to-yellow-50 border-b border-gray-200">
@@ -74,17 +84,23 @@ export const ClassDistribution: React.FC<ClassDistributionProps> = ({
           </div>
         ) : (
           <div className="space-y-5">
-            {turmas.map((turma, index) => {
+            {turmasOrdenadas.map((turma, index) => {
               const percentual = Math.min(turma.percentual_ocupacao, 100)
-              
+
               return (
                 <div key={index} className="group space-y-3 p-4 rounded-xl ">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(percentual)}
-                      <span className="text-sm font-bold text-gray-900">
-                        {turma.turma_nome}
-                      </span>
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-xs font-bold text-gray-500">
+                          {turma.serie_nome && (
+                          <span className="text-base text-gray-900">{turma.serie_nome}</span>
+                          )}
+                        </span>         
+                          Turma {getIdentificadorTurma(turma.turma_nome)}
+                      </div>
+                      
                     </div>
                     <span className={`text-sm font-bold ${getProgressTextColor(percentual)} flex items-center space-x-1`}>
                       <span>{turma.total_alunos}/{turma.capacidade}</span>

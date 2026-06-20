@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { BookOpen, GraduationCap, Users, Calendar } from 'lucide-react';
+import { BookOpen, GraduationCap, Users, Calendar, UserCog } from 'lucide-react';
 import SeriesTab from './tabs/SeriesTab';
 import TurmasTab from './tabs/TurmasTab';
 import DisciplinasTab from './tabs/DisciplinasTab';
+import DisciplinasProfessorTab from './tabs/DisciplinasProfessorTab';
 import AnosLetivosTab from './tabs/AnosLetivosTab';
 
-type TabType = 'series' | 'turmas' | 'disciplinas' | 'anos-letivos';
+type TabType = 'series' | 'turmas' | 'disciplinas' | 'disciplinas-professor' | 'anos-letivos';
 
 // Valida se a tab é válida
-const VALID_TABS: TabType[] = ['series', 'turmas', 'disciplinas', 'anos-letivos'];
+const VALID_TABS: TabType[] = ['series', 'turmas', 'disciplinas', 'disciplinas-professor', 'anos-letivos'];
 const isValidTab = (tab: string | null): tab is TabType => {
   return tab !== null && VALID_TABS.includes(tab as TabType);
 };
@@ -55,6 +56,7 @@ export default function GestaoEscolarPage() {
     { id: 'series' as TabType, label: 'Séries', icon: GraduationCap, color: 'blue' },
     { id: 'turmas' as TabType, label: 'Turmas', icon: Users, color: 'blue' },
     { id: 'disciplinas' as TabType, label: 'Disciplinas', icon: BookOpen, color: 'blue' },
+    { id: 'disciplinas-professor' as TabType, label: 'Disciplinas do Professor', icon: UserCog, color: 'blue' },
   ];
 
   return (
@@ -115,6 +117,7 @@ export default function GestaoEscolarPage() {
             {activeTab === 'series' && <SeriesTab />}
             {activeTab === 'turmas' && <TurmasTab />}
             {activeTab === 'disciplinas' && <DisciplinasTab />}
+            {activeTab === 'disciplinas-professor' && <DisciplinasProfessorTab />}
           </div>
         </div>
       </div>
