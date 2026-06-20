@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { X, UserPlus, BookOpen, Users, School, Check, AlertCircle } from 'lucide-react';
+import { X, UserPlus, BookOpen, Users, School, Check, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { logger } from '../../lib/logger';
+import { professorDisciplinaService } from '../../services/professorDisciplinaService';
+import type { Disciplina } from '../../services/disciplinaService';
 import type { ProfessorDisponivel, DisciplinaDisponivel, TurmaDisponivel } from '../../services/alocacaoProfessorService';
 
 interface AlocarProfessorModalProps {
@@ -30,7 +32,11 @@ export default function AlocarProfessorModal({
   const [professorSelecionado, setProfessorSelecionado] = useState<string>('');
   const [alocacoesTemp, setAlocacoesTemp] = useState<AlocacaoTemp[]>([]);
   const [turmaSelecionada, setTurmaSelecionada] = useState<string>('');
-  const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<string>('');
+  const [disciplinasSelecionadas, setDisciplinasSelecionadas] = useState<Set<string>>(new Set());
+
+  // Disciplinas que o professor selecionado pode lecionar (habilitação)
+  const [disciplinasHabilitadas, setDisciplinasHabilitadas] = useState<Disciplina[]>([]);
+  const [loadingHabilitadas, setLoadingHabilitadas] = useState(false);
 
   // Resetar ao abrir/fechar
   useEffect(() => {
@@ -38,41 +44,95 @@ export default function AlocarProfessorModal({
       setProfessorSelecionado('');
       setAlocacoesTemp([]);
       setTurmaSelecionada('');
-      setDisciplinaSelecionada('');
+      setDisciplinasSelecionadas(new Set());
+      setDisciplinasHabilitadas([]);
     }
   }, [isOpen]);
 
-  const adicionarAlocacao = () => {
-    if (!turmaSelecionada || !disciplinaSelecionada) {
-      logger.warning('⚠️ Turma e disciplina devem ser selecionadas');
+  // Ao trocar de professor, carregar as disciplinas habilitadas e limpar a lista
+  useEffect(() => {
+    if (!professorSelecionado) {
+      setDisciplinasHabilitadas([]);
+      setDisciplinasSelecionadas(new Set());
+      setAlocacoesTemp([]);
       return;
     }
 
-    // Verificar se já existe
-    const jaExiste = alocacoesTemp.some(
-      a => a.turma_id === turmaSelecionada && a.disciplina_id === disciplinaSelecionada
-    );
+    let cancelado = false;
+    const carregar = async () => {
+      try {
+        setLoadingHabilitadas(true);
+        const habilitadas = await professorDisciplinaService.listarDisciplinasDoProfessor(professorSelecionado);
+        if (!cancelado) {
+          setDisciplinasHabilitadas(habilitadas);
+          setDisciplinasSelecionadas(new Set());
+          setAlocacoesTemp([]);
+        }
+      } catch (error) {
+        if (!cancelado) {
+          logger.error('Erro ao carregar disciplinas do professor', 'service');
+          setDisciplinasHabilitadas([]);
+        }
+      } finally {
+        if (!cancelado) setLoadingHabilitadas(false);
+      }
+    };
 
-    if (jaExiste) {
-      logger.warning('⚠️ Esta combinação já foi adicionada');
+    carregar();
+    return () => {
+      cancelado = true;
+    };
+  }, [professorSelecionado]);
+
+  const disciplinasBase = disciplinasHabilitadas.filter((d) => d.categoria === 'base');
+  const disciplinasEspeciais = disciplinasHabilitadas.filter((d) => d.categoria !== 'base');
+  const idsBase = disciplinasBase.map((d) => d.disciplina_id);
+  const todasBaseMarcadas = idsBase.length > 0 && idsBase.every((id) => disciplinasSelecionadas.has(id));
+
+  const toggleDisciplina = (disciplina_id: string) => {
+    setDisciplinasSelecionadas((prev) => {
+      const novo = new Set(prev);
+      if (novo.has(disciplina_id)) novo.delete(disciplina_id);
+      else novo.add(disciplina_id);
+      return novo;
+    });
+  };
+
+  const togglePacoteBase = () => {
+    setDisciplinasSelecionadas((prev) => {
+      const novo = new Set(prev);
+      if (todasBaseMarcadas) idsBase.forEach((id) => novo.delete(id));
+      else idsBase.forEach((id) => novo.add(id));
+      return novo;
+    });
+  };
+
+  const adicionarAlocacoes = () => {
+    if (!turmaSelecionada || disciplinasSelecionadas.size === 0) {
+      logger.warning('⚠️ Selecione a turma e ao menos uma disciplina');
       return;
     }
 
-    setAlocacoesTemp([...alocacoesTemp, {
-      turma_id: turmaSelecionada,
-      disciplina_id: disciplinaSelecionada
-    }]);
+    setAlocacoesTemp((prev) => {
+      const novas = [...prev];
+      disciplinasSelecionadas.forEach((disciplina_id) => {
+        const jaExiste = novas.some(
+          (a) => a.turma_id === turmaSelecionada && a.disciplina_id === disciplina_id
+        );
+        if (!jaExiste) {
+          novas.push({ turma_id: turmaSelecionada, disciplina_id });
+        }
+      });
+      return novas;
+    });
 
-    // Limpar seleção
-    setTurmaSelecionada('');
-    setDisciplinaSelecionada('');
-    
-    logger.info('➕ Alocação adicionada temporariamente');
+    // Limpar seleção de disciplinas (mantém a turma pra facilitar adicionar outras)
+    setDisciplinasSelecionadas(new Set());
+    logger.info('✅ Alocações adicionadas à lista');
   };
 
   const removerAlocacao = (index: number) => {
     setAlocacoesTemp(alocacoesTemp.filter((_, i) => i !== index));
-    logger.info('➖ Alocação removida');
   };
 
   const handleConfirmar = () => {
@@ -80,14 +140,12 @@ export default function AlocarProfessorModal({
       logger.warning('⚠️ Selecione um professor');
       return;
     }
-
     if (alocacoesTemp.length === 0) {
       logger.warning('⚠️ Adicione pelo menos uma alocação');
       return;
     }
 
-    // Criar array de alocações com professor
-    const alocacoes = alocacoesTemp.map(a => ({
+    const alocacoes = alocacoesTemp.map((a) => ({
       ...a,
       professor_id: professorSelecionado
     }));
@@ -96,13 +154,36 @@ export default function AlocarProfessorModal({
   };
 
   const getNomeTurma = (turma_id: string) => {
-    const turma = turmas.find(t => t.turma_id === turma_id);
+    const turma = turmas.find((t) => t.turma_id === turma_id);
     return turma ? `${turma.nome_serie} - ${turma.nome_turma} (${turma.turno})` : 'Turma não encontrada';
   };
 
   const getNomeDisciplina = (disciplina_id: string) => {
-    const disciplina = disciplinas.find(d => d.disciplina_id === disciplina_id);
+    const disciplina = disciplinas.find((d) => d.disciplina_id === disciplina_id);
     return disciplina ? disciplina.nome_disciplina : 'Disciplina não encontrada';
+  };
+
+  const renderChipDisciplina = (disciplina: Disciplina) => {
+    const marcada = disciplinasSelecionadas.has(disciplina.disciplina_id);
+    return (
+      <button
+        key={disciplina.disciplina_id}
+        type="button"
+        onClick={() => toggleDisciplina(disciplina.disciplina_id)}
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-left text-sm font-medium transition-all ${
+          marcada ? 'border-blue-500 bg-blue-50 text-blue-900' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+        }`}
+      >
+        <span
+          className={`flex items-center justify-center w-4 h-4 rounded border-2 flex-shrink-0 ${
+            marcada ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300'
+          }`}
+        >
+          {marcada && <Check className="w-3 h-3" />}
+        </span>
+        {disciplina.nome_disciplina}
+      </button>
+    );
   };
 
   if (!isOpen) return null;
@@ -118,7 +199,7 @@ export default function AlocarProfessorModal({
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">Alocar Professor</h2>
-              <p className="text-blue-100 text-sm">Vincule professores às disciplinas e turmas</p>
+              <p className="text-blue-100 text-sm">Vincule o professor às disciplinas e turmas</p>
             </div>
           </div>
           <button
@@ -154,15 +235,15 @@ export default function AlocarProfessorModal({
           </div>
 
           {/* Adicionar Alocações */}
-          <div className="bg-gray-50 rounded-xl p-6 mb-6">
-            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              <BookOpen className="w-5 h-5 mr-2 text-purple-600" />
-              Adicionar Turma e Disciplina
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {professorSelecionado && (
+            <div className="bg-gray-50 rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <BookOpen className="w-5 h-5 mr-2 text-purple-600" />
+                Selecione a turma e as disciplinas
+              </h3>
+
               {/* Turma */}
-              <div>
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                   <School className="w-4 h-4 mr-1 text-green-600" />
                   Turma
@@ -182,37 +263,66 @@ export default function AlocarProfessorModal({
                 </select>
               </div>
 
-              {/* Disciplina */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                  <BookOpen className="w-4 h-4 mr-1 text-orange-600" />
-                  Disciplina
-                </label>
-                <select
-                  value={disciplinaSelecionada}
-                  onChange={(e) => setDisciplinaSelecionada(e.target.value)}
-                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
-                  disabled={loading}
-                >
-                  <option value="">-- Selecione --</option>
-                  {disciplinas.map((disc) => (
-                    <option key={disc.disciplina_id} value={disc.disciplina_id}>
-                      {disc.nome_disciplina}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+              {/* Disciplinas (habilitadas do professor) */}
+              {loadingHabilitadas ? (
+                <div className="flex items-center gap-2 py-4 text-sm text-gray-600">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Carregando disciplinas do professor...
+                </div>
+              ) : disciplinasHabilitadas.length === 0 ? (
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 flex items-start">
+                  <AlertCircle className="w-5 h-5 text-amber-600 mr-3 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-900">Este professor ainda não tem disciplinas definidas</p>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Defina as disciplinas dele em <strong>Gestão Escolar → Disciplinas do Professor</strong> para poder alocá-lo.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Base */}
+                  {disciplinasBase.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">Disciplinas base</span>
+                        <button
+                          type="button"
+                          onClick={togglePacoteBase}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          {todasBaseMarcadas ? 'Desmarcar base' : 'Marcar pacote base'}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {disciplinasBase.map(renderChipDisciplina)}
+                      </div>
+                    </div>
+                  )}
 
-            <button
-              onClick={adicionarAlocacao}
-              disabled={!turmaSelecionada || !disciplinaSelecionada || loading}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              <UserPlus className="w-5 h-5 mr-2" />
-              Adicionar à Lista
-            </button>
-          </div>
+                  {/* Especiais */}
+                  {disciplinasEspeciais.length > 0 && (
+                    <div>
+                      <span className="text-sm font-medium text-gray-700 block mb-2">Disciplinas especiais</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {disciplinasEspeciais.map(renderChipDisciplina)}
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={adicionarAlocacoes}
+                    disabled={!turmaSelecionada || disciplinasSelecionadas.size === 0 || loading}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    <UserPlus className="w-5 h-5 mr-2" />
+                    Adicionar à Lista ({disciplinasSelecionadas.size})
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Lista de Alocações Temporárias */}
           {alocacoesTemp.length > 0 && (
@@ -228,11 +338,10 @@ export default function AlocarProfessorModal({
                     className="bg-white border-2 border-green-200 rounded-lg p-4 flex items-center justify-between hover:border-green-300 transition-all"
                   >
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-800">
-                        {getNomeTurma(alocacao.turma_id)}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        📚 {getNomeDisciplina(alocacao.disciplina_id)}
+                      <p className="font-semibold text-gray-800">{getNomeTurma(alocacao.turma_id)}</p>
+                      <p className="text-sm text-gray-600 flex items-center gap-1">
+                        <BookOpen className="w-3.5 h-3.5 text-orange-600" />
+                        {getNomeDisciplina(alocacao.disciplina_id)}
                       </p>
                     </div>
                     <button
@@ -248,14 +357,14 @@ export default function AlocarProfessorModal({
             </div>
           )}
 
-          {/* Aviso quando não há alocações */}
-          {alocacoesTemp.length === 0 && (
+          {/* Aviso quando não há professor selecionado */}
+          {!professorSelecionado && (
             <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 flex items-start">
               <AlertCircle className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-blue-900">Nenhuma alocação adicionada ainda</p>
+                <p className="text-sm font-semibold text-blue-900">Comece selecionando o professor</p>
                 <p className="text-sm text-blue-700 mt-1">
-                  Selecione uma turma e disciplina acima e clique em "Adicionar à Lista"
+                  As disciplinas disponíveis serão as que o professor pode lecionar.
                 </p>
               </div>
             </div>
@@ -274,7 +383,7 @@ export default function AlocarProfessorModal({
           <button
             onClick={handleConfirmar}
             disabled={!professorSelecionado || alocacoesTemp.length === 0 || loading}
-            className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
             {loading ? (
               <>
@@ -293,4 +402,3 @@ export default function AlocarProfessorModal({
     </div>
   );
 }
-

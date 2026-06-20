@@ -23,9 +23,6 @@ export const Step6Matricula: React.FC<Step6Props> = ({
   isLoadingDropdowns,
   showErrors = false
 }) => {
-  // Consumir showErrors para evitar warning - será usado quando implementarmos validação visual neste step
-  void showErrors;
-  
   const updateMatricula = (field: keyof FormularioFichaCadastro['matricula'], value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -36,26 +33,31 @@ export const Step6Matricula: React.FC<Step6Props> = ({
     }))
   }
 
-  // Função para formatar o nome completo da turma
   const formatarNomeTurma = (turma: Turma): string => {
-    console.log('🔍 Debug formatarNomeTurma COMPLETO:', {
-      turma,
-      serieId: turma.serie_id,
-      totalSeries: series.length,
-      todasSeries: series,
-      primeiraSerieNome: series.length > 0 ? series[0].nome_serie : 'NENHUMA SÉRIE CARREGADA'
-    });
-    
-    // Verificar se as séries estão realmente carregadas
-    if (series.length === 0) {
-      console.error('❌ PROBLEMA: Array de séries está vazio!');
-      return `⚠️ ERRO: Séries não carregadas - ${turma.nome_turma} - ${turma.turno} (Sala: ${turma.sala})`;
-    }
-    
-    // Por enquanto, vamos exibir só o nome da série da primeira série + nome da turma
-    const nomeSerie = series[0].nome_serie;
-    return `${nomeSerie} ${turma.nome_turma} - ${turma.turno} (Sala: ${turma.sala})`;
+    const serie = series.find(s => s.serie_id === turma.serie_id)
+    // O nome_turma no banco às vezes repete a série (ex: "2 ano A"), então usamos
+    // apenas o identificador final (A, B...) para combinar com o nome da série.
+    const identificador = turma.nome_turma.trim().split(/\s+/).pop() || turma.nome_turma
+
+    const partes: string[] = []
+    if (serie?.nome_serie) partes.push(serie.nome_serie)
+    partes.push(`Turma ${identificador}`)
+
+    let texto = partes.join(' - ')
+    texto += ` (${turma.turno})`
+    if (turma.sala) texto += ` - Sala ${turma.sala}`
+    return texto
   }
+
+  // Ordenar as turmas pela série (1º Ano, 2º Ano... 5º Ano) e depois pelo nome da turma
+  const turmasOrdenadas = [...turmas].sort((a, b) => {
+    const serieA = series.find(s => s.serie_id === a.serie_id)?.nome_serie ?? ''
+    const serieB = series.find(s => s.serie_id === b.serie_id)?.nome_serie ?? ''
+    if (serieA !== serieB) {
+      return serieA.localeCompare(serieB, 'pt-BR', { numeric: true })
+    }
+    return a.nome_turma.localeCompare(b.nome_turma, 'pt-BR', { numeric: true })
+  })
 
   const isFieldInvalid = (value: string) => {
     return !value || value.trim() === ''
@@ -153,12 +155,11 @@ export const Step6Matricula: React.FC<Step6Props> = ({
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${getFieldBorderClass(formData.matricula.turma_id)}`}
                 >
                   <option value="">Selecione a turma</option>
-                  {turmas.map(turma => (
+                  {turmasOrdenadas.map(turma => (
                     <option key={turma.turma_id} value={turma.turma_id}>
                       {formatarNomeTurma(turma)}
                     </option>
                   ))}
-                  <option key="ff78c1da-c853-40e4-8bc1-5865ec7e654b" value="ff78c1da-c853-40e4-8bc1-5865ec7e654b">Nenhuma turma disponível</option>
                 </select>
                 
                 {isFieldInvalid(formData.matricula.turma_id) && (
@@ -227,19 +228,6 @@ export const Step6Matricula: React.FC<Step6Props> = ({
           </div>
         </div>
 
-        {/* Debug Info - só em desenvolvimento */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Debug Info</h4>
-          <div className="text-xs text-gray-600 space-y-1">
-            <p>Anos Letivos: {anosLetivos.length} carregados</p>
-            <p>Séries: {series.length} carregadas</p>
-            <p>Turmas: {turmas.length} carregadas</p>
-            <p>Loading: {isLoadingDropdowns ? 'Sim' : 'Não'}</p>
-            <p>Ano Selecionado: {formData.matricula.ano_letivo_id || 'Nenhum'}</p>
-            <p>Turma Selecionada: {formData.matricula.turma_id || 'Nenhuma'}</p>
-            <p>Data Matrícula: {formData.matricula.data_matricula || 'Não informada'}</p>
-          </div>
-        </div>
       </div>
     </div>
   )

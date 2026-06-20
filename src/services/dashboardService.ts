@@ -23,6 +23,7 @@ export interface UltimosAlunos {
 
 export interface AlunosPorTurma {
   turma_nome: string
+  serie_nome?: string
   total_alunos: number
   capacidade: number
   percentual_ocupacao: number
@@ -290,8 +291,8 @@ export const dashboardService = {
               totalAlunos = matriculasResponse.data.total
             }
             
-            const capacidade = turma.capacidade || turma.max_alunos || 30
-            
+            const capacidade = turma.capacidade_maxima || turma.capacidade || turma.max_alunos || 30
+
             logger.debug('🎯 Turma processada:', 'service', {
               turmaId,
               serieId,
@@ -299,9 +300,10 @@ export const dashboardService = {
               totalAlunos,
               capacidade
             })
-            
+
             return {
               turma_nome: nomeTurma,
+              serie_nome: seriesMap.get(serieId),
               total_alunos: totalAlunos,
               capacidade: capacidade,
               percentual_ocupacao: Math.round((totalAlunos / capacidade) * 100)
@@ -311,12 +313,13 @@ export const dashboardService = {
             const turmaId = turma.id || turma.turma_id
             // O nome_turma já vem completo do banco, não precisa concatenar com série
             const nomeTurma = turma.nome_turma || turma.nome || 'Turma sem nome'
-            const capacidade = turma.capacidade || turma.max_alunos || 30
-            
+            const capacidade = turma.capacidade_maxima || turma.capacidade || turma.max_alunos || 30
+
             logger.error('❌ Erro ao buscar matrículas da turma', 'service', { turmaId, error })
-            
+
             return {
               turma_nome: nomeTurma,
+              serie_nome: seriesMap.get(turma.serie_id),
               total_alunos: 0,
               capacidade: capacidade,
               percentual_ocupacao: 0

@@ -2,9 +2,12 @@ import api from '../lib/api';
 import { logger } from '../lib/logger';
 
 // Types
+export type CategoriaDisciplina = 'base' | 'especial';
+
 export interface Disciplina {
   disciplina_id: string;
   nome_disciplina: string;
+  categoria?: CategoriaDisciplina;
   created_at?: string;
   updated_at?: string;
 }

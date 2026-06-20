@@ -172,11 +172,7 @@ export default function FichaCadastroPage() {
           validators.obrigatorio(formData.aluno.data_nascimento_aluno) &&
           validators.dataNascimento(formData.aluno.data_nascimento_aluno) &&
           validators.obrigatorio(formData.aluno.cpf_aluno) &&
-          validators.cpf(formData.aluno.cpf_aluno) &&
-          validators.obrigatorio(formData.aluno.cep_aluno) &&
-          formData.aluno.cep_aluno.replace(/\D/g, '').length === 8 &&
-          validators.obrigatorio(formData.aluno.endereco_aluno) &&
-          validators.obrigatorio(formData.aluno.bairro_aluno)
+          validators.cpf(formData.aluno.cpf_aluno)
         )
       case 2: // Step2CertidaoNascimento
         return (
@@ -191,16 +187,13 @@ export default function FichaCadastroPage() {
       case 3: // Step3Responsaveis
         return (
           formData.responsaveis.length > 0 &&
-          formData.responsaveis.every(resp => 
+          formData.responsaveis.every(resp =>
             validators.obrigatorio(resp.nome_responsavel) &&
             validators.obrigatorio(resp.sobrenome_responsavel) &&
             validators.obrigatorio(resp.cpf_responsavel) &&
             validators.cpf(resp.cpf_responsavel) &&
-            validators.obrigatorio(resp.rg_responsavel) &&
             validators.obrigatorio(resp.telefone_responsavel) &&
             validators.telefone(resp.telefone_responsavel) &&
-            validators.obrigatorio(resp.email_responsavel) &&
-            validators.email(resp.email_responsavel) &&
             validators.obrigatorio(resp.parentesco_id)
           )
         )
@@ -426,12 +419,10 @@ export default function FichaCadastroPage() {
     switch (currentStep) {
       case 1:
         return (
-          <Step1DadosPessoais 
+          <Step1DadosPessoais
             key={`step1-${formKey}`}
-            formData={formData} 
-            setFormData={setFormData} 
-            religioes={religioes} 
-            isLoadingDropdowns={isLoadingDropdowns}
+            formData={formData}
+            setFormData={setFormData}
             showErrors={showErrors}
           />
         )
