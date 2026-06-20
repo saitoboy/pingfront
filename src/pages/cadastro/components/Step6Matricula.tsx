@@ -17,11 +17,10 @@ interface Step6Props {
 export const Step6Matricula: React.FC<Step6Props> = ({
   formData,
   setFormData,
-  anosLetivos, 
+  anosLetivos,
   series,
-  turmas, 
-  isLoadingDropdowns,
-  showErrors = false
+  turmas,
+  isLoadingDropdowns
 }) => {
   const updateMatricula = (field: keyof FormularioFichaCadastro['matricula'], value: string) => {
     setFormData(prev => ({

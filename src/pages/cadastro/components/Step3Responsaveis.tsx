@@ -13,12 +13,11 @@ interface Step3Props {
   showErrors?: boolean
 }
 
-export const Step3Responsaveis: React.FC<Step3Props> = ({ 
+export const Step3Responsaveis: React.FC<Step3Props> = ({
   formData,
   setFormData,
-  parentescos, 
-  isLoadingDropdowns,
-  showErrors = false
+  parentescos,
+  isLoadingDropdowns
 }) => {
   const [responsavelAtivo, setResponsavelAtivo] = useState(0)
 
