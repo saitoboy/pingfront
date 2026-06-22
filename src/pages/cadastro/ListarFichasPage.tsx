@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  Eye, 
-  FileText, 
-  User, 
+import {
+  Search,
+  Eye,
+  FileText,
+  User,
   Calendar,
   Phone,
-  MapPin,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -218,18 +217,31 @@ export default function ListarFichasPage() {
                       {/* Header com gradiente */}
                       <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
                         <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="text-xl font-bold text-white mb-2 line-clamp-1">
-                              {ficha.aluno.nome_aluno} {ficha.aluno.sobrenome_aluno}
-                            </h3>
-                            <div className="flex items-center gap-2 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                              <User className="w-4 h-4 text-white" />
-                              <span className="text-white font-semibold text-sm">
-                                RA: {ficha.matricula.ra || 'N/A'}
-                              </span>
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            {/* Foto do aluno */}
+                            {ficha.aluno.foto_aluno ? (
+                              <img
+                                src={ficha.aluno.foto_aluno}
+                                alt={ficha.aluno.nome_aluno}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-white/50 flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                                <User className="w-6 h-6 text-white" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <h3 className="text-xl font-bold text-white mb-1 line-clamp-1">
+                                {ficha.aluno.nome_aluno} {ficha.aluno.sobrenome_aluno}
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                <span className="text-white font-semibold text-sm">
+                                  RA: {ficha.matricula.ra || 'N/A'}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 ml-2">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -292,18 +304,6 @@ export default function ListarFichasPage() {
                               </div>
                             </div>
                           )}
-
-                          <div className="flex items-center gap-3 p-2 bg-orange-50 rounded-lg">
-                            <div className="p-2 bg-orange-100 rounded-lg">
-                              <MapPin className="w-4 h-4 text-orange-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs text-gray-500 font-medium">Endereço</p>
-                              <p className="text-sm font-semibold text-gray-900 truncate">
-                                {ficha.aluno.endereco_aluno || 'N/A'}
-                              </p>
-                            </div>
-                          </div>
                         </div>
 
                         {/* Status da matrícula */}
@@ -437,10 +437,18 @@ export default function ListarFichasPage() {
             >
               {/* Dados do Aluno */}
               <section className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-blue-500 rounded-lg">
-                    <User className="w-6 h-6 text-white" />
-                  </div>
+                <div className="flex items-center gap-4 mb-6">
+                  {fichaSelecionada.aluno.foto_aluno ? (
+                    <img
+                      src={fichaSelecionada.aluno.foto_aluno}
+                      alt={fichaSelecionada.aluno.nome_aluno}
+                      className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-md flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="p-3 bg-blue-500 rounded-lg flex-shrink-0">
+                      <User className="w-6 h-6 text-white" />
+                    </div>
+                  )}
                   <h3 className="text-xl font-bold text-gray-900">Dados do Aluno</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -460,64 +468,46 @@ export default function ListarFichasPage() {
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">CPF</label>
                     <p className="text-base font-semibold text-gray-900">{formatarCPF(fichaSelecionada.aluno.cpf_aluno)}</p>
                   </div>
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">RG</label>
-                    <p className="text-base font-semibold text-gray-900">{fichaSelecionada.aluno.rg_aluno || 'N/A'}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Naturalidade</label>
-                    <p className="text-base font-semibold text-gray-900">{fichaSelecionada.aluno.naturalidade_aluno || 'N/A'}</p>
-                  </div>
-                  <div className="md:col-span-2 bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Endereço</label>
-                    <p className="text-base font-semibold text-gray-900">{fichaSelecionada.aluno.endereco_aluno || 'N/A'}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Bairro</label>
-                    <p className="text-base font-semibold text-gray-900">{fichaSelecionada.aluno.bairro_aluno || 'N/A'}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">CEP</label>
-                    <p className="text-base font-semibold text-gray-900">{fichaSelecionada.aluno.cep_aluno || 'N/A'}</p>
-                  </div>
                 </div>
               </section>
 
-              {/* Certidão */}
-              <section className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-purple-500 rounded-lg">
-                    <FileText className="w-6 h-6 text-white" />
+              {/* Certidão — exibe apenas se existir */}
+              {fichaSelecionada.certidao && (
+                <section className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-3 bg-purple-500 rounded-lg">
+                      <FileText className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">Certidão de Nascimento</h3>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900">Certidão de Nascimento</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Livro</label>
-                    <p className="text-base font-semibold text-gray-900">{fichaSelecionada.certidao.livro_certidao || 'N/A'}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Livro</label>
+                      <p className="text-base font-semibold text-gray-900">{fichaSelecionada.certidao.livro_certidao || 'N/A'}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Matrícula</label>
+                      <p className="text-base font-semibold text-gray-900">{fichaSelecionada.certidao.matricula_certidao || 'N/A'}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Termo</label>
+                      <p className="text-base font-semibold text-gray-900">{fichaSelecionada.certidao.termo_certidao || 'N/A'}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Folha</label>
+                      <p className="text-base font-semibold text-gray-900">{fichaSelecionada.certidao.folha_certidao || 'N/A'}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Data de Expedição</label>
+                      <p className="text-base font-semibold text-gray-900">{formatarData(fichaSelecionada.certidao.data_expedicao_certidao)}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Cartório</label>
+                      <p className="text-base font-semibold text-gray-900">{fichaSelecionada.certidao.nome_cartorio_certidao || 'N/A'}</p>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Matrícula</label>
-                    <p className="text-base font-semibold text-gray-900">{fichaSelecionada.certidao.matricula_certidao || 'N/A'}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Termo</label>
-                    <p className="text-base font-semibold text-gray-900">{fichaSelecionada.certidao.termo_certidao || 'N/A'}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Folha</label>
-                    <p className="text-base font-semibold text-gray-900">{fichaSelecionada.certidao.folha_certidao || 'N/A'}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Data de Expedição</label>
-                    <p className="text-base font-semibold text-gray-900">{formatarData(fichaSelecionada.certidao.data_expedicao_certidao)}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Cartório</label>
-                    <p className="text-base font-semibold text-gray-900">{fichaSelecionada.certidao.nome_cartorio_certidao || 'N/A'}</p>
-                  </div>
-                </div>
-              </section>
+                </section>
+              )}
 
               {/* Responsáveis */}
               {fichaSelecionada.responsaveis && fichaSelecionada.responsaveis.length > 0 && (
@@ -541,60 +531,12 @@ export default function ListarFichasPage() {
                             <p className="text-base font-semibold text-gray-900">{formatarCPF(responsavel.cpf_responsavel)}</p>
                           </div>
                           <div className="bg-gray-50 rounded-lg p-3">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">RG</label>
-                            <p className="text-base font-semibold text-gray-900">{responsavel.rg_responsavel || 'N/A'}</p>
-                          </div>
-                          <div className="bg-gray-50 rounded-lg p-3">
                             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Telefone</label>
                             <p className="text-base font-semibold text-gray-900">{formatarTelefone(responsavel.telefone_responsavel)}</p>
-                          </div>
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Email</label>
-                            <p className="text-base font-semibold text-gray-900 break-all">{responsavel.email_responsavel || 'N/A'}</p>
-                          </div>
-                          <div className="bg-gray-50 rounded-lg p-3">
-                            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Grau de Instrução</label>
-                            <p className="text-base font-semibold text-gray-900">{responsavel.grau_instrucao_responsavel || 'N/A'}</p>
                           </div>
                         </div>
                       </div>
                     ))}
-                  </div>
-                </section>
-              )}
-
-              {/* Dados de Saúde */}
-              {fichaSelecionada.dados_saude && (
-                <section className="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-6 border border-red-100">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-red-500 rounded-lg">
-                      <User className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900">Dados de Saúde</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Vacinas em Dia</label>
-                      <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
-                        fichaSelecionada.dados_saude.vacinas_em_dia 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {fichaSelecionada.dados_saude.vacinas_em_dia ? 'Sim' : 'Não'}
-                      </span>
-                    </div>
-                    {fichaSelecionada.dados_saude.alergias && (
-                      <div className="md:col-span-2 bg-white rounded-lg p-4 border border-gray-200">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Alergias</label>
-                        <p className="text-base font-semibold text-gray-900">{fichaSelecionada.dados_saude.alergias}</p>
-                      </div>
-                    )}
-                    {fichaSelecionada.dados_saude.observacoes && (
-                      <div className="md:col-span-2 bg-white rounded-lg p-4 border border-gray-200">
-                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Observações</label>
-                        <p className="text-base font-semibold text-gray-900 whitespace-pre-wrap">{fichaSelecionada.dados_saude.observacoes}</p>
-                      </div>
-                    )}
                   </div>
                 </section>
               )}

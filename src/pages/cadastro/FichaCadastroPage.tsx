@@ -1,25 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { 
+import {
   ArrowLeft,
   ArrowRight,
   Check,
-  CheckCircle
+  CheckCircle,
+  SkipForward
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import { validators } from '../../lib/utils'
 import { cadastroService } from '../../services/cadastroService'
-import type { 
-  Parentesco, 
-  Religiao, 
-  AnoLetivo, 
+import type {
+  Parentesco,
+  Religiao,
+  AnoLetivo,
   Serie,
-  Turma 
+  Turma
 } from '../../types/api'
 import {
   Step1DadosPessoais,
-  Step2CertidaoNascimento,
   Step3Responsaveis,
-  Step4DadosSaude,
   Step5Diagnosticos,
   Step6Matricula,
   Step7Revisao
@@ -28,13 +27,11 @@ import type { FormularioFichaCadastro } from './types'
 import { WIZARD_STEPS } from './types'
 
 export default function FichaCadastroPage() {
-  // Estado do wizard
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
-  const [formKey, setFormKey] = useState(Date.now()) // Para forçar re-render dos componentes
-  const [attemptedSteps, setAttemptedSteps] = useState<Set<number>>(new Set()) // Steps que foram tentados (para mostrar erros)
+  const [formKey, setFormKey] = useState(Date.now())
+  const [attemptedSteps, setAttemptedSteps] = useState<Set<number>>(new Set())
 
-  // Estado principal do formulário
   const [formData, setFormData] = useState<FormularioFichaCadastro>({
     aluno: {
       nome_aluno: '',
@@ -46,7 +43,8 @@ export default function FichaCadastroPage() {
       endereco_aluno: '',
       bairro_aluno: '',
       cep_aluno: '',
-      religiao_id: ''
+      religiao_id: '',
+      foto_aluno: undefined
     },
     certidao: {
       livro_certidao: '',
@@ -117,7 +115,6 @@ export default function FichaCadastroPage() {
     }
   })
 
-  // Estados para dropdowns
   const [parentescos, setParentescos] = useState<Parentesco[]>([])
   const [religioes, setReligioes] = useState<Religiao[]>([])
   const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([])
@@ -125,7 +122,6 @@ export default function FichaCadastroPage() {
   const [turmas, setTurmas] = useState<Turma[]>([])
   const [isLoadingDropdowns, setIsLoadingDropdowns] = useState(true)
 
-  // Carregar dados dos dropdowns
   useEffect(() => {
     carregarDadosDropdowns()
   }, [])
@@ -133,25 +129,23 @@ export default function FichaCadastroPage() {
   const carregarDadosDropdowns = async () => {
     try {
       setIsLoadingDropdowns(true);
-      
+
       const dropdownsData = await cadastroService.carregarTodosDropdowns();
-      
+
       console.log('🔍 Debug dropdownsData:', dropdownsData);
-      
-      // Definir os estados com os dados carregados
+
       setReligioes(dropdownsData.religioes);
       setParentescos(dropdownsData.parentescos);
       setAnosLetivos(dropdownsData.anosLetivos);
       setSeries(dropdownsData.series);
       setTurmas(dropdownsData.turmas);
-      
+
       console.log('✅ Séries carregadas no state:', dropdownsData.series);
-      
+
     } catch (error) {
       logger.error('❌ Erro ao carregar dados dos dropdowns');
       console.error(error);
-      
-      // Limpar todos os arrays em caso de erro
+
       setReligioes([]);
       setParentescos([]);
       setAnosLetivos([]);
@@ -162,10 +156,16 @@ export default function FichaCadastroPage() {
     }
   }
 
-  // Função de validação por step
+  // Mapeamento das etapas do wizard para os steps originais dos componentes
+  // Step 1 → Dados Pessoais (Step1DadosPessoais)
+  // Step 2 → Responsáveis (Step3Responsaveis)
+  // Step 3 → Diagnósticos (Step5Diagnosticos) - opcional
+  // Step 4 → Matrícula (Step6Matricula)
+  // Step 5 → Revisão (Step7Revisao)
+
   const validateCurrentStep = (): boolean => {
     switch (currentStep) {
-      case 1: // Step1DadosPessoais
+      case 1: // Dados Pessoais
         return (
           validators.obrigatorio(formData.aluno.nome_aluno) &&
           validators.obrigatorio(formData.aluno.sobrenome_aluno) &&
@@ -174,17 +174,7 @@ export default function FichaCadastroPage() {
           validators.obrigatorio(formData.aluno.cpf_aluno) &&
           validators.cpf(formData.aluno.cpf_aluno)
         )
-      case 2: // Step2CertidaoNascimento
-        return (
-          validators.obrigatorio(formData.certidao.livro_certidao) &&
-          validators.obrigatorio(formData.certidao.folha_certidao) &&
-          validators.obrigatorio(formData.certidao.termo_certidao) &&
-          validators.obrigatorio(formData.certidao.matricula_certidao) &&
-          validators.obrigatorio(formData.certidao.data_expedicao_certidao) &&
-          validators.dataNascimento(formData.certidao.data_expedicao_certidao) &&
-          validators.obrigatorio(formData.certidao.nome_cartorio_certidao)
-        )
-      case 3: // Step3Responsaveis
+      case 2: // Responsáveis
         return (
           formData.responsaveis.length > 0 &&
           formData.responsaveis.every(resp =>
@@ -197,26 +187,21 @@ export default function FichaCadastroPage() {
             validators.obrigatorio(resp.parentesco_id)
           )
         )
-      case 4: // Step4DadosSaude
-        // Dados de saúde são todos opcionais, então sempre válido
+      case 3: // Diagnósticos (opcional)
         return true
-      case 5: // Step5Diagnosticos
-        // Diagnósticos são todos opcionais, então sempre válido
-        return true
-      case 6: // Step6Matricula
+      case 4: // Matrícula
         return (
           validators.obrigatorio(formData.matricula.turma_id) &&
           validators.obrigatorio(formData.matricula.ano_letivo_id) &&
           validators.obrigatorio(formData.matricula.data_matricula)
         )
-      case 7: // Step7Revisao
+      case 5: // Revisão
         return true
       default:
         return false
     }
   }
 
-  // Navegação do wizard
   const goToStep = (step: number) => {
     if (step >= 1 && step <= WIZARD_STEPS.length) {
       setCurrentStep(step)
@@ -224,9 +209,7 @@ export default function FichaCadastroPage() {
   }
 
   const goToNextStep = () => {
-    // Validar step atual antes de prosseguir
     if (!validateCurrentStep()) {
-      // Marcar este step como tentado para mostrar erros visuais
       setAttemptedSteps(prev => new Set(prev).add(currentStep))
       logger.warning('Validação falhou no Step ' + currentStep, 'form')
       return
@@ -243,7 +226,6 @@ export default function FichaCadastroPage() {
     }
   }
 
-  // Função para resetar o formulário
   const resetFormulario = () => {
     setFormData({
       aluno: {
@@ -256,7 +238,8 @@ export default function FichaCadastroPage() {
         endereco_aluno: '',
         bairro_aluno: '',
         cep_aluno: '',
-        religiao_id: ''
+        religiao_id: '',
+        foto_aluno: undefined
       },
       certidao: {
         livro_certidao: '',
@@ -326,42 +309,36 @@ export default function FichaCadastroPage() {
         data_matricula: new Date().toISOString().split('T')[0]
       }
     })
-    
-    // Gerar nova key para forçar re-render dos componentes
+
     setFormKey(Date.now())
-    
-    // Limpar steps tentados
     setAttemptedSteps(new Set())
   }
 
-  // Submissão final
   const handleSubmit = async () => {
-    if (currentStep !== 7) return
+    if (currentStep !== WIZARD_STEPS.length) return
 
     setIsLoading(true)
     try {
       logger.info('📝 Processando ficha de cadastro completa...')
 
-      // Função auxiliar para limpar strings vazias em UUIDs
       const cleanUuid = (value: string): string | undefined => {
         return value && value.trim() !== '' ? value : undefined
       }
 
-      // Preparar dados para envio
       const dadosCompletos = {
         aluno: {
           ...formData.aluno,
           data_nascimento_aluno: new Date(formData.aluno.data_nascimento_aluno),
-          // Se religiao_id for vazio, não enviar o campo (deixar undefined para o backend tratar)
           religiao_id: cleanUuid(formData.aluno.religiao_id)
         },
         certidao: {
           ...formData.certidao,
-          data_expedicao_certidao: new Date(formData.certidao.data_expedicao_certidao)
+          data_expedicao_certidao: formData.certidao.data_expedicao_certidao
+            ? new Date(formData.certidao.data_expedicao_certidao)
+            : undefined
         },
         responsaveis: formData.responsaveis.map(resp => ({
           ...resp,
-          // Se parentesco_id for vazio, não enviar o campo
           parentesco_id: cleanUuid(resp.parentesco_id)
         })),
         dados_saude: formData.dados_saude,
@@ -369,7 +346,6 @@ export default function FichaCadastroPage() {
         matricula: {
           ...formData.matricula,
           data_matricula: new Date(formData.matricula.data_matricula),
-          // Garantir que os IDs não sejam strings vazias
           turma_id: cleanUuid(formData.matricula.turma_id),
           ano_letivo_id: cleanUuid(formData.matricula.ano_letivo_id)
         }
@@ -377,27 +353,23 @@ export default function FichaCadastroPage() {
 
       console.log('🔍 Dados preparados para envio:', dadosCompletos)
 
-      // Chamada real à API
       const resultado = await cadastroService.processarFichaCadastro(dadosCompletos)
 
       if (resultado.status === 'sucesso') {
         const raGerado = resultado.dados?.ra_gerado || resultado.dados?.matricula?.ra || 'N/A'
         logger.success(`✅ Ficha de cadastro processada com sucesso! RA: ${raGerado}`)
-        
-        // Limpar formulário e voltar para o primeiro step
+
         resetFormulario()
         setCurrentStep(1)
-        
-        // Recarregar os dados dos dropdowns para garantir dados frescos
+
         setTimeout(() => {
           carregarDadosDropdowns()
         }, 100)
-        
+
         logger.info('🔄 Formulário resetado e pronto para novo cadastro')
-        
-        // Exibir mensagem de sucesso
+
         alert(`🎉 Cadastro realizado com sucesso!\n\nRA gerado: ${raGerado}\n\nO formulário foi limpo e está pronto para um novo cadastro.`)
-        
+
       } else {
         logger.error(`❌ Erro ao processar ficha: ${resultado.mensagem}`)
         alert(`Erro ao processar cadastro: ${resultado.mensagem}`)
@@ -412,10 +384,9 @@ export default function FichaCadastroPage() {
     }
   }
 
-  // Render do step atual
   const renderCurrentStep = () => {
     const showErrors = attemptedSteps.has(currentStep)
-    
+
     switch (currentStep) {
       case 1:
         return (
@@ -428,17 +399,8 @@ export default function FichaCadastroPage() {
         )
       case 2:
         return (
-          <Step2CertidaoNascimento 
+          <Step3Responsaveis
             key={`step2-${formKey}`}
-            formData={formData} 
-            setFormData={setFormData}
-            showErrors={showErrors}
-          />
-        )
-      case 3:
-        return (
-          <Step3Responsaveis 
-            key={`step3-${formKey}`}
             formData={formData}
             setFormData={setFormData}
             parentescos={parentescos}
@@ -446,28 +408,19 @@ export default function FichaCadastroPage() {
             showErrors={showErrors}
           />
         )
+      case 3:
+        return (
+          <Step5Diagnosticos
+            key={`step3-${formKey}`}
+            formData={formData}
+            setFormData={setFormData}
+            showErrors={showErrors}
+          />
+        )
       case 4:
         return (
-          <Step4DadosSaude 
+          <Step6Matricula
             key={`step4-${formKey}`}
-            formData={formData} 
-            setFormData={setFormData}
-            showErrors={showErrors}
-          />
-        )
-      case 5:
-        return (
-          <Step5Diagnosticos 
-            key={`step5-${formKey}`}
-            formData={formData} 
-            setFormData={setFormData}
-            showErrors={showErrors}
-          />
-        )
-      case 6:
-        return (
-          <Step6Matricula 
-            key={`step6-${formKey}`}
             formData={formData}
             setFormData={setFormData}
             anosLetivos={anosLetivos}
@@ -477,10 +430,10 @@ export default function FichaCadastroPage() {
             showErrors={showErrors}
           />
         )
-      case 7:
+      case 5:
         return (
-          <Step7Revisao 
-            key={`step7-${formKey}`}
+          <Step7Revisao
+            key={`step5-${formKey}`}
             formData={formData}
             parentescos={parentescos}
             religioes={religioes}
@@ -494,10 +447,8 @@ export default function FichaCadastroPage() {
     }
   }
 
-  // Ref para o container de steps (para scroll automático)
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
-  // Scroll automático para o step atual em mobile
   useEffect(() => {
     if (stepsContainerRef.current) {
       const stepElement = stepsContainerRef.current.children[currentStep - 1] as HTMLElement
@@ -507,7 +458,7 @@ export default function FichaCadastroPage() {
         const stepWidth = stepElement.offsetWidth
         const containerWidth = container.offsetWidth
         const scrollLeft = stepLeft - (containerWidth / 2) + (stepWidth / 2)
-        
+
         container.scrollTo({
           left: scrollLeft,
           behavior: 'smooth'
@@ -516,17 +467,18 @@ export default function FichaCadastroPage() {
     }
   }, [currentStep])
 
+  const isDiagnosticosStep = currentStep === 3
+
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
-      {/* Steps Navigation - Ícones com nomes embaixo */}
+      {/* Steps Navigation */}
       <div className="mb-8">
-        {/* Container com scroll horizontal em mobile, layout normal em desktop */}
-        <div 
+        <div
           ref={stepsContainerRef}
           className="
             steps-scroll-container
-            flex items-start 
-            lg:justify-between 
+            flex items-start
+            lg:justify-between
             gap-4 sm:gap-6 lg:gap-0
             overflow-x-auto overflow-y-visible
             pb-4
@@ -541,8 +493,8 @@ export default function FichaCadastroPage() {
           }}
         >
           {WIZARD_STEPS.map((step, index) => (
-            <div 
-              key={step.id} 
+            <div
+              key={step.id}
               className="flex flex-col items-center relative flex-shrink-0"
               style={{ minWidth: '80px' }}
             >
@@ -550,9 +502,9 @@ export default function FichaCadastroPage() {
               <div
                 className={`
                   flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full cursor-pointer transition-all duration-300 mb-2 flex-shrink-0
-                  ${currentStep === step.id 
-                    ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-100 scale-110' 
-                    : currentStep > step.id 
+                  ${currentStep === step.id
+                    ? 'bg-blue-600 text-white shadow-lg ring-4 ring-blue-100 scale-110'
+                    : currentStep > step.id
                       ? 'bg-green-600 text-white shadow-md'
                       : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                   }
@@ -567,12 +519,12 @@ export default function FichaCadastroPage() {
                   })
                 )}
               </div>
-              
+
               {/* Step Name */}
               <div className={`
                 text-xs sm:text-sm font-medium text-center leading-tight
-                ${currentStep === step.id 
-                  ? 'text-blue-600 font-bold' 
+                ${currentStep === step.id
+                  ? 'text-blue-600 font-bold'
                   : currentStep > step.id
                     ? 'text-green-600'
                     : 'text-gray-500'
@@ -581,32 +533,35 @@ export default function FichaCadastroPage() {
               style={{ maxWidth: '90px' }}
               >
                 {step.title}
+                {step.optional && (
+                  <span className="block text-xs font-normal text-gray-400">(Opcional)</span>
+                )}
               </div>
 
               {/* Connector Line - apenas em desktop */}
               {index < WIZARD_STEPS.length - 1 && (
-                <div 
+                <div
                   className={`
                     hidden lg:block absolute top-6 sm:top-7 left-full h-0.5 transition-colors duration-300 -z-10
                     ${currentStep > step.id ? 'bg-green-600' : 'bg-gray-300'}
                   `}
-                  style={{ 
+                  style={{
                     width: `calc(100% + ${100 / (WIZARD_STEPS.length - 1)}%)`,
                     transform: 'translateX(28px)'
-                  }} 
+                  }}
                 />
               )}
             </div>
           ))}
         </div>
 
-        {/* Progress Bar - Embaixo dos ícones */}
+        {/* Progress Bar */}
         <div className="mt-6">
           <div className="bg-gray-200 rounded-full h-2 relative overflow-hidden">
-            <div 
+            <div
               className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-              style={{ 
-                width: `${(currentStep / WIZARD_STEPS.length) * 100}%` 
+              style={{
+                width: `${(currentStep / WIZARD_STEPS.length) * 100}%`
               }}
             />
           </div>
@@ -637,6 +592,17 @@ export default function FichaCadastroPage() {
         </button>
 
         <div className="flex space-x-3">
+          {/* Botão "Pular" visível apenas na etapa de Diagnósticos */}
+          {isDiagnosticosStep && (
+            <button
+              onClick={goToNextStep}
+              className="flex items-center px-6 py-3 text-sm font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <SkipForward className="w-4 h-4 mr-2" />
+              Pular etapa
+            </button>
+          )}
+
           {currentStep === WIZARD_STEPS.length ? (
             <button
               onClick={handleSubmit}
@@ -658,9 +624,9 @@ export default function FichaCadastroPage() {
           ) : (
             <button
               onClick={goToNextStep}
-              disabled={currentStep === WIZARD_STEPS.length || !validateCurrentStep()}
+              disabled={currentStep === WIZARD_STEPS.length || (!isDiagnosticosStep && !validateCurrentStep())}
               className={`flex items-center px-6 py-3 text-sm font-medium rounded-lg transition-colors ${
-                validateCurrentStep()
+                isDiagnosticosStep || validateCurrentStep()
                   ? 'text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
                   : 'text-gray-400 bg-gray-200 cursor-not-allowed'
               }`}

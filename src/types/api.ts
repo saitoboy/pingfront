@@ -62,6 +62,7 @@ export interface Aluno {
   cep_aluno: string;
   religiao_id: string;
   certidao_id: string;
+  foto_aluno?: string;
   created_at: Date;
   updated_at: Date;
 }
