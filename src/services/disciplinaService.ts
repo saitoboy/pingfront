@@ -45,16 +45,16 @@ export const disciplinaService = {
   async buscarDisciplinaPorId(disciplina_id: string): Promise<Disciplina> {
     try {
       logger.info(`🔍 Buscando disciplina: ${disciplina_id}`, 'service');
-      logger.apiRequest('GET', `/disciplinas/${disciplina_id}`);
+      logger.apiRequest('GET', `/disciplina/${disciplina_id}`);
 
-      const response = await api.get(`/disciplinas/${disciplina_id}`);
+      const response = await api.get(`/disciplina/${disciplina_id}`);
 
-      logger.apiResponse(response.status, `/disciplinas/${disciplina_id}`);
+      logger.apiResponse(response.status, `/disciplina/${disciplina_id}`);
       logger.success(`✅ Disciplina encontrada: ${response.data.dados?.nome_disciplina}`, 'service');
 
       return response.data.dados;
     } catch (error: any) {
-      logger.apiResponse(error.response?.status || 500, `/disciplinas/${disciplina_id}`, error.response?.data);
+      logger.apiResponse(error.response?.status || 500, `/disciplina/${disciplina_id}`, error.response?.data);
       logger.error(`Erro ao buscar disciplina: ${error.response?.data?.mensagem || error.message}`, 'service');
       throw error;
     }
@@ -87,16 +87,16 @@ export const disciplinaService = {
   async atualizarDisciplina(disciplina_id: string, dados: Partial<CriarDisciplinaDto>): Promise<Disciplina> {
     try {
       logger.info(`✏️ Atualizando disciplina: ${disciplina_id}`, 'service');
-      logger.apiRequest('PUT', `/disciplinas/${disciplina_id}`, dados);
+      logger.apiRequest('PUT', `/disciplina/${disciplina_id}`, dados);
 
-      const response = await api.put(`/disciplinas/${disciplina_id}`, dados);
+      const response = await api.put(`/disciplina/${disciplina_id}`, dados);
 
-      logger.apiResponse(response.status, `/disciplinas/${disciplina_id}`);
+      logger.apiResponse(response.status, `/disciplina/${disciplina_id}`);
       logger.success(`✅ Disciplina atualizada: ${response.data.dados?.nome_disciplina}`, 'service');
 
       return response.data.dados;
     } catch (error: any) {
-      logger.apiResponse(error.response?.status || 500, `/disciplinas/${disciplina_id}`, error.response?.data);
+      logger.apiResponse(error.response?.status || 500, `/disciplina/${disciplina_id}`, error.response?.data);
       logger.error(`Erro ao atualizar disciplina: ${error.response?.data?.mensagem || error.message}`, 'service');
       throw error;
     }
@@ -108,14 +108,14 @@ export const disciplinaService = {
   async deletarDisciplina(disciplina_id: string): Promise<void> {
     try {
       logger.info(`🗑️ Deletando disciplina: ${disciplina_id}`, 'service');
-      logger.apiRequest('DELETE', `/disciplinas/${disciplina_id}`);
+      logger.apiRequest('DELETE', `/disciplina/${disciplina_id}`);
 
-      const response = await api.delete(`/disciplinas/${disciplina_id}`);
+      const response = await api.delete(`/disciplina/${disciplina_id}`);
 
-      logger.apiResponse(response.status, `/disciplinas/${disciplina_id}`);
+      logger.apiResponse(response.status, `/disciplina/${disciplina_id}`);
       logger.success(`✅ Disciplina deletada com sucesso`, 'service');
     } catch (error: any) {
-      logger.apiResponse(error.response?.status || 500, `/disciplinas/${disciplina_id}`, error.response?.data);
+      logger.apiResponse(error.response?.status || 500, `/disciplina/${disciplina_id}`, error.response?.data);
       logger.error(`Erro ao deletar disciplina: ${error.response?.data?.mensagem || error.message}`, 'service');
       throw error;
     }
