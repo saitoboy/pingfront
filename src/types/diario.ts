@@ -13,3 +13,35 @@ export interface ProfessorComTurmas {
   ano?: number;
   ano_letivo_ativo?: boolean;
 }
+
+export type StatusRegistroDiario = 'rascunho' | 'concluido';
+
+export interface RegistroDiario {
+  registro_diario_id?: string;
+  turma_disciplina_professor_id: string;
+  data_aula: string; // YYYY-MM-DD
+  resumo: string; // HTML do editor rico — "o que foi feito"
+  conteudo_programatico?: string; // HTML
+  metodologia?: string;
+  recursos?: string[];
+  observacoes?: string; // HTML
+  fotos?: string[]; // base64
+  status: StatusRegistroDiario;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Registro retornado na visão admin (com dados da turma/disciplina embutidos)
+export interface RegistroDiarioComDetalhes {
+  registro_diario_id: string;
+  turma_disciplina_professor_id: string;
+  data_aula: string;
+  status: StatusRegistroDiario;
+  resumo: string;
+  created_at: string;
+  updated_at: string;
+  nome_disciplina: string;
+  nome_turma: string;
+  turno: string;
+  nome_serie: string;
+}
