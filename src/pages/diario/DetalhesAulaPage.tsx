@@ -225,17 +225,13 @@ export default function DetalhesAulaPage() {
   const carregarPeriodoLetivoAtual = async () => {
     try {
       logger.info('📅 Carregando período letivo atual', 'component')
-      const response = await periodoLetivoService.buscarPeriodoLetivoAtual()
-      
-      logger.info('📅 Resposta do período letivo:', 'component', response)
-      
-      if (response.sucesso && response.dados && !Array.isArray(response.dados)) {
-        setPeriodoLetivoAtual(response.dados.periodo_letivo_id)
-        logger.success(`✅ Período letivo atual carregado: ${response.dados.bimestre}º bimestre`, 'component')
-        logger.info(`📅 Período letivo ID: ${response.dados.periodo_letivo_id}`, 'component')
+      const periodo = await periodoLetivoService.buscarAtual()
+
+      if (periodo) {
+        setPeriodoLetivoAtual(periodo.periodo_letivo_id)
+        logger.success(`✅ Período letivo atual carregado: ${periodo.bimestre}º bimestre`, 'component')
       } else {
         logger.error('❌ Erro ao carregar período letivo atual', 'component')
-        logger.error('❌ Response:', 'component', response)
         setPeriodoLetivoAtual('')
       }
     } catch (error) {

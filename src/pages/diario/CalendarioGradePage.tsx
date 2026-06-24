@@ -121,9 +121,8 @@ export default function CalendarioGradePage() {
 
   const carregarPeriodoLetivoAtual = async () => {
     try {
-      const response = await periodoLetivoService.buscarPeriodoLetivoAtual()
-      if (response.sucesso && response.dados) {
-        const periodo = Array.isArray(response.dados) ? response.dados[0] : response.dados
+      const periodo = await periodoLetivoService.buscarAtual()
+      if (periodo) {
         setPeriodoLetivoAtual(periodo.periodo_letivo_id)
       }
     } catch (error) {
