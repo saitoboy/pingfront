@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { anoLetivoService, type AnoLetivo } from '../../../services/anoLetivoService';
 import PeriodoLetivoService, { type PeriodoLetivo } from '../../../services/periodoLetivoService';
-import { logger } from '../../../lib/logger';
 import { useAuth } from '../../../contexts/AuthContext';
 import AnoLetivoModal from '../modals/AnoLetivoModal';
 

@@ -72,7 +72,6 @@ export default function DiarioDiaPage() {
   const [registro, setRegistro] = useState<RegistroDiario>(
     registroVazio(turmaDisciplinaProfessorId || '', data || '')
   )
-  const [registroId, setRegistroId] = useState<string | undefined>(undefined)
   const [salvandoRegistro, setSalvandoRegistro] = useState(false)
   const [ultimoSalvamento, setUltimoSalvamento] = useState<string | null>(null)
 
@@ -168,7 +167,6 @@ export default function DiarioDiaPage() {
 
       if (response.sucesso && response.dados) {
         const r = response.dados
-        setRegistroId(r.registro_diario_id)
         setRegistro({
           turma_disciplina_professor_id: turmaDisciplinaProfessorId,
           data_aula: data,
@@ -183,7 +181,6 @@ export default function DiarioDiaPage() {
         setUltimoSalvamento(r.updated_at || null)
         logger.success('✅ Registro diário carregado', 'component')
       } else {
-        setRegistroId(undefined)
         setRegistro(registroVazio(turmaDisciplinaProfessorId, data))
       }
     } catch (error) {
@@ -208,12 +205,8 @@ export default function DiarioDiaPage() {
 
   const carregarPeriodoLetivoAtual = async () => {
     try {
-      const response = await periodoLetivoService.buscarPeriodoLetivoAtual()
-      if (response.sucesso && response.dados && !Array.isArray(response.dados)) {
-        setPeriodoLetivoAtual(response.dados.periodo_letivo_id)
-      } else {
-        setPeriodoLetivoAtual('')
-      }
+      const periodo = await periodoLetivoService.buscarAtual()
+      setPeriodoLetivoAtual(periodo?.periodo_letivo_id || '')
     } catch (error) {
       logger.error('❌ Erro ao carregar período letivo atual', 'component', error)
       setPeriodoLetivoAtual('')
@@ -259,7 +252,6 @@ export default function DiarioDiaPage() {
       const response = await registroDiarioService.salvar({ ...registro, status })
 
       if (response.sucesso && response.dados) {
-        setRegistroId(response.dados.registro_diario_id)
         setRegistro((prev) => ({ ...prev, status }))
         setUltimoSalvamento(response.dados.updated_at || new Date().toISOString())
         logger.success('✅ Registro salvo com sucesso', 'component')
