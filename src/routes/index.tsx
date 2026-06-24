@@ -23,6 +23,7 @@ import CalendarioGradePage from '../pages/diario/CalendarioGradePage';
 import DetalhesAulaPage from '../pages/diario/DetalhesAulaPage';
 import LancarNotasPage from '../pages/diario/LancarNotasPage';
 import MeuDiarioPage from '../pages/diario/MeuDiarioPage';
+import AdminDiariosPage from '../pages/diario/AdminDiariosPage';
 
 // 🔐 Componente de Rota Protegida
 interface ProtectedRouteProps {
@@ -241,6 +242,15 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <DiarioProfessorPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/diario/admin/:professorId"
+          element={
+            <ProtectedRoute>
+              <AdminDiariosPage />
             </ProtectedRoute>
           }
         />

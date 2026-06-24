@@ -9,12 +9,12 @@ import {
 } from 'lucide-react'
 import { StepHeader } from './StepHeader'
 import type { FormularioFichaCadastro } from '../types'
-import type { Parentesco, AnoLetivo, Serie, Turma } from '../../../types/api'
+import type { Parentesco, AnoLetivo, Serie, Turma, Religiao } from '../../../types/api'
 
 interface Step7Props {
   formData: FormularioFichaCadastro
   parentescos: Parentesco[]
-  religioes: never[]
+  religioes: Religiao[]
   anosLetivos: AnoLetivo[]
   series: Serie[]
   turmas: Turma[]

@@ -382,7 +382,7 @@ export interface FichaCadastroCompleta {
     matricula_certidao: string;
     termo_certidao: string;
     folha_certidao: string;
-    data_expedicao_certidao: Date;
+    data_expedicao_certidao?: Date;
     nome_cartorio_certidao: string;
   };
   responsaveis: Array<{
