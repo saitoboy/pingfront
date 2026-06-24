@@ -1,10 +1,8 @@
-import { 
-  User, 
-  FileText, 
-  Users, 
-  Heart, 
-  Stethoscope, 
-  GraduationCap, 
+import {
+  User,
+  Users,
+  Stethoscope,
+  GraduationCap,
   CheckCircle
 } from 'lucide-react'
 
@@ -14,6 +12,7 @@ export interface WizardStep {
   icon: any;
   description: string;
   section: string;
+  optional?: boolean;
 }
 
 export const WIZARD_STEPS: WizardStep[] = [
@@ -25,44 +24,31 @@ export const WIZARD_STEPS: WizardStep[] = [
     section: "aluno"
   },
   {
-    id: 2, 
-    title: "Certidão de Nascimento",
-    icon: FileText,
-    description: "Dados da certidão de nascimento",
-    section: "certidao"
-  },
-  {
-    id: 3,
+    id: 2,
     title: "Responsáveis",
-    icon: Users, 
+    icon: Users,
     description: "Dados dos responsáveis pelo aluno",
     section: "responsaveis"
   },
   {
-    id: 4,
-    title: "Dados de Saúde", 
-    icon: Heart,
-    description: "Informações médicas e de saúde",
-    section: "dados_saude"
-  },
-  {
-    id: 5,
+    id: 3,
     title: "Diagnósticos",
     icon: Stethoscope,
-    description: "Diagnósticos e necessidades especiais", 
-    section: "diagnostico"
+    description: "Diagnósticos e necessidades especiais",
+    section: "diagnostico",
+    optional: true
   },
   {
-    id: 6,
+    id: 4,
     title: "Matrícula",
     icon: GraduationCap,
     description: "Turma e dados acadêmicos",
     section: "matricula"
   },
   {
-    id: 7,
+    id: 5,
     title: "Revisão",
-    icon: CheckCircle, 
+    icon: CheckCircle,
     description: "Conferir dados antes de salvar",
     section: "review"
   }

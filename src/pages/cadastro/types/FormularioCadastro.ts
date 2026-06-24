@@ -11,6 +11,7 @@ export interface FormularioFichaCadastro {
     bairro_aluno: string;
     cep_aluno: string;
     religiao_id: string;
+    foto_aluno?: string;
   };
   certidao: {
     livro_certidao: string;

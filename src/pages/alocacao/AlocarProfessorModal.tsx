@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { X, UserPlus, BookOpen, Users, School, Check, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import { X, UserPlus, BookOpen, Users, School, Check, AlertCircle, Sparkles, Loader2, GraduationCap, Save } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { professorDisciplinaService } from '../../services/professorDisciplinaService';
+import { disciplinaService } from '../../services/disciplinaService';
 import type { Disciplina } from '../../services/disciplinaService';
 import type { ProfessorDisponivel, DisciplinaDisponivel, TurmaDisponivel } from '../../services/alocacaoProfessorService';
 
@@ -38,6 +39,13 @@ export default function AlocarProfessorModal({
   const [disciplinasHabilitadas, setDisciplinasHabilitadas] = useState<Disciplina[]>([]);
   const [loadingHabilitadas, setLoadingHabilitadas] = useState(false);
 
+  // Configuração inline de disciplinas
+  const [mostrarConfigInline, setMostrarConfigInline] = useState(false);
+  const [todasDisciplinasConfig, setTodasDisciplinasConfig] = useState<Disciplina[]>([]);
+  const [selecionadasConfig, setSelecionadasConfig] = useState<Set<string>>(new Set());
+  const [carregandoDisciplinasConfig, setCarregandoDisciplinasConfig] = useState(false);
+  const [salvandoConfig, setSalvandoConfig] = useState(false);
+
   // Resetar ao abrir/fechar
   useEffect(() => {
     if (!isOpen) {
@@ -46,6 +54,8 @@ export default function AlocarProfessorModal({
       setTurmaSelecionada('');
       setDisciplinasSelecionadas(new Set());
       setDisciplinasHabilitadas([]);
+      setMostrarConfigInline(false);
+      setSelecionadasConfig(new Set());
     }
   }, [isOpen]);
 
@@ -55,6 +65,8 @@ export default function AlocarProfessorModal({
       setDisciplinasHabilitadas([]);
       setDisciplinasSelecionadas(new Set());
       setAlocacoesTemp([]);
+      setMostrarConfigInline(false);
+      setSelecionadasConfig(new Set());
       return;
     }
 
@@ -84,10 +96,33 @@ export default function AlocarProfessorModal({
     };
   }, [professorSelecionado]);
 
+  // Carregar todas as disciplinas quando o painel inline abre (apenas uma vez)
+  useEffect(() => {
+    if (!mostrarConfigInline || todasDisciplinasConfig.length > 0) return;
+    const carregar = async () => {
+      setCarregandoDisciplinasConfig(true);
+      try {
+        const data = await disciplinaService.listarDisciplinas();
+        setTodasDisciplinasConfig(data);
+      } catch {
+        logger.error('Erro ao carregar disciplinas', 'service');
+      } finally {
+        setCarregandoDisciplinasConfig(false);
+      }
+    };
+    carregar();
+  }, [mostrarConfigInline]);
+
   const disciplinasBase = disciplinasHabilitadas.filter((d) => d.categoria === 'base');
   const disciplinasEspeciais = disciplinasHabilitadas.filter((d) => d.categoria !== 'base');
   const idsBase = disciplinasBase.map((d) => d.disciplina_id);
   const todasBaseMarcadas = idsBase.length > 0 && idsBase.every((id) => disciplinasSelecionadas.has(id));
+
+  // Config inline
+  const disciplinasBaseConfig = todasDisciplinasConfig.filter(d => d.categoria === 'base');
+  const disciplinasEspeciaisConfig = todasDisciplinasConfig.filter(d => d.categoria !== 'base');
+  const idsBaseConfig = disciplinasBaseConfig.map(d => d.disciplina_id);
+  const todasBaseMarcadasConfig = idsBaseConfig.length > 0 && idsBaseConfig.every(id => selecionadasConfig.has(id));
 
   const toggleDisciplina = (disciplina_id: string) => {
     setDisciplinasSelecionadas((prev) => {
@@ -105,6 +140,55 @@ export default function AlocarProfessorModal({
       else idsBase.forEach((id) => novo.add(id));
       return novo;
     });
+  };
+
+  const toggleDisciplinaConfig = (disciplina_id: string) => {
+    setSelecionadasConfig(prev => {
+      const novo = new Set(prev);
+      if (novo.has(disciplina_id)) novo.delete(disciplina_id);
+      else novo.add(disciplina_id);
+      return novo;
+    });
+  };
+
+  const togglePacoteBaseConfig = () => {
+    setSelecionadasConfig(prev => {
+      const novo = new Set(prev);
+      if (todasBaseMarcadasConfig) idsBaseConfig.forEach(id => novo.delete(id));
+      else idsBaseConfig.forEach(id => novo.add(id));
+      return novo;
+    });
+  };
+
+  const recarregarHabilitadas = async () => {
+    if (!professorSelecionado) return;
+    try {
+      setLoadingHabilitadas(true);
+      const habilitadas = await professorDisciplinaService.listarDisciplinasDoProfessor(professorSelecionado);
+      setDisciplinasHabilitadas(habilitadas);
+    } catch {
+      setDisciplinasHabilitadas([]);
+    } finally {
+      setLoadingHabilitadas(false);
+    }
+  };
+
+  const handleSalvarConfig = async () => {
+    if (!professorSelecionado) return;
+    try {
+      setSalvandoConfig(true);
+      await professorDisciplinaService.definirDisciplinasDoProfessor(
+        professorSelecionado,
+        Array.from(selecionadasConfig)
+      );
+      setMostrarConfigInline(false);
+      await recarregarHabilitadas();
+    } catch (error: any) {
+      logger.error('Erro ao salvar disciplinas', 'service');
+      alert('Erro ao salvar: ' + (error.response?.data?.mensagem || error.message));
+    } finally {
+      setSalvandoConfig(false);
+    }
   };
 
   const adicionarAlocacoes = () => {
@@ -126,7 +210,6 @@ export default function AlocarProfessorModal({
       return novas;
     });
 
-    // Limpar seleção de disciplinas (mantém a turma pra facilitar adicionar outras)
     setDisciplinasSelecionadas(new Set());
     logger.info('✅ Alocações adicionadas à lista');
   };
@@ -180,6 +263,27 @@ export default function AlocarProfessorModal({
           }`}
         >
           {marcada && <Check className="w-3 h-3" />}
+        </span>
+        {disciplina.nome_disciplina}
+      </button>
+    );
+  };
+
+  const renderChipDisciplinaConfig = (disciplina: Disciplina) => {
+    const marcada = selecionadasConfig.has(disciplina.disciplina_id);
+    return (
+      <button
+        key={disciplina.disciplina_id}
+        type="button"
+        onClick={() => toggleDisciplinaConfig(disciplina.disciplina_id)}
+        className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border-2 text-left text-xs font-medium transition-all ${
+          marcada ? 'border-blue-500 bg-blue-50 text-blue-900' : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+        }`}
+      >
+        <span className={`flex items-center justify-center w-4 h-4 rounded border-2 flex-shrink-0 ${
+          marcada ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300'
+        }`}>
+          {marcada && <Check className="w-2.5 h-2.5" />}
         </span>
         {disciplina.nome_disciplina}
       </button>
@@ -270,14 +374,83 @@ export default function AlocarProfessorModal({
                   Carregando disciplinas do professor...
                 </div>
               ) : disciplinasHabilitadas.length === 0 ? (
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 flex items-start">
-                  <AlertCircle className="w-5 h-5 text-amber-600 mr-3 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-amber-900">Este professor ainda não tem disciplinas definidas</p>
-                    <p className="text-sm text-amber-700 mt-1">
-                      Defina as disciplinas dele em <strong>Gestão Escolar → Disciplinas do Professor</strong> para poder alocá-lo.
-                    </p>
+                <div className="space-y-3">
+                  {/* Aviso */}
+                  <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 flex items-start">
+                    <AlertCircle className="w-5 h-5 text-amber-600 mr-3 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-amber-900">Este professor ainda não tem disciplinas definidas</p>
+                      <p className="text-sm text-amber-700 mt-1">Configure as disciplinas dele para poder alocá-lo.</p>
+                    </div>
+                    <button
+                      onClick={() => setMostrarConfigInline(v => !v)}
+                      className="ml-3 flex-shrink-0 text-xs font-semibold px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                    >
+                      {mostrarConfigInline ? 'Fechar' : 'Configurar agora'}
+                    </button>
                   </div>
+
+                  {/* Painel inline de configuração */}
+                  {mostrarConfigInline && (
+                    <div className="bg-white border-2 border-blue-100 rounded-xl p-4">
+                      <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <GraduationCap className="w-4 h-4 text-blue-600" />
+                        Definir disciplinas do professor
+                      </h4>
+
+                      {carregandoDisciplinasConfig ? (
+                        <div className="flex items-center gap-2 py-4 text-sm text-gray-600">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Carregando disciplinas...
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {disciplinasBaseConfig.length > 0 && (
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Disciplinas base</span>
+                                <button
+                                  type="button"
+                                  onClick={togglePacoteBaseConfig}
+                                  className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                                >
+                                  <Sparkles className="w-3 h-3" />
+                                  {todasBaseMarcadasConfig ? 'Desmarcar base' : 'Marcar tudo'}
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {disciplinasBaseConfig.map(renderChipDisciplinaConfig)}
+                              </div>
+                            </div>
+                          )}
+
+                          {disciplinasEspeciaisConfig.length > 0 && (
+                            <div>
+                              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Disciplinas especiais</span>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {disciplinasEspeciaisConfig.map(renderChipDisciplinaConfig)}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                            <span className="text-xs text-gray-500">{selecionadasConfig.size} selecionada(s)</span>
+                            <button
+                              onClick={handleSalvarConfig}
+                              disabled={selecionadasConfig.size === 0 || salvandoConfig}
+                              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {salvandoConfig ? (
+                                <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
+                              ) : (
+                                <><Save className="w-4 h-4" /> Salvar e continuar</>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">

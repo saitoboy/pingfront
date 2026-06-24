@@ -64,8 +64,8 @@ export default function SelecionarProfessorPage() {
 
   const handleProfessorClick = (professor: ProfessorComTurmas) => {
     logger.info(`👤 Professor selecionado: ${professor.nome_usuario}`, 'component')
-    // Navega para a página do diário do professor
-    navigate(`/diario/professor/${professor.usuario_id}`)
+    // Navega para a visão de diários (registros) do professor
+    navigate(`/diario/admin/${professor.usuario_id}`)
   }
 
   // Agrupar professores únicos (sem duplicatas)

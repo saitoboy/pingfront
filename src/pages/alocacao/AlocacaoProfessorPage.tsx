@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Users, BookOpen, Calendar, Plus, Trash2, RefreshCw, TrendingUp, Award, School } from 'lucide-react';
+import { Users, BookOpen, Calendar, Plus, Trash2, RefreshCw, TrendingUp, Award, School, GraduationCap, ChevronDown, ChevronUp } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { alocacaoProfessorService } from '../../services/alocacaoProfessorService';
 import { cadastroService } from '../../services/cadastroService';
 import AlocarProfessorModal from './AlocarProfessorModal';
+import DisciplinasProfessorTab from '../gestao/tabs/DisciplinasProfessorTab';
 import type { 
   AlocacaoProfessor, 
   ProfessorDisponivel, 
@@ -28,6 +29,7 @@ export default function AlocacaoProfessorPage() {
   const [modalAberto, setModalAberto] = useState(false);
   const [professorFiltro, setProfessorFiltro] = useState<string>('');
   const [disciplinaFiltro, setDisciplinaFiltro] = useState<string>('');
+  const [mostrarDisciplinas, setMostrarDisciplinas] = useState(false);
 
   // Carregar dados iniciais ao montar
   useEffect(() => {
@@ -274,14 +276,24 @@ export default function AlocacaoProfessorPage() {
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Atualizar
             </button>
-            <button
-              onClick={() => setModalAberto(true)}
-              disabled={!anoLetivoAtivo || loading}
-              className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Nova Alocação
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setMostrarDisciplinas(v => !v)}
+                className="w-full sm:w-auto px-4 py-2.5 bg-green-100 hover:bg-green-200 text-green-800 font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+              >
+                <GraduationCap className="w-4 h-4" />
+                Disciplinas dos Professores
+                {mostrarDisciplinas ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={() => setModalAberto(true)}
+                disabled={!anoLetivoAtivo || loading}
+                className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Nova Alocação
+              </button>
+            </div>
           </div>
         </div>
 
@@ -327,6 +339,13 @@ export default function AlocacaoProfessorPage() {
                 <School className="w-12 h-12 text-green-200 opacity-50" />
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Painel Disciplinas dos Professores */}
+        {mostrarDisciplinas && (
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <DisciplinasProfessorTab />
           </div>
         )}
 
