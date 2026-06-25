@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, BookOpen, Calendar, Plus, Trash2, RefreshCw, TrendingUp, Award, School } from 'lucide-react';
+import { Users, BookOpen, Calendar, Plus, Trash2, TrendingUp, Award, School } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { alocacaoProfessorService } from '../../services/alocacaoProfessorService';
 import { cadastroService } from '../../services/cadastroService';
@@ -262,7 +262,7 @@ export default function AlocacaoProfessorPage() {
 
         {/* Barra de ações */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 mb-6">
-          
+
           <button
             onClick={() => setModalAberto(true)}
             disabled={!anoLetivoAtivo || loading}

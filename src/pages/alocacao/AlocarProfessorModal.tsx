@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, UserPlus, BookOpen, Users, School, Check, AlertCircle, Sparkles, Loader2, Save, ChevronDown, Pencil } from 'lucide-react';
+import { X, UserPlus, BookOpen, School, Check, AlertCircle, Sparkles, Loader2, Save, ChevronDown, Pencil } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { professorDisciplinaService } from '../../services/professorDisciplinaService';
 import { disciplinaService } from '../../services/disciplinaService';
