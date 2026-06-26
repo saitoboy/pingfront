@@ -444,9 +444,9 @@ export default function AlocarProfessorModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-blue-600 px-6 py-5 flex items-center justify-between">
+        <div className="bg-blue-600 px-6 py-5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
               <UserPlus className="w-6 h-6 text-white" />
@@ -466,7 +466,7 @@ export default function AlocarProfessorModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+        <div className="p-6 overflow-y-auto flex-1 min-h-0">
           {/* Passo 1: Seleção de Professor */}
           <div className="mb-6">
             <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
@@ -725,7 +725,7 @@ export default function AlocarProfessorModal({
 
         {/* Erro de submissão (ex.: disciplina já tem professor na turma) */}
         {erroSubmit && (
-          <div className="mx-6 mb-2 bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
+          <div className="flex-shrink-0 mx-6 mt-3 bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-red-900">Não foi possível alocar</p>
@@ -742,7 +742,7 @@ export default function AlocarProfessorModal({
         )}
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3 border-t">
+        <div className="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3 border-t flex-shrink-0">
           <button
             onClick={onClose}
             className="px-6 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all"

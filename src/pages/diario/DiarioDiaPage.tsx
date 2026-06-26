@@ -19,6 +19,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import frequenciaService, { type AlunoFrequencia } from '../../services/frequenciaService'
 import registroDiarioService from '../../services/registroDiarioService'
 import RichTextEditor from '../../components/diario/RichTextEditor'
+import AnexosUploader from '../../components/diario/AnexosUploader'
 import {
   carregarContextoDiario,
   diasSemanaComAula,
@@ -34,12 +35,13 @@ import {
   ehFuturo,
   rotuloTrimestre,
 } from '../../lib/diarioCalendario'
-import type { RegistroDiario, StatusRegistroDiario } from '../../types/diario'
+import type { RegistroDiario, StatusRegistroDiario, AnexoRegistro } from '../../types/diario'
 
 const registroVazio = (vinculacaoId: string, data: string): RegistroDiario => ({
   turma_disciplina_professor_id: vinculacaoId,
   data_aula: data,
   resumo: '',
+  anexos: [],
   status: 'rascunho',
 })
 
@@ -132,6 +134,7 @@ export default function DiarioDiaPage() {
                     turma_disciplina_professor_id: d.turma_disciplina_professor_id,
                     data_aula: data,
                     resumo: resp.dados.resumo || '',
+                    anexos: resp.dados.anexos || [],
                     status: resp.dados.status || 'rascunho',
                   }
                 : registroVazio(d.turma_disciplina_professor_id, data)
@@ -233,6 +236,13 @@ export default function DiarioDiaPage() {
     setRegistros((prev) => ({
       ...prev,
       [vinculacaoId]: { ...prev[vinculacaoId], resumo: html },
+    }))
+  }
+
+  const atualizarAnexos = (vinculacaoId: string, anexos: AnexoRegistro[]) => {
+    setRegistros((prev) => ({
+      ...prev,
+      [vinculacaoId]: { ...prev[vinculacaoId], anexos },
     }))
   }
 
@@ -494,6 +504,11 @@ export default function DiarioDiaPage() {
                               minHeight={120}
                             />
                           </div>
+                          <AnexosUploader
+                            value={registro.anexos || []}
+                            onChange={(anexos) => atualizarAnexos(disc.turma_disciplina_professor_id, anexos)}
+                            disabled={ocupado}
+                          />
                           <div className="flex justify-end gap-3">
                             <button
                               onClick={() => salvarConteudo(disc.turma_disciplina_professor_id, 'rascunho')}

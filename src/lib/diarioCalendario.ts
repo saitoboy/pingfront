@@ -40,7 +40,7 @@ export const toISO = (d: Date): string => {
 }
 
 /** Converte YYYY-MM-DD -> Date local (meia-noite). */
-export const parseISO = (data: string): Date => new Date(data + 'T00:00:00')
+export const parseISO = (data: string): Date => new Date(data.substring(0, 10) + 'T00:00:00')
 
 /** 0=Domingo ... 6=Sábado para uma data ISO. */
 export const diaSemanaDe = (data: string): number => parseISO(data).getDay()
@@ -67,21 +67,79 @@ export const ehFuturo = (data: string): boolean => data > hojeISO()
 /**
  * Lista todas as datas letivas (YYYY-MM-DD) dentro de [inicio, fim]
  * cujo dia da semana esteja no conjunto informado, em ordem crescente.
+ * Datas em `feriados` (YYYY-MM-DD) são excluídas — não há aula nelas.
  */
 export const diasLetivosNoIntervalo = (
   inicio: string,
   fim: string,
-  diasSemana: Set<number>
+  diasSemana: Set<number>,
+  feriados: Set<string> = new Set()
 ): string[] => {
   if (!inicio || !fim || diasSemana.size === 0) return []
   const dias: string[] = []
   const atual = parseISO(inicio)
   const limite = parseISO(fim)
   while (atual <= limite) {
-    if (diasSemana.has(atual.getDay())) dias.push(toISO(atual))
+    const iso = toISO(atual)
+    if (diasSemana.has(atual.getDay()) && !feriados.has(iso)) dias.push(iso)
     atual.setDate(atual.getDate() + 1)
   }
   return dias
+}
+
+export interface CelulaCalendario {
+  data: string | null // null = célula de preenchimento (antes do dia 1 / depois do último)
+  noTrimestre: boolean // true se a data cai dentro de [inicio, fim] do trimestre
+}
+
+export interface MesCalendario {
+  ano: number
+  mes: number // 0-11
+  rotulo: string // ex.: "Abril de 2026"
+  semanas: CelulaCalendario[][] // cada semana tem 7 células (Dom→Sáb)
+}
+
+/**
+ * Gera a estrutura de calendário (meses → semanas → células) cobrindo
+ * todos os meses tocados por [inicio, fim]. Células fora do mês ou fora do
+ * trimestre vêm marcadas para a UI renderizar esmaecidas.
+ */
+export const gerarCalendario = (inicio: string, fim: string): MesCalendario[] => {
+  if (!inicio || !fim) return []
+  const dInicio = parseISO(inicio)
+  const dFim = parseISO(fim)
+  const meses: MesCalendario[] = []
+
+  let ano = dInicio.getFullYear()
+  let mes = dInicio.getMonth()
+  const ultimoAno = dFim.getFullYear()
+  const ultimoMes = dFim.getMonth()
+
+  while (ano < ultimoAno || (ano === ultimoAno && mes <= ultimoMes)) {
+    const diasNoMes = new Date(ano, mes + 1, 0).getDate()
+    const offset = new Date(ano, mes, 1).getDay() // 0=Domingo
+
+    const celulas: CelulaCalendario[] = []
+    for (let i = 0; i < offset; i++) celulas.push({ data: null, noTrimestre: false })
+    for (let dia = 1; dia <= diasNoMes; dia++) {
+      const data = toISO(new Date(ano, mes, dia))
+      celulas.push({ data, noTrimestre: data >= inicio && data <= fim })
+    }
+    while (celulas.length % 7 !== 0) celulas.push({ data: null, noTrimestre: false })
+
+    const semanas: CelulaCalendario[][] = []
+    for (let i = 0; i < celulas.length; i += 7) semanas.push(celulas.slice(i, i + 7))
+
+    meses.push({ ano, mes, rotulo: `${nomeMes(mes)} de ${ano}`, semanas })
+
+    mes++
+    if (mes > 11) {
+      mes = 0
+      ano++
+    }
+  }
+
+  return meses
 }
 
 /** Agrupa datas por "Ano-Mês" preservando a ordem. */

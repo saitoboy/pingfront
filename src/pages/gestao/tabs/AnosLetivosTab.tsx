@@ -54,10 +54,21 @@ export default function AnosLetivosTab() {
   const [adicionandoTrimestre, setAdicionandoTrimestre] = useState<string | null>(null);
   const [novoTrimestre, setNovoTrimestre] = useState({ bimestre: 1, data_inicio: '', data_fim: '' });
   const [ativandoTrimestre, setAtivandoTrimestre] = useState<string | null>(null);
+  const [periodoAtual, setPeriodoAtual] = useState<PeriodoLetivo | null>(null);
 
   useEffect(() => {
     carregarAnosLetivos();
+    carregarPeriodoAtual();
   }, []);
+
+  const carregarPeriodoAtual = async () => {
+    try {
+      const dados = await PeriodoLetivoService.buscarAtual();
+      setPeriodoAtual(dados);
+    } catch {
+      // silencioso
+    }
+  };
 
   const carregarAnosLetivos = async () => {
     try {
@@ -183,6 +194,7 @@ export default function AnosLetivosTab() {
       setAtivandoTrimestre(periodo.periodo_letivo_id);
       const resultado = await PeriodoLetivoService.ativar(periodo.periodo_letivo_id);
       alert(`${TRIMESTRE_LABELS[periodo.bimestre - 1]} ativado em ${resultado.total} matrícula(s).`);
+      await carregarPeriodoAtual();
     } catch (error: any) {
       alert('Erro ao ativar período: ' + (error.response?.data?.mensagem || error.message));
     } finally {
@@ -224,8 +236,31 @@ export default function AnosLetivosTab() {
     );
   }
 
+  const anoAtual = periodoAtual
+    ? anosLetivos.find(a => a.ano_letivo_id === periodoAtual.ano_letivo_id)
+    : null;
+
   return (
     <div>
+      {periodoAtual && (
+        <div className="flex items-center gap-3 mb-5 px-4 py-3 bg-green-50 border border-green-200 rounded-xl">
+          <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full flex-shrink-0">
+            <Zap className="w-4 h-4 text-green-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-green-700 uppercase tracking-wide">Trimestre Ativo</p>
+            <p className="text-sm font-semibold text-green-900">
+              {TRIMESTRE_LABELS[periodoAtual.bimestre - 1]}
+              {anoAtual ? ` — ${anoAtual.ano}` : ''}
+            </p>
+          </div>
+          {(temDataValida(periodoAtual.data_inicio) || temDataValida(periodoAtual.data_fim)) && (
+            <span className="text-xs text-green-700 flex-shrink-0">
+              {formatarData(periodoAtual.data_inicio)} → {formatarData(periodoAtual.data_fim)}
+            </span>
+          )}
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="flex-1">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -355,6 +390,7 @@ export default function AnosLetivosTab() {
                             const label = TRIMESTRE_LABELS[num - 1];
                             const editando = editandoId === periodo?.periodo_letivo_id;
                             const salvando = salvandoTrimestre === periodo?.periodo_letivo_id;
+                            const isAtivo = periodoAtual?.periodo_letivo_id === periodo?.periodo_letivo_id;
 
                             if (!periodo) {
                               return (
@@ -378,7 +414,7 @@ export default function AnosLetivosTab() {
                             }
 
                             return (
-                              <div key={num} className="bg-white border border-gray-200 rounded-lg">
+                              <div key={num} className={`border rounded-lg ${isAtivo ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200'}`}>
                                 {editando ? (
                                   <div className="px-3 py-2 space-y-2">
                                     <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -424,8 +460,14 @@ export default function AnosLetivosTab() {
                                   </div>
                                 ) : (
                                   <div className="flex items-center gap-3 px-3 py-2">
-                                    <CalendarRange className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                                    <span className="text-sm font-medium text-gray-700 w-28 flex-shrink-0">{label}</span>
+                                    <CalendarRange className={`w-4 h-4 flex-shrink-0 ${isAtivo ? 'text-green-600' : 'text-blue-500'}`} />
+                                    <span className={`text-sm font-medium w-28 flex-shrink-0 ${isAtivo ? 'text-green-800' : 'text-gray-700'}`}>{label}</span>
+                                    {isAtivo && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 flex-shrink-0">
+                                        <CheckCircle className="w-3 h-3" />
+                                        Ativo
+                                      </span>
+                                    )}
                                     <span className="text-sm text-gray-500 flex-1">
                                       {temDataValida(periodo.data_inicio) || temDataValida(periodo.data_fim)
                                         ? `${formatarData(periodo.data_inicio)} → ${formatarData(periodo.data_fim)}`
@@ -433,17 +475,19 @@ export default function AnosLetivosTab() {
                                     </span>
                                     {isAdmin && (
                                       <div className="flex gap-1 flex-shrink-0 items-center">
-                                        <button
-                                          onClick={() => handleAtivarPeriodo(periodo, al.ano)}
-                                          disabled={ativandoTrimestre === periodo.periodo_letivo_id}
-                                          className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
-                                          title="Ativar este trimestre nas matrículas"
-                                        >
-                                          {ativandoTrimestre === periodo.periodo_letivo_id
-                                            ? <Loader2 className="w-3 h-3 animate-spin" />
-                                            : <Zap className="w-3 h-3" />}
-                                          Ativar
-                                        </button>
+                                        {!isAtivo && (
+                                          <button
+                                            onClick={() => handleAtivarPeriodo(periodo, al.ano)}
+                                            disabled={ativandoTrimestre === periodo.periodo_letivo_id}
+                                            className="flex items-center gap-1 px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                                            title="Ativar este trimestre nas matrículas"
+                                          >
+                                            {ativandoTrimestre === periodo.periodo_letivo_id
+                                              ? <Loader2 className="w-3 h-3 animate-spin" />
+                                              : <Zap className="w-3 h-3" />}
+                                            Ativar
+                                          </button>
+                                        )}
                                         <button
                                           onClick={() => handleIniciarEdicao(periodo)}
                                           className="text-blue-600 hover:text-blue-900 p-1"

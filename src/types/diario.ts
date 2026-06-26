@@ -16,6 +16,13 @@ export interface ProfessorComTurmas {
 
 export type StatusRegistroDiario = 'rascunho' | 'concluido';
 
+export interface AnexoRegistro {
+  nome: string; // Nome original do arquivo
+  tipo: string; // MIME type (ex.: application/pdf, image/png)
+  tamanho: number; // Bytes
+  dados: string; // Conteúdo em base64 (data URL)
+}
+
 export interface RegistroDiario {
   registro_diario_id?: string;
   turma_disciplina_professor_id: string;
@@ -26,6 +33,7 @@ export interface RegistroDiario {
   recursos?: string[];
   observacoes?: string; // HTML
   fotos?: string[]; // base64
+  anexos?: AnexoRegistro[]; // anexos genéricos (imagem, PDF, outros)
   status: StatusRegistroDiario;
   created_at?: string;
   updated_at?: string;

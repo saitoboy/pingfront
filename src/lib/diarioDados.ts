@@ -4,6 +4,7 @@
 import { anoLetivoService, type AnoLetivo } from '../services/anoLetivoService'
 import periodoLetivoService, { type PeriodoLetivo } from '../services/periodoLetivoService'
 import gradeHorarioService, { type GradeHorario } from '../services/gradeHorarioService'
+import feriadoService from '../services/feriadoService'
 import { professorService } from '../services/professorService'
 import registroDiarioService from '../services/registroDiarioService'
 import { logger } from './logger'
@@ -32,6 +33,10 @@ export interface ContextoDiario {
   vinculacoes: Vinculacao[]
   // grades por vinculação, para descobrir os dias da semana de cada disciplina
   gradesPorVinculacao: Record<string, GradeHorario[]>
+  // datas (YYYY-MM-DD) sem aula: feriados e recessos do ano letivo ativo
+  feriados: Set<string>
+  // descrição de cada feriado por data (YYYY-MM-DD)
+  feriadosDesc: Record<string, string>
   // turma "principal" do professor (frequência é por turma)
   turmaId: string
   nomeTurma: string
@@ -82,6 +87,22 @@ export const carregarContextoDiario = async (): Promise<ContextoDiario> => {
   // se nada veio mas há um período ativo, ao menos mostra ele
   if (trimestres.length === 0 && periodoAtual) trimestres = [periodoAtual]
 
+  // feriados/recessos do ano letivo ativo (datas sem aula)
+  const feriados = new Set<string>()
+  const feriadosDesc: Record<string, string> = {}
+  if (anoLetivoId) {
+    try {
+      const lista = await feriadoService.listarPorAno(anoLetivoId)
+      for (const f of lista) {
+        const iso = f.data.substring(0, 10)
+        feriados.add(iso)
+        feriadosDesc[iso] = f.descricao
+      }
+    } catch (error) {
+      logger.error('❌ Erro ao carregar feriados', 'service', error)
+    }
+  }
+
   // Carrega a grade de cada vinculação em paralelo
   const gradesPorVinculacao: Record<string, GradeHorario[]> = {}
   await Promise.all(
@@ -103,6 +124,8 @@ export const carregarContextoDiario = async (): Promise<ContextoDiario> => {
     trimestreAtivoId: periodoAtual?.periodo_letivo_id || '',
     vinculacoes,
     gradesPorVinculacao,
+    feriados,
+    feriadosDesc,
     turmaId: primeira?.turma_id ?? '',
     nomeTurma: primeira?.nome_turma ?? '',
     nomeSerie: primeira?.nome_serie ?? '',

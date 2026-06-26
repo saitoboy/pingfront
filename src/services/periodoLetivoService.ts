@@ -7,6 +7,7 @@ export interface PeriodoLetivo {
   ano_letivo_id: string
   data_inicio?: string | null
   data_fim?: string | null
+  ativo: boolean
   created_at: string
   updated_at: string
 }

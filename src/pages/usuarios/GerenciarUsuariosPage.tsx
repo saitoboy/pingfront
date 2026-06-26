@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import type { ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  Users, 
-  Search, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Filter,
-  User,
-  Mail,
-  Calendar,
-  AlertCircle
+import {
+  Users,
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  AlertCircle,
+  Camera,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import { usuarioService } from '../../services/usuarioService'
@@ -20,6 +20,9 @@ import type { Usuario, UsuarioTipo } from '../../types/api'
 interface UsuarioComTipo extends Usuario {
   tipo_usuario_nome?: string
 }
+
+type SortField = 'nome_usuario' | 'email_usuario' | 'tipo_usuario_id' | 'created_at'
+type SortDir = 'asc' | 'desc'
 
 export default function GerenciarUsuariosPage() {
   const navigate = useNavigate()
@@ -33,8 +36,12 @@ export default function GerenciarUsuariosPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [sortField, setSortField] = useState<SortField>('nome_usuario')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [fotos, setFotos] = useState<Record<string, string>>({})
+  const [fotoTargetId, setFotoTargetId] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Carregar dados iniciais
   useEffect(() => {
     carregarDados()
   }, [])
@@ -43,41 +50,75 @@ export default function GerenciarUsuariosPage() {
     try {
       setIsLoading(true)
       setError(null)
-
-      // Carregar usuários e tipos em paralelo
       const [usuariosData, tiposData] = await Promise.all([
         usuarioService.listarUsuarios(),
         usuarioService.buscarTiposUsuario()
       ])
-
       setUsuarios(usuariosData.dados || [])
       setTiposUsuario(tiposData)
-      
-      logger.info('✅ Dados carregados com sucesso', 'component', {
+      logger.info('Dados carregados', 'component', {
         usuarios: usuariosData.dados?.length || 0,
         tipos: tiposData.length
       })
-    } catch (error) {
-      logger.error('❌ Erro ao carregar dados', 'component', error)
+    } catch (err) {
+      logger.error('Erro ao carregar dados', 'component', err)
       setError('Erro ao carregar dados. Tente novamente.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Filtrar usuários
-  const usuariosFiltrados = usuarios.filter(usuario => {
-    const matchSearch = usuario.nome_usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       usuario.email_usuario.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchTipo = !filterTipo || usuario.tipo_usuario_id === filterTipo
-    return matchSearch && matchTipo
-  })
-
-  const handleCriarUsuario = () => {
-    navigate('/usuarios/criar')
+  const getTipoNome = (tipoId: string) => {
+    const tipo = tiposUsuario.find(t => t.tipo_usuario_id === tipoId)
+    return tipo ? tipo.nome_tipo.charAt(0).toUpperCase() + tipo.nome_tipo.slice(1) : 'Desconhecido'
   }
 
-  // Ações dos usuários
+  const getTipoConfig = (tipoId: string) => {
+    const tipo = tiposUsuario.find(t => t.tipo_usuario_id === tipoId)
+    switch (tipo?.nome_tipo) {
+      case 'admin':      return { badge: 'bg-red-100 text-red-700 border-red-200',     dot: 'bg-red-500' }
+      case 'secretario': return { badge: 'bg-blue-100 text-blue-700 border-blue-200',  dot: 'bg-blue-500' }
+      case 'professor':  return { badge: 'bg-green-100 text-green-700 border-green-200', dot: 'bg-green-500' }
+      default:           return { badge: 'bg-gray-100 text-gray-700 border-gray-200',  dot: 'bg-gray-400' }
+    }
+  }
+
+  const isProfessor = (tipoId: string) =>
+    tiposUsuario.find(t => t.tipo_usuario_id === tipoId)?.nome_tipo === 'professor'
+
+  const compare = (a: UsuarioComTipo, b: UsuarioComTipo): number => {
+    let result = 0
+    switch (sortField) {
+      case 'nome_usuario':   result = a.nome_usuario.localeCompare(b.nome_usuario); break
+      case 'email_usuario':  result = a.email_usuario.localeCompare(b.email_usuario); break
+      case 'tipo_usuario_id': result = getTipoNome(a.tipo_usuario_id).localeCompare(getTipoNome(b.tipo_usuario_id)); break
+      case 'created_at':     result = new Date(a.created_at).getTime() - new Date(b.created_at).getTime(); break
+    }
+    return sortDir === 'asc' ? result : -result
+  }
+
+  const usuariosFiltrados = usuarios
+    .filter(u => {
+      const matchSearch =
+        u.nome_usuario.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email_usuario.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchTipo = !filterTipo || u.tipo_usuario_id === filterTipo
+      return matchSearch && matchTipo
+    })
+    .sort(compare)
+
+  const contadores = {
+    total:     usuarios.length,
+    admin:     usuarios.filter(u => tiposUsuario.find(t => t.tipo_usuario_id === u.tipo_usuario_id)?.nome_tipo === 'admin').length,
+    secretario:usuarios.filter(u => tiposUsuario.find(t => t.tipo_usuario_id === u.tipo_usuario_id)?.nome_tipo === 'secretario').length,
+    professor: usuarios.filter(u => tiposUsuario.find(t => t.tipo_usuario_id === u.tipo_usuario_id)?.nome_tipo === 'professor').length,
+  }
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortField(field); setSortDir('asc') }
+  }
+
   const handleEditarUsuario = (usuario: UsuarioComTipo) => {
     setSelectedUsuario(usuario)
     setShowEditModal(true)
@@ -90,18 +131,15 @@ export default function GerenciarUsuariosPage() {
 
   const handleConfirmarExclusao = async () => {
     if (!selectedUsuario) return
-
     setIsDeleting(true)
     try {
       await usuarioService.excluirUsuario(selectedUsuario.usuario_id)
-      logger.success('✅ Usuário excluído com sucesso', 'component')
-      
-      // Recarregar lista
+      logger.info('Usuário excluído', 'component')
       await carregarDados()
       setShowDeleteModal(false)
       setSelectedUsuario(null)
-    } catch (error) {
-      logger.error('❌ Erro ao excluir usuário', 'component', error)
+    } catch (err) {
+      logger.error('Erro ao excluir usuário', 'component', err)
       setError('Erro ao excluir usuário. Tente novamente.')
     } finally {
       setIsDeleting(false)
@@ -109,225 +147,291 @@ export default function GerenciarUsuariosPage() {
   }
 
   const handleUsuarioEditado = async () => {
-    // Recarregar dados após edição
     await carregarDados()
   }
 
-  // Obter nome do tipo de usuário
-  const getTipoNome = (tipoId: string) => {
-    const tipo = tiposUsuario.find(t => t.tipo_usuario_id === tipoId)
-    return tipo ? tipo.nome_tipo.charAt(0).toUpperCase() + tipo.nome_tipo.slice(1) : 'Desconhecido'
+  const handleFotoClick = (usuarioId: string) => {
+    setFotoTargetId(usuarioId)
+    fileInputRef.current?.click()
   }
 
-  // Obter cor do tipo de usuário
-  const getTipoColor = (tipoId: string) => {
-    const tipo = tiposUsuario.find(t => t.tipo_usuario_id === tipoId)
-    switch (tipo?.nome_tipo) {
-      case 'admin':
-        return 'bg-red-100 text-red-800 border-red-200'
-      case 'secretario':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'professor':
-        return 'bg-green-100 text-green-800 border-green-200'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+  const handleFotoChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !fotoTargetId) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      if (ev.target?.result) {
+        setFotos(prev => ({ ...prev, [fotoTargetId]: ev.target!.result as string }))
+      }
     }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+    setFotoTargetId(null)
+  }
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ChevronUp className="w-3 h-3 text-gray-300" />
+    return sortDir === 'asc'
+      ? <ChevronUp className="w-3 h-3 text-blue-600" />
+      : <ChevronDown className="w-3 h-3 text-blue-600" />
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       <div className="px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Filtros e Busca */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Busca */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Buscar Usuários
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Nome ou email..."
-                />
-              </div>
-            </div>
 
-            {/* Filtro por Tipo */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Filtrar por Tipo
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Filter className="h-5 w-5 text-gray-400" />
-                </div>
-                <select
-                  value={filterTipo}
-                  onChange={(e) => setFilterTipo(e.target.value)}
-                  className="block w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                >
-                  <option value="">Todos os tipos</option>
-                  {Array.isArray(tiposUsuario) && tiposUsuario.map((tipo) => (
-                    <option key={tipo.tipo_usuario_id} value={tipo.tipo_usuario_id}>
-                      {tipo.nome_tipo.charAt(0).toUpperCase() + tipo.nome_tipo.slice(1)}
-                    </option>
-                  ))}
-                </select>
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          {[
+            { label: 'Total',        count: contadores.total,      color: 'from-blue-600 to-purple-600' },
+            { label: 'Admins',       count: contadores.admin,      color: 'from-red-500 to-red-600' },
+            { label: 'Secretários',  count: contadores.secretario, color: 'from-blue-500 to-blue-600' },
+            { label: 'Professores',  count: contadores.professor,  color: 'from-green-500 to-green-600' },
+          ].map(({ label, count, color }) => (
+            <div key={label} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              <div className={`w-8 h-8 bg-gradient-to-br ${color} rounded-lg flex items-center justify-center mb-2`}>
+                <Users className="w-4 h-4 text-white" />
               </div>
+              <p className="text-2xl font-bold text-gray-900">{count}</p>
+              <p className="text-xs text-gray-500">{label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Filtros */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Buscar por nome ou email..."
+              />
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {[
+                { value: '', label: 'Todos' },
+                ...tiposUsuario.map(t => ({
+                  value: t.tipo_usuario_id,
+                  label: t.nome_tipo.charAt(0).toUpperCase() + t.nome_tipo.slice(1)
+                }))
+              ].map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setFilterTipo(value)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all duration-200 ${
+                    filterTipo === value
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-transparent shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-
-
-        {/* Lista de Usuários */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-          {/* Header da Tabela */}
-          <div className="px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-gray-200">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <h3 className="text-lg font-bold text-gray-900">
-                Usuários ({usuariosFiltrados.length})
-              </h3>
-              <div className="flex items-center space-x-2">
-                {/* Botão Gerenciar Tipos - Comentado temporariamente */}
-                {/* <button
-                  onClick={() => navigate('/usuarios/tipos')}
-                  className="flex items-center px-4 py-3 text-sm font-medium text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Gerenciar Tipos
-                </button> */}
-                <button
-                  onClick={handleCriarUsuario}
-                  className="w-full sm:w-auto flex items-center justify-center px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Usuário
-                </button>
-              </div>
+        {/* Tabela */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold text-gray-900">Usuários</h3>
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                {usuariosFiltrados.length}
+              </span>
             </div>
+            <button
+              onClick={() => navigate('/usuarios/criar')}
+              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-sm hover:shadow-md"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              Novo Usuário
+            </button>
           </div>
 
-          {/* Conteúdo */}
-          <div className="p-6">
-            {isLoading ? (
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="h-20 bg-gray-200 rounded-xl"></div>
-                  </div>
-                ))}
-              </div>
-            ) : error ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertCircle className="w-8 h-8 text-red-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Erro ao Carregar</h3>
-                <p className="text-gray-600 mb-4">{error}</p>
+          {isLoading ? (
+            <div className="p-6 space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="animate-pulse h-14 bg-gray-100 rounded-xl" />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="p-12 text-center">
+              <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+              <p className="text-gray-600 mb-4">{error}</p>
+              <button
+                onClick={carregarDados}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-sm hover:from-blue-700 hover:to-purple-700 transition-all"
+              >
+                Tentar Novamente
+              </button>
+            </div>
+          ) : usuariosFiltrados.length === 0 ? (
+            <div className="p-12 text-center">
+              <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="font-medium text-gray-700">
+                {searchTerm || filterTipo ? 'Nenhum resultado encontrado' : 'Nenhum usuário cadastrado'}
+              </p>
+              <p className="text-sm text-gray-400 mt-1">
+                {searchTerm || filterTipo ? 'Ajuste os filtros de busca' : 'Crie o primeiro usuário do sistema'}
+              </p>
+              {!searchTerm && !filterTipo && (
                 <button
-                  onClick={carregarDados}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  onClick={() => navigate('/usuarios/criar')}
+                  className="mt-4 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-sm hover:from-blue-700 hover:to-purple-700 transition-all shadow-sm inline-flex items-center gap-2"
                 >
-                  Tentar Novamente
+                  <Plus className="w-4 h-4" />
+                  Criar Primeiro Usuário
                 </button>
-              </div>
-            ) : usuariosFiltrados.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {searchTerm || filterTipo ? 'Nenhum usuário encontrado' : 'Nenhum usuário cadastrado'}
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {searchTerm || filterTipo 
-                    ? 'Tente ajustar os filtros de busca'
-                    : 'Comece criando o primeiro usuário do sistema'
-                  }
-                </p>
-                {!searchTerm && !filterTipo && (
-                  <button
-                    onClick={handleCriarUsuario}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg"
-                  >
-                    <Plus className="w-4 h-4 mr-2 inline" />
-                    Criar Primeiro Usuário
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {usuariosFiltrados.map((usuario) => (
-                  <div
-                    key={usuario.usuario_id}
-                    className="group relative bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl p-4 sm:p-6 hover:border-blue-200 transition-all duration-300"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-                        {/* Avatar */}
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-                          <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                        </div>
-
-                        {/* Informações */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 gap-2 sm:gap-0 mb-2">
-                            <h4 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th
+                      className="px-6 py-3 text-left cursor-pointer select-none group"
+                      onClick={() => handleSort('nome_usuario')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
+                          Usuário
+                        </span>
+                        <SortIcon field="nome_usuario" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left cursor-pointer select-none group"
+                      onClick={() => handleSort('email_usuario')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
+                          Email
+                        </span>
+                        <SortIcon field="email_usuario" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left cursor-pointer select-none group"
+                      onClick={() => handleSort('tipo_usuario_id')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
+                          Tipo
+                        </span>
+                        <SortIcon field="tipo_usuario_id" />
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left cursor-pointer select-none group hidden md:table-cell"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide group-hover:text-blue-600 transition-colors">
+                          Criado em
+                        </span>
+                        <SortIcon field="created_at" />
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-right">
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Ações</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {usuariosFiltrados.map((usuario) => {
+                    const cfg = getTipoConfig(usuario.tipo_usuario_id)
+                    const foto = fotos[usuario.usuario_id]
+                    const ehProfessor = isProfessor(usuario.tipo_usuario_id)
+                    return (
+                      <tr
+                        key={usuario.usuario_id}
+                        className="hover:bg-blue-50/30 transition-colors group"
+                      >
+                        <td className="px-6 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex-shrink-0">
+                              {foto ? (
+                                <img
+                                  src={foto}
+                                  alt={usuario.nome_usuario}
+                                  className="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm"
+                                />
+                              ) : (
+                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-sm ring-2 ring-white">
+                                  <span className="text-white text-xs font-bold">
+                                    {usuario.nome_usuario.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                              {ehProfessor && (
+                                <button
+                                  onClick={() => handleFotoClick(usuario.usuario_id)}
+                                  className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-50 hover:border-blue-300 transition-colors opacity-0 group-hover:opacity-100"
+                                  title="Alterar foto do professor"
+                                >
+                                  <Camera className="w-2.5 h-2.5 text-gray-500" />
+                                </button>
+                              )}
+                            </div>
+                            <span className="font-medium text-gray-900 text-sm">
                               {usuario.nome_usuario}
-                            </h4>
-                            <span className={`px-2 sm:px-3 py-1 text-xs font-semibold rounded-full border ${getTipoColor(usuario.tipo_usuario_id)} flex-shrink-0 w-fit`}>
-                              {getTipoNome(usuario.tipo_usuario_id)}
                             </span>
                           </div>
-                          
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2 sm:gap-0 text-xs sm:text-sm text-gray-600">
-                            <div className="flex items-center space-x-1 min-w-0">
-                              <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                              <span className="truncate">{usuario.email_usuario}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                              <span className="whitespace-nowrap">
-                                Criado em {new Date(usuario.created_at).toLocaleDateString('pt-BR')}
-                              </span>
-                            </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          {usuario.email_usuario}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full border ${cfg.badge}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                            {getTipoNome(usuario.tipo_usuario_id)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-400 hidden md:table-cell">
+                          {new Date(usuario.created_at).toLocaleDateString('pt-BR')}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => handleEditarUsuario(usuario)}
+                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Editar usuário"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleExcluirUsuario(usuario)}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Excluir usuário"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
-                        </div>
-                      </div>
-
-                      {/* Ações */}
-                      <div className="flex items-center justify-end sm:justify-start space-x-2 flex-shrink-0">
-                        <button
-                          onClick={() => handleEditarUsuario(usuario)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Editar usuário"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleExcluirUsuario(usuario)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Excluir usuário"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
+
+        {/* Input oculto para upload de foto (professores) */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFotoChange}
+        />
 
         {/* Modal de Edição */}
         {showEditModal && selectedUsuario && (
@@ -335,60 +439,56 @@ export default function GerenciarUsuariosPage() {
             usuario={selectedUsuario}
             tiposUsuario={tiposUsuario}
             isOpen={showEditModal}
-            onClose={() => {
-              setShowEditModal(false)
-              setSelectedUsuario(null)
-            }}
+            onClose={() => { setShowEditModal(false); setSelectedUsuario(null) }}
             onSuccess={handleUsuarioEditado}
           />
         )}
 
-        {/* Modal de Confirmação de Exclusão */}
+        {/* Modal de Exclusão */}
         {showDeleteModal && selectedUsuario && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-              <div className="p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                    <AlertCircle className="w-6 h-6 text-red-600" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900">Confirmar Exclusão</h3>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
                 </div>
-                
-                <p className="text-gray-600 mb-6">
-                  Tem certeza que deseja excluir o usuário <strong>{selectedUsuario.nome_usuario}</strong>?
-                  Esta ação não pode ser desfeita.
-                </p>
-                
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => setShowDeleteModal(false)}
-                    className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleConfirmarExclusao}
-                    disabled={isDeleting}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center"
-                  >
-                    {isDeleting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                        Excluindo...
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Excluir
-                      </>
-                    )}
-                  </button>
+                <div>
+                  <h3 className="font-bold text-gray-900">Confirmar Exclusão</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">Esta ação não pode ser desfeita.</p>
                 </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-6 pl-13">
+                Excluir o usuário <strong>{selectedUsuario.nome_usuario}</strong>?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmarExclusao}
+                  disabled={isDeleting}
+                  className="px-4 py-2 text-sm text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Excluindo...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Excluir
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   )

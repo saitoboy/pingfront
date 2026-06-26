@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, Save, User, Mail, Shield, AlertCircle, CheckCircle } from 'lucide-react'
+import { X, Save, User, Mail, Shield, AlertCircle, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react'
 import { logger } from '../../lib/logger'
 import { usuarioService } from '../../services/usuarioService'
 import type { Usuario, UsuarioTipo } from '../../types/api'
@@ -16,6 +16,8 @@ interface FormData {
   nome_usuario: string
   email_usuario: string
   tipo_usuario_id: string
+  nova_senha: string
+  confirmar_senha: string
 }
 
 interface FormErrors {
@@ -32,11 +34,15 @@ export default function EditarUsuarioModal({
   const [formData, setFormData] = useState<FormData>({
     nome_usuario: '',
     email_usuario: '',
-    tipo_usuario_id: ''
+    tipo_usuario_id: '',
+    nova_senha: '',
+    confirmar_senha: ''
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [showNovaSenha, setShowNovaSenha] = useState(false)
+  const [showConfirmarSenha, setShowConfirmarSenha] = useState(false)
 
   // Inicializar dados do formulário
   useEffect(() => {
@@ -44,10 +50,14 @@ export default function EditarUsuarioModal({
       setFormData({
         nome_usuario: usuario.nome_usuario || '',
         email_usuario: usuario.email_usuario || '',
-        tipo_usuario_id: usuario.tipo_usuario_id || ''
+        tipo_usuario_id: usuario.tipo_usuario_id || '',
+        nova_senha: '',
+        confirmar_senha: ''
       })
       setErrors({})
       setSuccess(false)
+      setShowNovaSenha(false)
+      setShowConfirmarSenha(false)
     }
   }, [usuario, isOpen])
 
@@ -69,6 +79,15 @@ export default function EditarUsuarioModal({
 
     if (!formData.tipo_usuario_id) {
       newErrors.tipo_usuario_id = 'Tipo de usuário é obrigatório'
+    }
+
+    if (formData.nova_senha) {
+      if (formData.nova_senha.length < 6) {
+        newErrors.nova_senha = 'Senha deve ter pelo menos 6 caracteres'
+      }
+      if (formData.nova_senha !== formData.confirmar_senha) {
+        newErrors.confirmar_senha = 'Senhas não conferem'
+      }
     }
 
     setErrors(newErrors)
@@ -106,7 +125,14 @@ export default function EditarUsuarioModal({
     try {
       logger.info('✏️ Atualizando usuário...', 'form', { usuario_id: usuario.usuario_id })
       
-      const resultado = await usuarioService.atualizarUsuario(usuario.usuario_id, formData)
+      const payload: { nome_usuario: string; email_usuario: string; tipo_usuario_id: string; senha_usuario?: string } = {
+        nome_usuario: formData.nome_usuario,
+        email_usuario: formData.email_usuario,
+        tipo_usuario_id: formData.tipo_usuario_id,
+      }
+      if (formData.nova_senha) payload.senha_usuario = formData.nova_senha
+
+      const resultado = await usuarioService.atualizarUsuario(usuario.usuario_id, payload)
       
       if (resultado.status === 'sucesso') {
         logger.success('✅ Usuário atualizado com sucesso', 'form')
@@ -274,6 +300,88 @@ export default function EditarUsuarioModal({
                   {errors.tipo_usuario_id}
                 </p>
               )}
+            </div>
+
+            {/* Redefinir Senha */}
+            <div className="border-t border-gray-100 pt-5">
+              <p className="text-sm font-semibold text-gray-700 mb-4">Redefinir Senha</p>
+              <p className="text-xs text-gray-400 mb-4 -mt-2">Deixe em branco para manter a senha atual.</p>
+
+              {/* Nova Senha */}
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nova Senha
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type={showNovaSenha ? 'text' : 'password'}
+                    value={formData.nova_senha}
+                    onChange={(e) => handleInputChange('nova_senha', e.target.value)}
+                    className={`block w-full pl-12 pr-12 py-3 border-2 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                      errors.nova_senha
+                        ? 'border-red-300 bg-red-50'
+                        : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
+                    placeholder="Nova senha (mín. 6 caracteres)"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNovaSenha(v => !v)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showNovaSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.nova_senha && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {errors.nova_senha}
+                  </p>
+                )}
+              </div>
+
+              {/* Confirmar Senha */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Confirmar Nova Senha
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type={showConfirmarSenha ? 'text' : 'password'}
+                    value={formData.confirmar_senha}
+                    onChange={(e) => handleInputChange('confirmar_senha', e.target.value)}
+                    className={`block w-full pl-12 pr-12 py-3 border-2 rounded-xl placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                      errors.confirmar_senha
+                        ? 'border-red-300 bg-red-50'
+                        : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
+                    placeholder="Repita a nova senha"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmarSenha(v => !v)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showConfirmarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {errors.confirmar_senha && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-1" />
+                    {errors.confirmar_senha}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Erro Geral */}
