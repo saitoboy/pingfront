@@ -7,6 +7,7 @@ export interface GradeHorario {
   dia_semana: number // 0=Domingo, 1=Segunda, ..., 6=Sábado
   hora_inicio: string // Formato HH:MM
   hora_fim: string // Formato HH:MM
+  observacao?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -80,7 +81,7 @@ class GradeHorarioService {
   /**
    * Criar nova grade de horário
    */
-  static async criarGrade(dadosGrade: Omit<GradeHorario, 'grade_horario_id' | 'created_at' | 'updated_at'>): Promise<GradeHorarioResponse> {
+  static async criarGrade(dadosGrade: Omit<GradeHorario, 'grade_horario_id' | 'created_at' | 'updated_at'> & { observacao?: string | null }): Promise<GradeHorarioResponse> {
     try {
       logger.info(`📝 Criando grade: ${dadosGrade.dia_semana} ${dadosGrade.hora_inicio}-${dadosGrade.hora_fim}`, 'service')
       const response = await api.post('/grade-horario', dadosGrade)

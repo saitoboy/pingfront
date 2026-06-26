@@ -175,13 +175,18 @@ export const carregarStatusPorData = async (
         const resp = await registroDiarioService.listarPorVinculacao(v.turma_disciplina_professor_id)
         if (!resp.sucesso || !Array.isArray(resp.dados)) return
         for (const r of resp.dados) {
-          const data = r.data_aula
+          // Normaliza data_aula para YYYY-MM-DD independente do formato retornado pelo banco
+          const raw = r.data_aula as unknown
+          const data: string =
+            raw instanceof Date
+              ? `${raw.getFullYear()}-${String(raw.getMonth() + 1).padStart(2, '0')}-${String(raw.getDate()).padStart(2, '0')}`
+              : String(raw).substring(0, 10)
           const slot = (registrosPorData[data] ??= { concluidos: 0, total: 0 })
           slot.total += 1
           if (r.status === 'concluido') slot.concluidos += 1
         }
-      } catch {
-        /* ignora vinculação sem registros */
+      } catch (err) {
+        logger.error('Erro ao carregar registros da vinculação', 'service', err)
       }
     })
   )

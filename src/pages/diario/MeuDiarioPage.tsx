@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen,
@@ -43,6 +43,7 @@ const CELL_LETIVO: Record<StatusDia, { cls: string; Icon: typeof CheckCircle2; r
 
 export default function MeuDiarioPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { usuario } = useAuth()
   const [ctx, setCtx] = useState<ContextoDiario | null>(null)
   const [statusPorData, setStatusPorData] = useState<Record<string, StatusDia>>({})
@@ -56,7 +57,7 @@ export default function MeuDiarioPage() {
     }
     carregar()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [location.key])
 
   const carregar = async () => {
     try {
