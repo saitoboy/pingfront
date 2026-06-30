@@ -10,11 +10,27 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  Printer
+  Printer,
+  Pencil,
+  Save,
+  CheckCircle,
+  AlertCircle,
+  X,
+  Camera,
+  Stethoscope,
+  Eye as EyeIcon,
+  Ear,
+  Brain,
+  Star,
+  Activity,
+  GraduationCap,
+  Users,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { cadastroService } from '../../services/cadastroService';
 import { logger } from '../../lib/logger';
-import type { FichaCadastroResposta } from '../../types/api';
+import type { FichaCadastroResposta, Parentesco, AnoLetivo, Serie, Turma } from '../../types/api';
 import { imprimirFicha } from './utils/fichaImpressao';
 
 export default function ListarFichasPage() {
@@ -26,12 +42,45 @@ export default function ListarFichasPage() {
   const [fichaSelecionada, setFichaSelecionada] = useState<FichaCadastroResposta | null>(null);
   const [mostrarDetalhes, setMostrarDetalhes] = useState(false);
   const [paginaAtual, setPaginaAtual] = useState(1);
+
+  // ──────────────────── EDIÇÃO ────────────────────
+  const [mostrarEdicao, setMostrarEdicao] = useState(false);
+  const [fichaEmEdicao, setFichaEmEdicao] = useState<FichaCadastroResposta | null>(null);
+  const [editTab, setEditTab] = useState<'aluno' | 'responsaveis' | 'diagnostico' | 'matricula'>('aluno');
+  const [editAluno, setEditAluno] = useState<Record<string, any>>({});
+  const [editResponsaveis, setEditResponsaveis] = useState<Record<string, any>[]>([]);
+  const [editDiagnostico, setEditDiagnostico] = useState<Record<string, any>>({});
+  const [editMatricula, setEditMatricula] = useState<Record<string, any>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  // Dropdowns para o modal de edição
+  const [parentescos, setParentescos] = useState<Parentesco[]>([]);
+  const [anosLetivos, setAnosLetivos] = useState<AnoLetivo[]>([]);
+  const [series, setSeries] = useState<Serie[]>([]);
+  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [isLoadingEditDropdowns, setIsLoadingEditDropdowns] = useState(false);
   const fichasPorPagina = 6;
 
   // Carregar fichas ao montar o componente
   useEffect(() => {
     carregarFichas();
+    carregarDropdowns();
   }, []);
+
+  const carregarDropdowns = async () => {
+    try {
+      setIsLoadingEditDropdowns(true);
+      const dados = await cadastroService.carregarTodosDropdowns();
+      setParentescos(dados.parentescos);
+      setAnosLetivos(dados.anosLetivos);
+      setSeries(dados.series);
+      setTurmas(dados.turmas);
+    } catch {
+      // silencioso — dropdowns não bloqueiam a listagem
+    } finally {
+      setIsLoadingEditDropdowns(false);
+    }
+  };
 
   // Filtrar fichas quando o termo de busca mudar
   useEffect(() => {
@@ -123,6 +172,98 @@ export default function ListarFichasPage() {
     const fichaParaImprimir = ficha || fichaSelecionada;
     if (!fichaParaImprimir) return;
     imprimirFicha(fichaParaImprimir);
+  };
+
+  const dateToInput = (d: Date | string | null | undefined): string => {
+    if (!d) return '';
+    const dt = typeof d === 'string' ? new Date(d) : d;
+    return isNaN(dt.getTime()) ? '' : dt.toISOString().split('T')[0];
+  };
+
+  const TABS_EDICAO = [
+    { id: 'aluno' as const, label: 'Dados Pessoais' },
+    { id: 'responsaveis' as const, label: 'Responsáveis' },
+    { id: 'diagnostico' as const, label: 'Diagnósticos' },
+    { id: 'matricula' as const, label: 'Matrícula' },
+  ];
+
+  const formatarNomeTurmaEdit = (turma: Turma): string => {
+    const serie = series.find(s => s.serie_id === turma.serie_id);
+    const identificador = turma.nome_turma.trim().split(/\s+/).pop() || turma.nome_turma;
+    const partes: string[] = [];
+    if (serie?.nome_serie) partes.push(serie.nome_serie);
+    partes.push(`Turma ${identificador}`);
+    let texto = partes.join(' - ');
+    texto += ` (${turma.turno})`;
+    if (turma.sala) texto += ` - Sala ${turma.sala}`;
+    return texto;
+  };
+
+  const turmasOrdenadas = [...turmas].sort((a, b) => {
+    const serieA = series.find(s => s.serie_id === a.serie_id)?.nome_serie ?? '';
+    const serieB = series.find(s => s.serie_id === b.serie_id)?.nome_serie ?? '';
+    if (serieA !== serieB) return serieA.localeCompare(serieB, 'pt-BR', { numeric: true });
+    return a.nome_turma.localeCompare(b.nome_turma, 'pt-BR', { numeric: true });
+  });
+
+  const iCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm';
+  const lCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1';
+
+  const abrirEdicao = (ficha: FichaCadastroResposta) => {
+    setFichaEmEdicao(ficha);
+    setEditAluno({ ...ficha.aluno });
+    setEditResponsaveis(ficha.responsaveis?.map(r => ({ ...r })) || []);
+    setEditDiagnostico(ficha.diagnostico ? { ...ficha.diagnostico } : {});
+    setEditMatricula({ ...ficha.matricula });
+    setEditTab('aluno');
+    setSaveStatus(null);
+    setMostrarEdicao(true);
+  };
+
+  const salvarEdicao = async () => {
+    if (!fichaEmEdicao) return;
+    setIsSaving(true);
+    setSaveStatus(null);
+    const falhas: string[] = [];
+
+    const calls: Promise<void>[] = [
+      cadastroService.atualizarAluno(fichaEmEdicao.aluno.aluno_id, editAluno)
+        .then(r => { if (r.status === 'erro') falhas.push(`Aluno: ${r.mensagem}`); })
+        .catch(e => falhas.push(`Aluno: ${e.message}`)),
+
+      cadastroService.atualizarMatricula(fichaEmEdicao.matricula.matricula_aluno_id, editMatricula)
+        .then(r => { if (r.status === 'erro') falhas.push(`Matrícula: ${r.mensagem}`); })
+        .catch(e => falhas.push(`Matrícula: ${e.message}`)),
+    ];
+
+    editResponsaveis.forEach(resp => {
+      if (resp.responsavel_id) {
+        calls.push(
+          cadastroService.atualizarResponsavel(resp.responsavel_id, resp)
+            .then(r => { if (r.status === 'erro') falhas.push(`Responsável: ${r.mensagem}`); })
+            .catch(e => falhas.push(`Responsável: ${e.message}`))
+        );
+      }
+    });
+
+    if (fichaEmEdicao.diagnostico?.diagnostico_id) {
+      calls.push(
+        cadastroService.atualizarDiagnostico(fichaEmEdicao.diagnostico.diagnostico_id, editDiagnostico)
+          .then(r => { if (r.status === 'erro') falhas.push(`Diagnóstico: ${r.mensagem}`); })
+          .catch(e => falhas.push(`Diagnóstico: ${e.message}`))
+      );
+    }
+
+    await Promise.all(calls);
+
+    if (falhas.length === 0) {
+      setSaveStatus({ ok: true, msg: 'Salvo com sucesso!' });
+      await carregarFichas();
+      setTimeout(() => setMostrarEdicao(false), 800);
+    } else {
+      setSaveStatus({ ok: false, msg: falhas.join(' | ') });
+    }
+    setIsSaving(false);
   };
 
   if (isLoading) {
@@ -258,6 +399,13 @@ export default function ListarFichasPage() {
                               title="Ver detalhes"
                             >
                               <Eye className="w-5 h-5 text-white" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); abrirEdicao(ficha); }}
+                              className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all duration-200 hover:scale-110"
+                              title="Editar ficha"
+                            >
+                              <Pencil className="w-5 h-5 text-white" />
                             </button>
                           </div>
                         </div>
@@ -399,6 +547,409 @@ export default function ListarFichasPage() {
         );
       })()}
 
+
+      {/* Modal de edição */}
+      {mostrarEdicao && fichaEmEdicao && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => !isSaving && setMostrarEdicao(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-6 flex items-center justify-between z-10">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-1">Editar Ficha</h2>
+                <p className="text-indigo-100 text-sm">
+                  {fichaEmEdicao.aluno.nome_aluno} {fichaEmEdicao.aluno.sobrenome_aluno} · RA: {fichaEmEdicao.matricula.ra}
+                </p>
+              </div>
+              <button
+                onClick={() => !isSaving && setMostrarEdicao(false)}
+                disabled={isSaving}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white disabled:opacity-50"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="border-b border-gray-200 px-8 bg-white flex gap-1 overflow-x-auto flex-shrink-0">
+              {TABS_EDICAO.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setEditTab(tab.id)}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    editTab === tab.id
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Conteúdo */}
+            <div className="p-8 overflow-y-auto flex-1" style={{ scrollbarWidth: 'thin', scrollbarColor: '#a5b4fc #f3f4f6' }}>
+
+              {/* ── Dados Pessoais ── */}
+              {editTab === 'aluno' && (
+                <div className="space-y-6">
+                  {/* Foto */}
+                  <div className="flex flex-col items-center gap-3">
+                    <div
+                      className="relative w-28 h-28 rounded-full border-4 border-indigo-200 overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer hover:border-indigo-400 transition-colors"
+                      onClick={() => document.getElementById('edit-foto-input')?.click()}
+                      title="Clique para trocar foto"
+                    >
+                      {editAluno.foto_aluno ? (
+                        <img src={editAluno.foto_aluno} alt="Foto" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-gray-400">
+                          <Camera className="w-8 h-8" />
+                          <span className="text-xs">Adicionar foto</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => document.getElementById('edit-foto-input')?.click()} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                        {editAluno.foto_aluno ? 'Trocar foto' : 'Escolher foto'}
+                      </button>
+                      {editAluno.foto_aluno && (
+                        <button type="button" onClick={() => setEditAluno(p => ({ ...p, foto_aluno: undefined }))} className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700">
+                          <X className="w-3 h-3" /> Remover
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      id="edit-foto-input"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = ev => setEditAluno(p => ({ ...p, foto_aluno: ev.target?.result as string }));
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                    <p className="text-xs text-gray-400">Opcional — JPG, PNG ou GIF</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                      <input type="text" className={iCls} value={editAluno.nome_aluno || ''} maxLength={50}
+                        onChange={e => {
+                          const v = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '').toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+                          setEditAluno(p => ({ ...p, nome_aluno: v }));
+                        }}
+                        placeholder="Nome do aluno"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Sobrenome *</label>
+                      <input type="text" className={iCls} value={editAluno.sobrenome_aluno || ''} maxLength={80}
+                        onChange={e => {
+                          const v = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '').toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+                          setEditAluno(p => ({ ...p, sobrenome_aluno: v }));
+                        }}
+                        placeholder="Sobrenome do aluno"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Data de Nascimento *</label>
+                      <input type="date" className={iCls} value={dateToInput(editAluno.data_nascimento_aluno)} max={new Date().toISOString().split('T')[0]}
+                        onChange={e => setEditAluno(p => ({ ...p, data_nascimento_aluno: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">CPF *</label>
+                      <input type="text" className={iCls} maxLength={14}
+                        value={(() => { const c = (editAluno.cpf_aluno || '').replace(/\D/g, ''); return c.length === 11 ? c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : editAluno.cpf_aluno || ''; })()}
+                        onChange={e => setEditAluno(p => ({ ...p, cpf_aluno: e.target.value.replace(/\D/g, '') }))}
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Responsáveis ── */}
+              {editTab === 'responsaveis' && (
+                <div className="space-y-4">
+                  {/* Tabs dos responsáveis */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {editResponsaveis.map((_, idx) => (
+                      <div key={idx} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-indigo-100 text-indigo-700">
+                        Responsável {idx + 1}
+                        {editResponsaveis.length > 1 && (
+                          <button onClick={() => setEditResponsaveis(prev => prev.filter((_, i) => i !== idx))} className="ml-1 p-0.5 hover:bg-red-500 hover:text-white rounded transition-colors">
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => setEditResponsaveis(prev => [...prev, { nome_responsavel: '', sobrenome_responsavel: '', telefone_responsavel: '', rg_responsavel: '', cpf_responsavel: '', grau_instrucao_responsavel: '', email_responsavel: '', parentesco_id: '' }])}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" /> Adicionar
+                    </button>
+                  </div>
+
+                  {editResponsaveis.map((resp, idx) => (
+                    <div key={idx} className="border border-gray-200 rounded-xl p-5">
+                      <p className="text-sm font-semibold text-gray-700 mb-4">Responsável {idx + 1}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                          <input type="text" className={iCls} value={resp.nome_responsavel || ''} maxLength={50}
+                            onChange={e => {
+                              const v = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '').toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+                              setEditResponsaveis(prev => prev.map((r, i) => i === idx ? { ...r, nome_responsavel: v } : r));
+                            }}
+                            placeholder="Nome do responsável"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Sobrenome *</label>
+                          <input type="text" className={iCls} value={resp.sobrenome_responsavel || ''} maxLength={80}
+                            onChange={e => {
+                              const v = e.target.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '').toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+                              setEditResponsaveis(prev => prev.map((r, i) => i === idx ? { ...r, sobrenome_responsavel: v } : r));
+                            }}
+                            placeholder="Sobrenome do responsável"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">CPF *</label>
+                          <input type="text" className={iCls} maxLength={14}
+                            value={(() => { const c = (resp.cpf_responsavel || '').replace(/\D/g, ''); return c.length === 11 ? c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : resp.cpf_responsavel || ''; })()}
+                            onChange={e => setEditResponsaveis(prev => prev.map((r, i) => i === idx ? { ...r, cpf_responsavel: e.target.value.replace(/\D/g, '') } : r))}
+                            placeholder="000.000.000-00"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Telefone *</label>
+                          <input type="text" className={iCls} maxLength={15}
+                            value={(() => { const t = (resp.telefone_responsavel || '').replace(/\D/g, ''); return t.length === 11 ? t.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : t.length === 10 ? t.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3') : resp.telefone_responsavel || ''; })()}
+                            onChange={e => setEditResponsaveis(prev => prev.map((r, i) => i === idx ? { ...r, telefone_responsavel: e.target.value.replace(/\D/g, '') } : r))}
+                            placeholder="(11) 99999-9999"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Parentesco *</label>
+                          <select className={iCls} value={resp.parentesco_id || ''} disabled={isLoadingEditDropdowns}
+                            onChange={e => setEditResponsaveis(prev => prev.map((r, i) => i === idx ? { ...r, parentesco_id: e.target.value } : r))}
+                          >
+                            <option value="">{isLoadingEditDropdowns ? 'Carregando...' : 'Selecione o parentesco...'}</option>
+                            {parentescos.map(p => <option key={p.parentesco_id} value={p.parentesco_id}>{p.nome_parentesco}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {editResponsaveis.length === 0 && (
+                    <p className="text-gray-500 text-sm">Nenhum responsável cadastrado.</p>
+                  )}
+                </div>
+              )}
+
+              {/* ── Diagnósticos ── */}
+              {editTab === 'diagnostico' && (
+                <div className="grid gap-6">
+                  {/* Deficiências Visuais */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <EyeIcon className="h-5 w-5 text-blue-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Deficiências Visuais</h3>
+                    </div>
+                    <div className="grid gap-3">
+                      {(['cegueira', 'Cegueira'], ['baixa_visao', 'Baixa Visão']).length > 0 && (
+                        [['cegueira', 'Cegueira'], ['baixa_visao', 'Baixa Visão']] as [string, string][]
+                      ).map(([field, label]) => (
+                        <label key={field} className="flex items-center gap-3 cursor-pointer">
+                          <input type="checkbox" className="h-4 w-4 text-blue-600 rounded" checked={!!editDiagnostico[field]} onChange={e => setEditDiagnostico(p => ({ ...p, [field]: e.target.checked }))} />
+                          <span className="text-sm font-medium text-gray-700">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Deficiências Auditivas */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Ear className="h-5 w-5 text-green-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Deficiências Auditivas</h3>
+                    </div>
+                    <div className="grid gap-3">
+                      {([['surdez', 'Surdez'], ['deficiencia_auditiva', 'Deficiência Auditiva'], ['surdocegueira', 'Surdocegueira'], ['alteracoes_processamento_auditivo', 'Alterações no Processamento Auditivo']] as [string, string][]).map(([field, label]) => (
+                        <label key={field} className="flex items-center gap-3 cursor-pointer">
+                          <input type="checkbox" className="h-4 w-4 text-blue-600 rounded" checked={!!editDiagnostico[field]} onChange={e => setEditDiagnostico(p => ({ ...p, [field]: e.target.checked }))} />
+                          <span className="text-sm font-medium text-gray-700">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Deficiências Físicas e Múltiplas */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Activity className="h-5 w-5 text-red-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Deficiências Físicas e Múltiplas</h3>
+                    </div>
+                    <div className="grid gap-3">
+                      {([['deficiencia_fisica', 'Deficiência Física'], ['deficiencia_multipla', 'Deficiência Múltipla']] as [string, string][]).map(([field, label]) => (
+                        <label key={field} className="flex items-center gap-3 cursor-pointer">
+                          <input type="checkbox" className="h-4 w-4 text-blue-600 rounded" checked={!!editDiagnostico[field]} onChange={e => setEditDiagnostico(p => ({ ...p, [field]: e.target.checked }))} />
+                          <span className="text-sm font-medium text-gray-700">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Deficiências Intelectuais e Síndromes */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Brain className="h-5 w-5 text-purple-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Deficiências Intelectuais e Síndromes</h3>
+                    </div>
+                    <div className="grid gap-3">
+                      {([['deficiencia_intelectual', 'Deficiência Intelectual'], ['sindrome_down', 'Síndrome de Down']] as [string, string][]).map(([field, label]) => (
+                        <label key={field} className="flex items-center gap-3 cursor-pointer">
+                          <input type="checkbox" className="h-4 w-4 text-blue-600 rounded" checked={!!editDiagnostico[field]} onChange={e => setEditDiagnostico(p => ({ ...p, [field]: e.target.checked }))} />
+                          <span className="text-sm font-medium text-gray-700">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Transtornos e Condições Especiais */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Star className="h-5 w-5 text-yellow-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Transtornos e Condições Especiais</h3>
+                    </div>
+                    <div className="grid gap-3">
+                      {([['altas_habilidades', 'Altas Habilidades/Superdotação'], ['tea', 'TEA (Transtorno do Espectro Autista)'], ['tdah', 'TDAH (Transtorno do Déficit de Atenção com Hiperatividade)']] as [string, string][]).map(([field, label]) => (
+                        <label key={field} className="flex items-center gap-3 cursor-pointer">
+                          <input type="checkbox" className="h-4 w-4 text-blue-600 rounded" checked={!!editDiagnostico[field]} onChange={e => setEditDiagnostico(p => ({ ...p, [field]: e.target.checked }))} />
+                          <span className="text-sm font-medium text-gray-700">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Outros */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Stethoscope className="h-5 w-5 text-indigo-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Outros Diagnósticos</h3>
+                    </div>
+                    <label htmlFor="edit-outros-diag" className="block text-sm font-medium text-gray-700 mb-2">Descreva outros diagnósticos não listados acima</label>
+                    <textarea
+                      id="edit-outros-diag"
+                      rows={4}
+                      maxLength={500}
+                      className={`${iCls} resize-none`}
+                      value={editDiagnostico.outros_diagnosticos || ''}
+                      onChange={e => setEditDiagnostico(p => ({ ...p, outros_diagnosticos: e.target.value }))}
+                      placeholder="Descreva outros diagnósticos, laudos médicos ou observações importantes..."
+                    />
+                    <div className="mt-1 text-xs text-gray-500">{(editDiagnostico.outros_diagnosticos || '').length}/500 caracteres</div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Matrícula ── */}
+              {editTab === 'matricula' && (
+                <div className="grid gap-6">
+                  {/* Ano Letivo */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Calendar className="h-5 w-5 text-blue-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Ano Letivo</h3>
+                    </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Ano Letivo <span className="text-red-500">*</span></label>
+                    {isLoadingEditDropdowns ? (
+                      <div className="flex items-center gap-2 py-2"><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" /><span className="text-sm text-gray-600">Carregando...</span></div>
+                    ) : (
+                      <select className={iCls} value={editMatricula.ano_letivo_id || ''} onChange={e => setEditMatricula(p => ({ ...p, ano_letivo_id: e.target.value }))}>
+                        <option value="">Selecione o ano letivo</option>
+                        {anosLetivos.map(a => <option key={a.ano_letivo_id} value={a.ano_letivo_id}>{a.ano}</option>)}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Turma */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Users className="h-5 w-5 text-green-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Turma</h3>
+                    </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Turma <span className="text-red-500">*</span></label>
+                    {isLoadingEditDropdowns ? (
+                      <div className="flex items-center gap-2 py-2"><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600" /><span className="text-sm text-gray-600">Carregando...</span></div>
+                    ) : (
+                      <select className={iCls} value={editMatricula.turma_id || ''} onChange={e => setEditMatricula(p => ({ ...p, turma_id: e.target.value }))}>
+                        <option value="">Selecione a turma</option>
+                        {turmasOrdenadas.map(t => <option key={t.turma_id} value={t.turma_id}>{formatarNomeTurmaEdit(t)}</option>)}
+                      </select>
+                    )}
+                  </div>
+
+                  {/* Data da Matrícula */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <GraduationCap className="h-5 w-5 text-purple-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Data da Matrícula</h3>
+                    </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Data da Matrícula <span className="text-red-500">*</span></label>
+                    <input type="date" className={iCls} value={dateToInput(editMatricula.data_matricula)} max={new Date().toISOString().split('T')[0]}
+                      onChange={e => setEditMatricula(p => ({ ...p, data_matricula: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-8 py-4 flex items-center justify-between gap-4 flex-shrink-0">
+              <div className="flex-1">
+                {saveStatus && (
+                  <div className={`flex items-center gap-2 text-sm font-medium ${saveStatus.ok ? 'text-green-600' : 'text-red-600'}`}>
+                    {saveStatus.ok ? <CheckCircle className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
+                    <span>{saveStatus.msg}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setMostrarEdicao(false)}
+                  disabled={isSaving}
+                  className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={salvarEdicao}
+                  disabled={isSaving}
+                  className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold text-sm disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                  {isSaving ? 'Salvando...' : 'Salvar Tudo'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de detalhes */}
       {mostrarDetalhes && fichaSelecionada && (

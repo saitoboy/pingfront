@@ -67,6 +67,45 @@ export interface Aluno {
   updated_at: Date;
 }
 
+// 📦 Importação em lote de alunos com turma/ano (POST /ficha-cadastro/lote)
+export interface FichaLoteAlunoInput {
+  nome_aluno: string;
+  sobrenome_aluno: string;
+  data_nascimento_aluno: string; // YYYY-MM-DD
+  cpf_aluno: string;
+  rg_aluno: string;
+  naturalidade_aluno: string;
+  endereco_aluno: string;
+  bairro_aluno: string;
+  cep_aluno: string;
+}
+
+export interface FichaLoteRequest {
+  turma_id: string;
+  ano_letivo_id: string;
+  alunos: FichaLoteAlunoInput[];
+}
+
+export interface FichaLoteCriado {
+  indice: number;
+  nome: string;
+  aluno_id: string;
+  ra: string;
+}
+
+export interface FichaLoteFalha {
+  indice: number;
+  nome: string;
+  motivo: string;
+}
+
+export interface FichaLoteResposta {
+  sucesso: boolean;
+  mensagem: string;
+  criados: FichaLoteCriado[];
+  falhas: FichaLoteFalha[];
+}
+
 export interface Religiao {
   religiao_id: string;
   nome_religiao: string;
