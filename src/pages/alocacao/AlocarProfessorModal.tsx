@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { X, UserPlus, BookOpen, Users, School, Check, AlertCircle, Sparkles, Loader2, GraduationCap, Save } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { X, UserPlus, BookOpen, School, Check, AlertCircle, Sparkles, Loader2, Save, ChevronDown, Pencil } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { professorDisciplinaService } from '../../services/professorDisciplinaService';
 import { disciplinaService } from '../../services/disciplinaService';
@@ -9,7 +10,7 @@ import type { ProfessorDisponivel, DisciplinaDisponivel, TurmaDisponivel } from 
 interface AlocarProfessorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (alocacoes: Array<{ turma_id: string; disciplina_id: string; professor_id: string }>) => void;
+  onConfirm: (alocacoes: Array<{ turma_id: string; disciplina_id: string; professor_id: string }>) => Promise<void> | void;
   professores: ProfessorDisponivel[];
   disciplinas: DisciplinaDisponivel[];
   turmas: TurmaDisponivel[];
@@ -19,6 +20,133 @@ interface AlocarProfessorModalProps {
 interface AlocacaoTemp {
   turma_id: string;
   disciplina_id: string;
+}
+
+interface CustomSelectOption {
+  value: string;
+  label: string;
+}
+
+interface CustomSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: CustomSelectOption[];
+  placeholder?: string;
+  disabled?: boolean;
+  accent?: 'blue' | 'green';
+}
+
+const DROPDOWN_MAX_H = 240; // px (corresponde ao max-h-60)
+
+// Nome de turma legível: dado vem redundante (serie "2º Ano" + turma "2 ano B").
+// Extrai só o identificador (ex.: "B") e monta "2º Ano · Turma B".
+function formatarTurma(nomeSerie: string, nomeTurma: string, turno: string) {
+  const letra = nomeTurma.trim().split(/\s+/).pop() || '';
+  const base = letra.length <= 2 ? `${nomeSerie} · Turma ${letra.toUpperCase()}` : nomeTurma;
+  return `${base} (${turno})`;
+}
+
+function CustomSelect({
+  value,
+  onChange,
+  options,
+  placeholder = '-- Selecione --',
+  disabled = false,
+  accent = 'blue'
+}: CustomSelectProps) {
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState<{ left: number; width: number; top?: number; bottom?: number }>({ left: 0, width: 0 });
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const ring = accent === 'green' ? 'ring-green-500 border-green-500' : 'ring-blue-500 border-blue-500';
+  const selectedBg = accent === 'green' ? 'bg-green-50 text-green-900' : 'bg-blue-50 text-blue-900';
+
+  // Recalcula posição do menu (fixo na viewport) — evita clipping do overflow do modal
+  const atualizarPosicao = useCallback(() => {
+    const el = triggerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const espacoAbaixo = window.innerHeight - r.bottom;
+    const abrirParaCima = espacoAbaixo < DROPDOWN_MAX_H && r.top > espacoAbaixo;
+    setCoords(
+      abrirParaCima
+        ? { left: r.left, width: r.width, bottom: window.innerHeight - r.top + 4 }
+        : { left: r.left, width: r.width, top: r.bottom + 4 }
+    );
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    atualizarPosicao();
+    const onScroll = () => atualizarPosicao();
+    window.addEventListener('scroll', onScroll, true); // captura scroll de qualquer ancestral
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [open, atualizarPosicao]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (triggerRef.current?.contains(t) || listRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const selecionada = options.find((o) => o.value === value);
+
+  return (
+    <div ref={triggerRef} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        className={`w-full flex items-center justify-between gap-2 px-4 py-3 bg-white border-2 rounded-xl text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+          open ? `ring-2 ${ring}` : 'border-gray-200 hover:border-gray-300'
+        }`}
+      >
+        <span className={`truncate ${selecionada ? 'text-gray-800' : 'text-gray-400'}`}>
+          {selecionada ? selecionada.label : placeholder}
+        </span>
+        <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && createPortal(
+        <div
+          ref={listRef}
+          style={{ position: 'fixed', left: coords.left, width: coords.width, top: coords.top, bottom: coords.bottom, maxHeight: DROPDOWN_MAX_H }}
+          className="z-[60] bg-white border border-gray-200 rounded-xl shadow-xl overflow-y-auto overscroll-contain py-1"
+        >
+          {options.map((opt) => {
+            const ativa = opt.value === value;
+            return (
+              <button
+                key={opt.value || 'placeholder'}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                className={`w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left text-sm transition-colors ${
+                  ativa ? selectedBg + ' font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span className="truncate">{opt.label}</span>
+                {ativa && <Check className="w-4 h-4 flex-shrink-0" />}
+              </button>
+            );
+          })}
+        </div>,
+        document.body
+      )}
+    </div>
+  );
 }
 
 export default function AlocarProfessorModal({
@@ -32,6 +160,7 @@ export default function AlocarProfessorModal({
 }: AlocarProfessorModalProps) {
   const [professorSelecionado, setProfessorSelecionado] = useState<string>('');
   const [alocacoesTemp, setAlocacoesTemp] = useState<AlocacaoTemp[]>([]);
+  const [erroSubmit, setErroSubmit] = useState<string>('');
   const [turmaSelecionada, setTurmaSelecionada] = useState<string>('');
   const [disciplinasSelecionadas, setDisciplinasSelecionadas] = useState<Set<string>>(new Set());
 
@@ -56,6 +185,7 @@ export default function AlocarProfessorModal({
       setDisciplinasHabilitadas([]);
       setMostrarConfigInline(false);
       setSelecionadasConfig(new Set());
+      setErroSubmit('');
     }
   }, [isOpen]);
 
@@ -112,6 +242,8 @@ export default function AlocarProfessorModal({
     };
     carregar();
   }, [mostrarConfigInline]);
+
+  const nomeProfessor = professores.find((p) => p.professor_id === professorSelecionado)?.nome_usuario || '';
 
   const disciplinasBase = disciplinasHabilitadas.filter((d) => d.categoria === 'base');
   const disciplinasEspeciais = disciplinasHabilitadas.filter((d) => d.categoria !== 'base');
@@ -191,6 +323,17 @@ export default function AlocarProfessorModal({
     }
   };
 
+  // Abre o editor de capacitação já marcando as disciplinas atuais do professor
+  const abrirEditorCapacitacao = () => {
+    setSelecionadasConfig(new Set(disciplinasHabilitadas.map((d) => d.disciplina_id)));
+    setMostrarConfigInline(true);
+  };
+
+  const cancelarEditorCapacitacao = () => {
+    setMostrarConfigInline(false);
+    setSelecionadasConfig(new Set());
+  };
+
   const adicionarAlocacoes = () => {
     if (!turmaSelecionada || disciplinasSelecionadas.size === 0) {
       logger.warning('⚠️ Selecione a turma e ao menos uma disciplina');
@@ -218,7 +361,7 @@ export default function AlocarProfessorModal({
     setAlocacoesTemp(alocacoesTemp.filter((_, i) => i !== index));
   };
 
-  const handleConfirmar = () => {
+  const handleConfirmar = async () => {
     if (!professorSelecionado) {
       logger.warning('⚠️ Selecione um professor');
       return;
@@ -233,12 +376,19 @@ export default function AlocarProfessorModal({
       professor_id: professorSelecionado
     }));
 
-    onConfirm(alocacoes);
+    setErroSubmit('');
+    try {
+      await onConfirm(alocacoes);
+    } catch (error: any) {
+      const mensagem =
+        error?.response?.data?.mensagem || error?.message || 'Erro ao criar alocações';
+      setErroSubmit(mensagem);
+    }
   };
 
   const getNomeTurma = (turma_id: string) => {
     const turma = turmas.find((t) => t.turma_id === turma_id);
-    return turma ? `${turma.nome_serie} - ${turma.nome_turma} (${turma.turno})` : 'Turma não encontrada';
+    return turma ? formatarTurma(turma.nome_serie, turma.nome_turma, turma.turno) : 'Turma não encontrada';
   };
 
   const getNomeDisciplina = (disciplina_id: string) => {
@@ -294,9 +444,9 @@ export default function AlocarProfessorModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-blue-600 px-6 py-5 flex items-center justify-between">
+        <div className="bg-blue-600 px-6 py-5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
               <UserPlus className="w-6 h-6 text-white" />
@@ -316,34 +466,152 @@ export default function AlocarProfessorModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-          {/* Seleção de Professor */}
+        <div className="p-6 overflow-y-auto flex-1 min-h-0">
+          {/* Passo 1: Seleção de Professor */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-              <Users className="w-4 h-4 mr-2 text-blue-600" />
-              Selecione o Professor
+            <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
+              Selecione o professor
             </label>
-            <select
+            <CustomSelect
               value={professorSelecionado}
-              onChange={(e) => setProfessorSelecionado(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              onChange={setProfessorSelecionado}
               disabled={loading}
-            >
-              <option value="">-- Selecione um professor --</option>
-              {professores.map((prof) => (
-                <option key={prof.professor_id} value={prof.professor_id}>
-                  {prof.nome_usuario} ({prof.email_usuario})
-                </option>
-              ))}
-            </select>
+              accent="blue"
+              placeholder="-- Selecione um professor --"
+              options={professores.map((prof) => ({
+                value: prof.professor_id,
+                label: `${prof.nome_usuario} (${prof.email_usuario})`
+              }))}
+            />
           </div>
 
-          {/* Adicionar Alocações */}
+          {/* Passo 2: Capacitação — disciplinas que o professor leciona */}
           {professorSelecionado && (
-            <div className="bg-gray-50 rounded-xl p-6 mb-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <BookOpen className="w-5 h-5 mr-2 text-purple-600" />
-                Selecione a turma e as disciplinas
+            <div className="bg-gray-50 rounded-xl p-5 mb-6">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
+                  Disciplinas que {nomeProfessor || 'o professor'} leciona
+                </h3>
+                {!mostrarConfigInline && !loadingHabilitadas && disciplinasHabilitadas.length > 0 && (
+                  <button
+                    onClick={abrirEditorCapacitacao}
+                    className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    Editar
+                  </button>
+                )}
+              </div>
+
+              {loadingHabilitadas ? (
+                <div className="flex items-center gap-2 py-4 text-sm text-gray-600">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Carregando disciplinas do professor...
+                </div>
+              ) : mostrarConfigInline ? (
+                /* Editor de capacitação */
+                <div className="bg-white border-2 border-blue-100 rounded-xl p-4">
+                  {carregandoDisciplinasConfig ? (
+                    <div className="flex items-center gap-2 py-4 text-sm text-gray-600">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Carregando disciplinas...
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {disciplinasBaseConfig.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Disciplinas base</span>
+                            <button
+                              type="button"
+                              onClick={togglePacoteBaseConfig}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              {todasBaseMarcadasConfig ? 'Desmarcar base' : 'Marcar tudo'}
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {disciplinasBaseConfig.map(renderChipDisciplinaConfig)}
+                          </div>
+                        </div>
+                      )}
+
+                      {disciplinasEspeciaisConfig.length > 0 && (
+                        <div>
+                          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Disciplinas especiais</span>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {disciplinasEspeciaisConfig.map(renderChipDisciplinaConfig)}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-100">
+                        <span className="text-xs text-gray-500">{selecionadasConfig.size} selecionada(s)</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={cancelarEditorCapacitacao}
+                            disabled={salvandoConfig}
+                            className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            onClick={handleSalvarConfig}
+                            disabled={selecionadasConfig.size === 0 || salvandoConfig}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {salvandoConfig ? (
+                              <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
+                            ) : (
+                              <><Save className="w-4 h-4" /> Salvar disciplinas</>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : disciplinasHabilitadas.length === 0 ? (
+                /* Sem capacitação ainda */
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 flex items-start">
+                  <AlertCircle className="w-5 h-5 text-amber-600 mr-3 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-amber-900">Este professor ainda não tem disciplinas definidas</p>
+                    <p className="text-sm text-amber-700 mt-1">Defina o que ele pode lecionar para poder alocá-lo.</p>
+                  </div>
+                  <button
+                    onClick={abrirEditorCapacitacao}
+                    className="ml-3 flex-shrink-0 text-xs font-semibold px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                  >
+                    Definir disciplinas
+                  </button>
+                </div>
+              ) : (
+                /* Resumo das disciplinas habilitadas (somente leitura) */
+                <div className="flex flex-wrap gap-2">
+                  {disciplinasHabilitadas.map((d) => (
+                    <span
+                      key={d.disciplina_id}
+                      className="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+                      {d.nome_disciplina}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Passo 3: Turma + disciplinas para alocar */}
+          {professorSelecionado && !mostrarConfigInline && !loadingHabilitadas && disciplinasHabilitadas.length > 0 && (
+            <div className="bg-gray-50 rounded-xl p-5 mb-6">
+              <h3 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
+                Escolha a turma e marque as disciplinas
               </h3>
 
               {/* Turma */}
@@ -352,148 +620,59 @@ export default function AlocarProfessorModal({
                   <School className="w-4 h-4 mr-1 text-green-600" />
                   Turma
                 </label>
-                <select
+                <CustomSelect
                   value={turmaSelecionada}
-                  onChange={(e) => setTurmaSelecionada(e.target.value)}
-                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                  onChange={setTurmaSelecionada}
                   disabled={loading}
-                >
-                  <option value="">-- Selecione --</option>
-                  {turmas.map((turma) => (
-                    <option key={turma.turma_id} value={turma.turma_id}>
-                      {turma.nome_serie} - {turma.nome_turma} ({turma.turno})
-                    </option>
-                  ))}
-                </select>
+                  accent="green"
+                  placeholder="-- Selecione --"
+                  options={turmas.map((turma) => ({
+                    value: turma.turma_id,
+                    label: formatarTurma(turma.nome_serie, turma.nome_turma, turma.turno)
+                  }))}
+                />
               </div>
 
-              {/* Disciplinas (habilitadas do professor) */}
-              {loadingHabilitadas ? (
-                <div className="flex items-center gap-2 py-4 text-sm text-gray-600">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Carregando disciplinas do professor...
-                </div>
-              ) : disciplinasHabilitadas.length === 0 ? (
-                <div className="space-y-3">
-                  {/* Aviso */}
-                  <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 flex items-start">
-                    <AlertCircle className="w-5 h-5 text-amber-600 mr-3 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-amber-900">Este professor ainda não tem disciplinas definidas</p>
-                      <p className="text-sm text-amber-700 mt-1">Configure as disciplinas dele para poder alocá-lo.</p>
+              <div className="space-y-4">
+                {/* Base */}
+                {disciplinasBase.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Disciplinas base</span>
+                      <button
+                        type="button"
+                        onClick={togglePacoteBase}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        {todasBaseMarcadas ? 'Desmarcar base' : 'Marcar pacote base'}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setMostrarConfigInline(v => !v)}
-                      className="ml-3 flex-shrink-0 text-xs font-semibold px-3 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-                    >
-                      {mostrarConfigInline ? 'Fechar' : 'Configurar agora'}
-                    </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {disciplinasBase.map(renderChipDisciplina)}
+                    </div>
                   </div>
+                )}
 
-                  {/* Painel inline de configuração */}
-                  {mostrarConfigInline && (
-                    <div className="bg-white border-2 border-blue-100 rounded-xl p-4">
-                      <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <GraduationCap className="w-4 h-4 text-blue-600" />
-                        Definir disciplinas do professor
-                      </h4>
-
-                      {carregandoDisciplinasConfig ? (
-                        <div className="flex items-center gap-2 py-4 text-sm text-gray-600">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Carregando disciplinas...
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {disciplinasBaseConfig.length > 0 && (
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Disciplinas base</span>
-                                <button
-                                  type="button"
-                                  onClick={togglePacoteBaseConfig}
-                                  className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                                >
-                                  <Sparkles className="w-3 h-3" />
-                                  {todasBaseMarcadasConfig ? 'Desmarcar base' : 'Marcar tudo'}
-                                </button>
-                              </div>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                {disciplinasBaseConfig.map(renderChipDisciplinaConfig)}
-                              </div>
-                            </div>
-                          )}
-
-                          {disciplinasEspeciaisConfig.length > 0 && (
-                            <div>
-                              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Disciplinas especiais</span>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                {disciplinasEspeciaisConfig.map(renderChipDisciplinaConfig)}
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                            <span className="text-xs text-gray-500">{selecionadasConfig.size} selecionada(s)</span>
-                            <button
-                              onClick={handleSalvarConfig}
-                              disabled={selecionadasConfig.size === 0 || salvandoConfig}
-                              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {salvandoConfig ? (
-                                <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
-                              ) : (
-                                <><Save className="w-4 h-4" /> Salvar e continuar</>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                {/* Especiais */}
+                {disciplinasEspeciais.length > 0 && (
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 block mb-2">Disciplinas especiais</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {disciplinasEspeciais.map(renderChipDisciplina)}
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Base */}
-                  {disciplinasBase.length > 0 && (
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Disciplinas base</span>
-                        <button
-                          type="button"
-                          onClick={togglePacoteBase}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          {todasBaseMarcadas ? 'Desmarcar base' : 'Marcar pacote base'}
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {disciplinasBase.map(renderChipDisciplina)}
-                      </div>
-                    </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Especiais */}
-                  {disciplinasEspeciais.length > 0 && (
-                    <div>
-                      <span className="text-sm font-medium text-gray-700 block mb-2">Disciplinas especiais</span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {disciplinasEspeciais.map(renderChipDisciplina)}
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={adicionarAlocacoes}
-                    disabled={!turmaSelecionada || disciplinasSelecionadas.size === 0 || loading}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    <UserPlus className="w-5 h-5 mr-2" />
-                    Adicionar à Lista ({disciplinasSelecionadas.size})
-                  </button>
-                </div>
-              )}
+                <button
+                  onClick={adicionarAlocacoes}
+                  disabled={!turmaSelecionada || disciplinasSelecionadas.size === 0 || loading}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-3 rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  <UserPlus className="w-5 h-5 mr-2" />
+                  Adicionar à Lista ({disciplinasSelecionadas.size})
+                </button>
+              </div>
             </div>
           )}
 
@@ -544,8 +723,26 @@ export default function AlocarProfessorModal({
           )}
         </div>
 
+        {/* Erro de submissão (ex.: disciplina já tem professor na turma) */}
+        {erroSubmit && (
+          <div className="flex-shrink-0 mx-6 mt-3 bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-900">Não foi possível alocar</p>
+              <p className="text-sm text-red-700 mt-0.5">{erroSubmit}</p>
+            </div>
+            <button
+              onClick={() => setErroSubmit('')}
+              className="text-red-400 hover:text-red-600 flex-shrink-0"
+              aria-label="Fechar aviso"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3 border-t">
+        <div className="bg-gray-50 px-6 py-4 flex items-center justify-end space-x-3 border-t flex-shrink-0">
           <button
             onClick={onClose}
             className="px-6 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all"

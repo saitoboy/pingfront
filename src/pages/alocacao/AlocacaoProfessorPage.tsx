@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Users, BookOpen, Calendar, Plus, Trash2, RefreshCw, TrendingUp, Award, School, GraduationCap, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, BookOpen, Calendar, Plus, Trash2, TrendingUp, Award, School } from 'lucide-react';
 import { logger } from '../../lib/logger';
 import { alocacaoProfessorService } from '../../services/alocacaoProfessorService';
 import { cadastroService } from '../../services/cadastroService';
 import AlocarProfessorModal from './AlocarProfessorModal';
-import DisciplinasProfessorTab from '../gestao/tabs/DisciplinasProfessorTab';
 import type { 
   AlocacaoProfessor, 
   ProfessorDisponivel, 
@@ -27,9 +26,6 @@ export default function AlocacaoProfessorPage() {
   const [loading, setLoading] = useState(false);
   const [loadingInicial, setLoadingInicial] = useState(true);
   const [modalAberto, setModalAberto] = useState(false);
-  const [professorFiltro, setProfessorFiltro] = useState<string>('');
-  const [disciplinaFiltro, setDisciplinaFiltro] = useState<string>('');
-  const [mostrarDisciplinas, setMostrarDisciplinas] = useState(false);
 
   // Carregar dados iniciais ao montar
   useEffect(() => {
@@ -149,7 +145,7 @@ export default function AlocacaoProfessorPage() {
       }
     } catch (error: any) {
       logger.error('Erro ao criar alocações', 'service', error);
-      alert(error.response?.data?.mensagem || 'Erro ao criar alocações');
+      throw error; // Propaga para o modal exibir o erro inline
     } finally {
       setLoading(false);
     }
@@ -172,15 +168,15 @@ export default function AlocacaoProfessorPage() {
     }
   };
 
-  // Filtrar alocações
-  const alocacoesFiltradas = alocacoes.filter(alocacao => {
-    if (professorFiltro && alocacao.professor_id !== professorFiltro) return false;
-    if (disciplinaFiltro && alocacao.disciplina_id !== disciplinaFiltro) return false;
-    return true;
-  });
+  // Nome de turma legível: dado vem redundante (serie "2º Ano" + turma "2 ano B").
+  // Extrai só o identificador (ex.: "B") e monta "2º Ano · Turma B".
+  const formatarTurma = (nomeSerie: string, nomeTurma: string) => {
+    const letra = nomeTurma.trim().split(/\s+/).pop() || '';
+    return letra.length <= 2 ? `${nomeSerie} · Turma ${letra.toUpperCase()}` : nomeTurma;
+  };
 
   // Agrupar por professor
-  const alocacoesPorProfessor = alocacoesFiltradas.reduce((acc, alocacao) => {
+  const alocacoesPorProfessor = alocacoes.reduce((acc, alocacao) => {
     const key = alocacao.professor_id;
     if (!acc[key]) {
       acc[key] = {
@@ -219,85 +215,7 @@ export default function AlocacaoProfessorPage() {
           </div>
         )}
 
-        {/* Header com Filtros */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-
-            {/* Filtro Professor */}
-            <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                <Users className="w-4 h-4 mr-2 text-purple-600" />
-                Filtrar por Professor
-              </label>
-              <select
-                value={professorFiltro}
-                onChange={(e) => setProfessorFiltro(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                disabled={loading}
-              >
-                <option value="">Todos os professores</option>
-                {professores.map((prof) => (
-                  <option key={prof.professor_id} value={prof.professor_id}>
-                    {prof.nome_usuario}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Filtro Disciplina */}
-            <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                <BookOpen className="w-4 h-4 mr-2 text-orange-600" />
-                Filtrar por Disciplina
-              </label>
-              <select
-                value={disciplinaFiltro}
-                onChange={(e) => setDisciplinaFiltro(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
-                disabled={loading}
-              >
-                <option value="">Todas as disciplinas</option>
-                {disciplinas.map((disc) => (
-                  <option key={disc.disciplina_id} value={disc.disciplina_id}>
-                    {disc.nome_disciplina}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Botões de Ação */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mt-6 pt-6 border-t">
-            <button
-              onClick={() => { carregarAlocacoes(); carregarEstatisticas(); }}
-              disabled={!anoLetivoAtivo || loading}
-              className="w-full sm:w-auto px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Atualizar
-            </button>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => setMostrarDisciplinas(v => !v)}
-                className="w-full sm:w-auto px-4 py-2.5 bg-green-100 hover:bg-green-200 text-green-800 font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
-              >
-                <GraduationCap className="w-4 h-4" />
-                Disciplinas dos Professores
-                {mostrarDisciplinas ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-              <button
-                onClick={() => setModalAberto(true)}
-                disabled={!anoLetivoAtivo || loading}
-                className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Nova Alocação
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Estatísticas */}
+{/* Estatísticas */}
         {estatisticas && anoLetivoAtivo && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
@@ -342,12 +260,18 @@ export default function AlocacaoProfessorPage() {
           </div>
         )}
 
-        {/* Painel Disciplinas dos Professores */}
-        {mostrarDisciplinas && (
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <DisciplinasProfessorTab />
-          </div>
-        )}
+        {/* Barra de ações */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 mb-6">
+
+          <button
+            onClick={() => setModalAberto(true)}
+            disabled={!anoLetivoAtivo || loading}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-sm"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Alocação
+          </button>
+        </div>
 
         {/* Lista de Alocações por Professor */}
         {loadingInicial ? (
@@ -381,70 +305,81 @@ export default function AlocacaoProfessorPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {professoresComAlocacoes.map((prof) => (
-              <div key={prof.professor_id} className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                {/* Header do Professor */}
-                <div className="bg-blue-600 px-4 sm:px-6 py-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Users className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg sm:text-xl font-bold text-white truncate">{prof.nome_professor}</h3>
-                        <p className="text-blue-100 text-xs sm:text-sm truncate">{prof.email_professor}</p>
-                        {/* Quantidade de alocações - visível apenas em mobile */}
-                        <div className="sm:hidden mt-2">
-                          <div className="bg-white/20 px-3 py-1.5 rounded-lg inline-block">
-                            <p className="text-white font-bold text-sm">{prof.alocacoes.length} alocações</p>
-                          </div>
-                        </div>
-                      </div>
+            {professoresComAlocacoes.map((prof) => {
+              // Agrupar alocações do professor por turma (evita repetir turma/sala em cada card)
+              const turmasMap = prof.alocacoes.reduce((acc, a) => {
+                if (!acc[a.turma_id]) {
+                  acc[a.turma_id] = {
+                    turma_id: a.turma_id,
+                    nome_serie: a.nome_serie,
+                    nome_turma: a.nome_turma,
+                    turno: a.turno,
+                    sala: a.sala,
+                    disciplinas: [] as AlocacaoProfessor[]
+                  };
+                }
+                acc[a.turma_id].disciplinas.push(a);
+                return acc;
+              }, {} as Record<string, { turma_id: string; nome_serie: string; nome_turma: string; turno: string; sala: string; disciplinas: AlocacaoProfessor[] }>);
+              const turmasDoProfessor = Object.values(turmasMap);
+              const iniciais = prof.nome_professor.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
+
+              return (
+                <div key={prof.professor_id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  {/* Header do Professor */}
+                  <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+                    <div className="w-11 h-11 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-sm">{iniciais}</span>
                     </div>
-                    {/* Quantidade de alocações - visível apenas em desktop */}
-                    <div className="hidden sm:block bg-white/20 px-4 py-2 rounded-lg flex-shrink-0">
-                      <p className="text-white font-bold text-lg">{prof.alocacoes.length} alocações</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-bold text-gray-900 truncate">{prof.nome_professor}</h3>
+                      <p className="text-gray-500 text-xs truncate">{prof.email_professor}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full flex-shrink-0">
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span className="font-semibold text-sm">{prof.alocacoes.length}</span>
                     </div>
                   </div>
-                </div>
 
-                {/* Lista de Alocações */}
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {prof.alocacoes.map((alocacao) => (
-                      <div
-                        key={alocacao.turma_disciplina_professor_id}
-                        className="border-2 border-gray-200 rounded-xl p-4 hover:border-yellow-300 hover:shadow-md transition-all"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h4 className="font-bold text-gray-800 flex items-center">
-                              <BookOpen className="w-4 h-4 mr-2 text-orange-600" />
-                              {alocacao.nome_disciplina}
-                            </h4>
-                            <p className="text-sm text-gray-600 mt-1 flex items-center">
-                              <School className="w-3 h-3 mr-1 text-green-600" />
-                              {alocacao.nome_serie} - {alocacao.nome_turma}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {alocacao.turno} • Sala {alocacao.sala}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleRemoverAlocacao(alocacao.turma_disciplina_professor_id)}
-                            className="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-all flex-shrink-0"
-                            disabled={loading}
-                            title="Remover alocação"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                  {/* Turmas do professor */}
+                  <div className="p-4 space-y-3">
+                    {turmasDoProfessor.map((turma) => (
+                      <div key={turma.turma_id} className="border border-gray-200 rounded-xl overflow-hidden">
+                        {/* Cabeçalho da turma (uma vez só) */}
+                        <div className="flex items-center gap-2 bg-gray-50 px-4 py-2.5 border-b border-gray-100">
+                          <School className="w-4 h-4 text-green-600 flex-shrink-0" />
+                          <span className="font-semibold text-gray-800 text-sm">
+                            {formatarTurma(turma.nome_serie, turma.nome_turma)}
+                          </span>
+                          <span className="text-xs text-gray-500 ml-auto capitalize">
+                            {turma.turno} • Sala {turma.sala}
+                          </span>
+                        </div>
+                        {/* Disciplinas como chips */}
+                        <div className="flex flex-wrap gap-2 p-3">
+                          {turma.disciplinas.map((alocacao) => (
+                            <div
+                              key={alocacao.turma_disciplina_professor_id}
+                              className="group flex items-center gap-2 bg-orange-50 border border-orange-100 text-orange-900 pl-3 pr-1.5 py-1.5 rounded-lg text-sm"
+                            >
+                              <span className="font-medium">{alocacao.nome_disciplina}</span>
+                              <button
+                                onClick={() => handleRemoverAlocacao(alocacao.turma_disciplina_professor_id)}
+                                className="w-6 h-6 flex items-center justify-center rounded-md text-orange-400 hover:bg-red-100 hover:text-red-600 transition-all"
+                                disabled={loading}
+                                title="Remover alocação"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

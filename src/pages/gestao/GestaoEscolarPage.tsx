@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { BookOpen, GraduationCap, Users, Calendar } from 'lucide-react';
+import { BookOpen, GraduationCap, Users, Calendar, CalendarClock, CalendarOff } from 'lucide-react';
 import SeriesTab from './tabs/SeriesTab';
 import TurmasTab from './tabs/TurmasTab';
 import DisciplinasTab from './tabs/DisciplinasTab';
 import AnosLetivosTab from './tabs/AnosLetivosTab';
+import GradeHorarioTab from './tabs/GradeHorarioTab';
+import FeriadosTab from './tabs/FeriadosTab';
 
-type TabType = 'series' | 'turmas' | 'disciplinas' | 'anos-letivos';
+type TabType = 'series' | 'turmas' | 'disciplinas' | 'anos-letivos' | 'grade-horario' | 'feriados';
 
 // Valida se a tab é válida
-const VALID_TABS: TabType[] = ['series', 'turmas', 'disciplinas', 'anos-letivos'];
+const VALID_TABS: TabType[] = ['series', 'turmas', 'disciplinas', 'anos-letivos', 'grade-horario', 'feriados'];
 const isValidTab = (tab: string | null): tab is TabType => {
   return tab !== null && VALID_TABS.includes(tab as TabType);
 };
@@ -55,6 +57,8 @@ export default function GestaoEscolarPage() {
     { id: 'series' as TabType, label: 'Séries', icon: GraduationCap, color: 'blue' },
     { id: 'turmas' as TabType, label: 'Turmas', icon: Users, color: 'blue' },
     { id: 'disciplinas' as TabType, label: 'Disciplinas', icon: BookOpen, color: 'blue' },
+    { id: 'grade-horario' as TabType, label: 'Grade Horária', icon: CalendarClock, color: 'blue' },
+    { id: 'feriados' as TabType, label: 'Feriados', icon: CalendarOff, color: 'blue' },
   ];
 
   return (
@@ -115,6 +119,8 @@ export default function GestaoEscolarPage() {
             {activeTab === 'series' && <SeriesTab />}
             {activeTab === 'turmas' && <TurmasTab />}
             {activeTab === 'disciplinas' && <DisciplinasTab />}
+            {activeTab === 'grade-horario' && <GradeHorarioTab />}
+            {activeTab === 'feriados' && <FeriadosTab />}
           </div>
         </div>
       </div>

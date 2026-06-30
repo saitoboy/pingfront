@@ -113,7 +113,7 @@ export default function DiarioMateriaPage() {
 
   const handleSelecionarData = (data: string) => {
     setDataSelecionada(data)
-    navigate(`/diario/dia/${turmaDisciplinaProfessorId}/${data}`)
+    navigate(`/diario/dia/${data}`)
   }
 
   const formatarData = (data: string) => {

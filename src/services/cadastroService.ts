@@ -1,14 +1,22 @@
 import api from '../lib/api';
 import { logger } from '../lib/logger';
-import type { 
-  ApiResponse, 
-  Parentesco, 
-  Religiao, 
-  AnoLetivo, 
+import type {
+  ApiResponse,
+  Parentesco,
+  Religiao,
+  AnoLetivo,
   Turma,
   Serie,
   FichaCadastroCompleta,
-  FichaCadastroResposta
+  FichaCadastroResposta,
+  FichaLoteRequest,
+  FichaLoteResposta,
+  Aluno,
+  CertidaoNascimento,
+  Responsavel,
+  DadosSaude,
+  Diagnostico,
+  MatriculaAluno
 } from '../types/api';
 
 export const cadastroService = {
@@ -244,6 +252,43 @@ export const cadastroService = {
     }
   },
 
+  // 📦 IMPORTAR FICHAS EM LOTE - Cria aluno + matrícula para turma/ano (POST /ficha-cadastro/lote)
+  async processarFichasLote(payload: FichaLoteRequest): Promise<ApiResponse<FichaLoteResposta>> {
+    try {
+      logger.apiRequest('POST', '/ficha-cadastro/lote');
+      logger.info(`📦 Importando ${payload.alunos.length} aluno(s) → turma ${payload.turma_id}...`);
+
+      const response = await api.post('/ficha-cadastro/lote', payload);
+
+      logger.apiResponse(response.status, '/ficha-cadastro/lote');
+
+      const dados: FichaLoteResposta = {
+        sucesso: response.data?.sucesso ?? false,
+        mensagem: response.data?.mensagem || '',
+        criados: response.data?.criados || [],
+        falhas: response.data?.falhas || []
+      };
+
+      logger.success(`✅ Lote: ${dados.criados.length} criado(s), ${dados.falhas.length} falha(s)`);
+
+      return {
+        status: dados.criados.length > 0 ? 'sucesso' : 'erro',
+        dados,
+        mensagem: dados.mensagem
+      };
+    } catch (error: any) {
+      logger.apiResponse(error.response?.status || 500, '/ficha-cadastro/lote', error.response?.data);
+      logger.error(`Erro ao importar lote: ${error.response?.data?.mensagem || error.message}`);
+
+      return {
+        status: 'erro',
+        dados: undefined,
+        mensagem: error.response?.data?.mensagem || error.message || 'Erro desconhecido ao processar lote',
+        detalhes: error.response?.data?.erros
+      };
+    }
+  },
+
   // 📋 LISTAR TODAS AS FICHAS DE CADASTRO - Buscar todas as fichas cadastradas
   async listarTodasFichas(): Promise<ApiResponse<FichaCadastroResposta[]>> {
     try {
@@ -282,6 +327,66 @@ export const cadastroService = {
         dados: [],
         mensagem: error.response?.data?.mensagem || error.message || 'Erro desconhecido ao buscar fichas'
       };
+    }
+  },
+
+  // ✏️ ATUALIZAR ALUNO
+  async atualizarAluno(id: string, dados: Partial<Aluno>): Promise<ApiResponse<Aluno>> {
+    try {
+      const response = await api.put(`/aluno/${id}`, dados);
+      return { status: 'sucesso', dados: response.data?.dados || response.data, mensagem: response.data?.mensagem || 'Aluno atualizado' };
+    } catch (error: any) {
+      return { status: 'erro', dados: undefined, mensagem: error.response?.data?.mensagem || error.message };
+    }
+  },
+
+  // ✏️ ATUALIZAR CERTIDÃO
+  async atualizarCertidao(id: string, dados: Partial<CertidaoNascimento>): Promise<ApiResponse<CertidaoNascimento>> {
+    try {
+      const response = await api.put(`/certidao/${id}`, dados);
+      return { status: 'sucesso', dados: response.data?.dados || response.data, mensagem: response.data?.mensagem || 'Certidão atualizada' };
+    } catch (error: any) {
+      return { status: 'erro', dados: undefined, mensagem: error.response?.data?.mensagem || error.message };
+    }
+  },
+
+  // ✏️ ATUALIZAR RESPONSÁVEL
+  async atualizarResponsavel(id: string, dados: Partial<Responsavel>): Promise<ApiResponse<Responsavel>> {
+    try {
+      const response = await api.put(`/responsavel/${id}`, dados);
+      return { status: 'sucesso', dados: response.data?.dados || response.data, mensagem: response.data?.mensagem || 'Responsável atualizado' };
+    } catch (error: any) {
+      return { status: 'erro', dados: undefined, mensagem: error.response?.data?.mensagem || error.message };
+    }
+  },
+
+  // ✏️ ATUALIZAR DADOS SAÚDE
+  async atualizarDadosSaude(id: string, dados: Partial<DadosSaude>): Promise<ApiResponse<DadosSaude>> {
+    try {
+      const response = await api.put(`/dados-saude/${id}`, dados);
+      return { status: 'sucesso', dados: response.data?.dados || response.data, mensagem: response.data?.mensagem || 'Dados de saúde atualizados' };
+    } catch (error: any) {
+      return { status: 'erro', dados: undefined, mensagem: error.response?.data?.mensagem || error.message };
+    }
+  },
+
+  // ✏️ ATUALIZAR DIAGNÓSTICO
+  async atualizarDiagnostico(id: string, dados: Partial<Diagnostico>): Promise<ApiResponse<Diagnostico>> {
+    try {
+      const response = await api.put(`/diagnostico/${id}`, dados);
+      return { status: 'sucesso', dados: response.data?.dados || response.data, mensagem: response.data?.mensagem || 'Diagnóstico atualizado' };
+    } catch (error: any) {
+      return { status: 'erro', dados: undefined, mensagem: error.response?.data?.mensagem || error.message };
+    }
+  },
+
+  // ✏️ ATUALIZAR MATRÍCULA
+  async atualizarMatricula(id: string, dados: Partial<MatriculaAluno>): Promise<ApiResponse<MatriculaAluno>> {
+    try {
+      const response = await api.put(`/matricula-aluno/${id}`, dados);
+      return { status: 'sucesso', dados: response.data?.dados || response.data, mensagem: response.data?.mensagem || 'Matrícula atualizada' };
+    } catch (error: any) {
+      return { status: 'erro', dados: undefined, mensagem: error.response?.data?.mensagem || error.message };
     }
   },
 

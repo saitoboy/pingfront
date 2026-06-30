@@ -265,7 +265,7 @@ export default function AppRoutes() {
         />
 
         <Route
-          path="/diario/dia/:turmaDisciplinaProfessorId/:data"
+          path="/diario/dia/:data"
           element={
             <ProtectedRoute>
               <DiarioDiaPage />
