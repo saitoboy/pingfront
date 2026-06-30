@@ -6,7 +6,6 @@ import {
   FileText,
   User,
   Calendar,
-  Phone,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -207,7 +206,6 @@ export default function ListarFichasPage() {
   });
 
   const iCls = 'w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm';
-  const lCls = 'block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1';
 
   const abrirEdicao = (ficha: FichaCadastroResposta) => {
     setFichaEmEdicao(ficha);
@@ -229,11 +227,11 @@ export default function ListarFichasPage() {
     const calls: Promise<void>[] = [
       cadastroService.atualizarAluno(fichaEmEdicao.aluno.aluno_id, editAluno)
         .then(r => { if (r.status === 'erro') falhas.push(`Aluno: ${r.mensagem}`); })
-        .catch(e => falhas.push(`Aluno: ${e.message}`)),
+        .catch(e => { falhas.push(`Aluno: ${e.message}`); }),
 
       cadastroService.atualizarMatricula(fichaEmEdicao.matricula.matricula_aluno_id, editMatricula)
         .then(r => { if (r.status === 'erro') falhas.push(`Matrícula: ${r.mensagem}`); })
-        .catch(e => falhas.push(`Matrícula: ${e.message}`)),
+        .catch(e => { falhas.push(`Matrícula: ${e.message}`); }),
     ];
 
     editResponsaveis.forEach(resp => {
@@ -241,7 +239,7 @@ export default function ListarFichasPage() {
         calls.push(
           cadastroService.atualizarResponsavel(resp.responsavel_id, resp)
             .then(r => { if (r.status === 'erro') falhas.push(`Responsável: ${r.mensagem}`); })
-            .catch(e => falhas.push(`Responsável: ${e.message}`))
+            .catch(e => { falhas.push(`Responsável: ${e.message}`); })
         );
       }
     });
@@ -250,7 +248,7 @@ export default function ListarFichasPage() {
       calls.push(
         cadastroService.atualizarDiagnostico(fichaEmEdicao.diagnostico.diagnostico_id, editDiagnostico)
           .then(r => { if (r.status === 'erro') falhas.push(`Diagnóstico: ${r.mensagem}`); })
-          .catch(e => falhas.push(`Diagnóstico: ${e.message}`))
+          .catch(e => { falhas.push(`Diagnóstico: ${e.message}`); })
       );
     }
 
@@ -349,129 +347,104 @@ export default function ListarFichasPage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {fichasPaginaAtual.map((ficha) => (
-                    <div
-                      key={ficha.matricula.matricula_aluno_id}
-                      className="group bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-md hover:shadow-xl border border-gray-200 hover:border-blue-300 transition-all duration-300 overflow-hidden transform"
-                    >
-                      {/* Header com gradiente */}
-                      <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            {/* Foto do aluno */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                        <th className="px-4 py-3 text-left font-semibold w-10"></th>
+                        <th className="px-4 py-3 text-left font-semibold">Aluno</th>
+                        <th className="px-4 py-3 text-left font-semibold">Turma</th>
+                        <th className="px-4 py-3 text-left font-semibold hidden md:table-cell">Nascimento</th>
+                        <th className="px-4 py-3 text-left font-semibold hidden lg:table-cell">CPF</th>
+                        <th className="px-4 py-3 text-left font-semibold hidden lg:table-cell">Responsável</th>
+                        <th className="px-4 py-3 text-center font-semibold">Status</th>
+                        <th className="px-4 py-3 text-center font-semibold">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {fichasPaginaAtual.map((ficha, idx) => (
+                        <tr
+                          key={ficha.matricula.matricula_aluno_id}
+                          className={`hover:bg-blue-50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                        >
+                          <td className="px-4 py-3">
                             {ficha.aluno.foto_aluno ? (
                               <img
                                 src={ficha.aluno.foto_aluno}
                                 alt={ficha.aluno.nome_aluno}
-                                className="w-12 h-12 rounded-full object-cover border-2 border-white/50 flex-shrink-0"
+                                className="w-9 h-9 rounded-full object-cover border-2 border-blue-200"
                               />
                             ) : (
-                              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                                <User className="w-6 h-6 text-white" />
+                              <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center">
+                                <User className="w-4 h-4 text-blue-500" />
                               </div>
                             )}
-                            <div className="min-w-0">
-                              <h3 className="text-xl font-bold text-white mb-1 line-clamp-1">
-                                {ficha.aluno.nome_aluno} {ficha.aluno.sobrenome_aluno}
-                              </h3>
-                              <div className="flex items-center gap-2">
-                                <span className="text-white font-semibold text-sm">
-                                  RA: {ficha.matricula.ra || 'N/A'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 ml-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleImprimir(ficha);
-                              }}
-                              className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all duration-200 hover:scale-110"
-                              title="Imprimir ficha"
-                            >
-                              <Printer className="w-5 h-5 text-white" />
-                            </button>
-                            <button
-                              onClick={() => abrirDetalhes(ficha)}
-                              className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all duration-200 hover:scale-110"
-                              title="Ver detalhes"
-                            >
-                              <Eye className="w-5 h-5 text-white" />
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); abrirEdicao(ficha); }}
-                              className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all duration-200 hover:scale-110"
-                              title="Editar ficha"
-                            >
-                              <Pencil className="w-5 h-5 text-white" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Corpo do card */}
-                      <div className="p-6 space-y-4">
-                        {/* Informações principais */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                              <Calendar className="w-4 h-4 text-blue-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs text-gray-500 font-medium">Data de Nascimento</p>
-                              <p className="text-sm font-semibold text-gray-900 truncate">
-                                {formatarData(ficha.aluno.data_nascimento_aluno)}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg">
-                            <div className="p-2 bg-purple-100 rounded-lg">
-                              <User className="w-4 h-4 text-purple-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs text-gray-500 font-medium">CPF</p>
-                              <p className="text-sm font-semibold text-gray-900 truncate">
-                                {formatarCPF(ficha.aluno.cpf_aluno)}
-                              </p>
-                            </div>
-                          </div>
-
-                          {ficha.responsaveis && ficha.responsaveis.length > 0 && (
-                            <div className="flex items-center gap-3 p-2 bg-green-50 rounded-lg">
-                              <div className="p-2 bg-green-100 rounded-lg">
-                                <Phone className="w-4 h-4 text-green-600" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs text-gray-500 font-medium">Responsável</p>
-                                <p className="text-sm font-semibold text-gray-900 truncate">
-                                  {ficha.responsaveis[0].nome_responsavel} {ficha.responsaveis[0].sobrenome_responsavel}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Status da matrícula */}
-                        <div className="pt-4 border-t border-gray-200">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</span>
-                            <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm ${
-                              ficha.matricula.status === 'ativo' 
-                                ? 'bg-gradient-to-r from-green-400 to-green-500 text-white' 
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="font-semibold text-gray-900">
+                              {ficha.aluno.nome_aluno} {ficha.aluno.sobrenome_aluno}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-700">
+                            {(() => {
+                              const turma = turmas.find(t => t.turma_id === ficha.matricula.turma_id);
+                              if (!turma) return '—';
+                              const serie = series.find(s => s.serie_id === turma.serie_id);
+                              const id = turma.nome_turma.trim().split(/\s+/).pop() || turma.nome_turma;
+                              return serie ? `${serie.nome_serie} - Turma ${id}` : `Turma ${id}`;
+                            })()}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 hidden md:table-cell">
+                            {formatarData(ficha.aluno.data_nascimento_aluno)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">
+                            {formatarCPF(ficha.aluno.cpf_aluno)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">
+                            {ficha.responsaveis && ficha.responsaveis.length > 0
+                              ? `${ficha.responsaveis[0].nome_responsavel} ${ficha.responsaveis[0].sobrenome_responsavel}`
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${
+                              ficha.matricula.status === 'ativo'
+                                ? 'bg-green-100 text-green-700'
                                 : ficha.matricula.status === 'transferido'
-                                ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white'
-                                : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-gray-100 text-gray-600'
                             }`}>
                               {ficha.matricula.status || 'N/A'}
                             </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center justify-center gap-1">
+                              <button
+                                onClick={() => handleImprimir(ficha)}
+                                className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors text-gray-500 hover:text-gray-700"
+                                title="Imprimir ficha"
+                              >
+                                <Printer className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => abrirDetalhes(ficha)}
+                                className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors text-blue-500 hover:text-blue-700"
+                                title="Ver detalhes"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => abrirEdicao(ficha)}
+                                className="p-1.5 hover:bg-indigo-100 rounded-lg transition-colors text-indigo-500 hover:text-indigo-700"
+                                title="Editar ficha"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
                 {/* Controles de Paginação */}
@@ -771,9 +744,7 @@ export default function ListarFichasPage() {
                       <h3 className="text-lg font-semibold text-gray-900">Deficiências Visuais</h3>
                     </div>
                     <div className="grid gap-3">
-                      {(['cegueira', 'Cegueira'], ['baixa_visao', 'Baixa Visão']).length > 0 && (
-                        [['cegueira', 'Cegueira'], ['baixa_visao', 'Baixa Visão']] as [string, string][]
-                      ).map(([field, label]) => (
+                      {([['cegueira', 'Cegueira'], ['baixa_visao', 'Baixa Visão']] as [string, string][]).map(([field, label]) => (
                         <label key={field} className="flex items-center gap-3 cursor-pointer">
                           <input type="checkbox" className="h-4 w-4 text-blue-600 rounded" checked={!!editDiagnostico[field]} onChange={e => setEditDiagnostico(p => ({ ...p, [field]: e.target.checked }))} />
                           <span className="text-sm font-medium text-gray-700">{label}</span>
