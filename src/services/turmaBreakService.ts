@@ -10,12 +10,6 @@ export interface TurmaBreak {
   hora_fim: string
 }
 
-interface BreakResponse {
-  status: string
-  mensagem: string
-  dados?: TurmaBreak | TurmaBreak[]
-}
-
 const turmaBreakService = {
   async listarPorTurma(turmaId: string): Promise<TurmaBreak[]> {
     try {
